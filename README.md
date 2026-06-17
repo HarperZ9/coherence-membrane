@@ -134,6 +134,23 @@ b.check(later_observation).verdict              # MATCH | DRIFT | UNVERIFIABLE
 b.save("baseline.json")                          # drift is tracked across runs
 ```
 
+## The living loop (increment 4)
+
+`LiveMembrane` ties it together into one operator-configured object: it perceives
+continuously, remembers an authorized baseline, and mediates **only consequence**.
+It adds no authority and removes no check — every guarantee still lives in the
+parts it composes.
+
+```python
+from coherence_membrane import LiveMembrane, ScreenCaptureSource
+m = LiveMembrane()                                   # defaults: creative profile
+for event in m.perceive(ScreenCaptureSource(), max_frames=300):
+    ...                                              # free, continuous perception
+m.authorize(some_observation)                        # operator pins the baseline
+m.propose("draw", "canvas").decision                 # "allow" — reversible, un-gated
+m.propose("publish", "site", authorization=receipt)  # routed to the write-gate
+```
+
 ## Design discipline (encoded, not asserted)
 
 - **Inert.** Organs read and report. They never mutate the artifact, the process that
@@ -171,8 +188,10 @@ b.save("baseline.json")                          # drift is tracked across runs
 - **Increment 2:** the agnostic frame-handoff contract; native universal capture of the
   composited output (Windows/macOS/Linux via `ctypes`, no shims); the
   change-proportional, self-throttling continuity loop; consequence-scope.
-- **Increment 3 (this):** a second sense (`AudioArtifactOrgan`) on the same contract;
+- **Increment 3:** a second sense (`AudioArtifactOrgan`) on the same contract;
   modality-agnostic baseline memory (drift against an authorized baseline, persisted).
+- **Increment 4 (this):** `LiveMembrane` — the living loop as one configurable object
+  (perceive + remember + mediate consequence).
 - **Next:** macOS/Linux on-platform validation (the author has Windows only — those
   backends are implemented to the OS APIs but unvalidated); a raw-frame fast path for
   high-rate capture; Wayland/PipeWire backend; structured-data organ.
@@ -181,7 +200,7 @@ b.save("baseline.json")                          # drift is tracked across runs
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 91 tests
+python -m pytest          # 97 tests
 python -m coherence_membrane selftest             # every sense proves itself
 python -m coherence_membrane capture frame.png    # native screen grab
 ```
