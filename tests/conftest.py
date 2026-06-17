@@ -91,3 +91,37 @@ def gradient_rgb():
         return _encode(w, h, bytes(px), color_type=2)
 
     return _build
+
+
+@pytest.fixture
+def raw_bgra_frame():
+    """Build a raw BGRA Frame with real horizontal structure (for the fast path).
+
+    Returns (frame, bgra_bytes, width, height) so a test can both perceive the
+    frame and re-derive its identity/perceptual hash independently.
+    """
+    from coherence_membrane.capture import Frame, FrameDescriptor
+
+    def _build(width: int = 16, height: int = 16, *, invert: bool = False,
+               frame_index: int = 0, source_id: str = "test") -> tuple:
+        # R is a centre-peak tent (non-monotonic -> non-trivial dHash); B is a
+        # horizontal ramp with a DIFFERENT profile, so an R<->B byte-order swap
+        # changes the hash. invert flips the tent into a valley (a real change).
+        cx = (width - 1) / 2 if width > 1 else 0.0
+        bgra = bytearray()
+        for _y in range(height):
+            for x in range(width):
+                r = int(255 * (1 - abs(x - cx) / cx)) if cx else 0
+                if invert:
+                    r = 255 - r
+                b = (x * 255) // (width - 1) if width > 1 else 0
+                bgra += bytes([b, 64, r, 255])  # B, G, R, A
+        payload = bytes(bgra)
+        frame = Frame(
+            descriptor=FrameDescriptor(source_id=source_id, frame_index=frame_index,
+                                       width=width, height=height, pixel_format="bgra"),
+            payload=payload,
+        )
+        return frame, payload, width, height
+
+    return _build
