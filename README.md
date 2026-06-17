@@ -61,6 +61,55 @@ decide(req)   # -> proof-surface GateDecision (allow/deny/needs-human), or
 A `DriftVerdict`'s `MATCH/DRIFT/UNVERIFIABLE` *is* the gate's `witness_verdict`
 lattice, so perceived visual drift flows straight into the gate's state check.
 
+## Live capture (increment 2) — native, universal, no shims
+
+The architecture for capturing live frames is **dependency inversion: don't hook
+the world, capture what it already composited.** Every renderer — D3D11, D3D12,
+Vulkan, OpenGL, Metal, software — composites to the display. Capturing *there* is
+agnostic to all of them by construction: the membrane never imports a graphics
+API, never tracks a D3D version, and needs no producer-side shim. It asks the OS
+for the pixels the OS already has, through the OS's own API via `ctypes` (stdlib —
+no third-party package).
+
+| Platform | Backend | Status |
+| --- | --- | --- |
+| Windows | GDI (`BitBlt` + `GetDIBits`) | **validated live** |
+| macOS | CoreGraphics (`CGDisplayCreateImageForRect`) | implemented to the API; validate on-platform |
+| Linux / X11 | Xlib (`XGetImage`) | implemented to the API; validate on-platform |
+
+```bash
+python -m coherence_membrane capture frame.png   # one native grab of the screen
+python -m coherence_membrane watch 30             # always-on perception, 30 frames
+```
+
+```python
+from coherence_membrane import ScreenCaptureSource, ResourceBudget, run_continuity
+src = ScreenCaptureSource(region=(0, 0, 1280, 720))   # any owned/authorised surface
+for event in run_continuity(src, budget=ResourceBudget(min_interval_s=0.2), max_frames=300):
+    event.verdict     # MATCH (cheap) / DRIFT / UNVERIFIABLE (throttled)
+    event.distance    # perceptual distance on a real visual change
+```
+
+**Always-on without being over-consumptive.** The continuity loop is
+*change-proportional*: a cheap identity hash runs every tick; only a real change
+escalates to the full decode + perceptual hash. A `ResourceBudget` caps the
+expensive work and paces the cadence; once spent, a changed frame is reported
+`UNVERIFIABLE("throttled")` — never silently dropped.
+
+**Mediate consequence, not activity.** The loop only *perceives*; it never gates.
+Acting goes through the write-gate, and only for consequential actions:
+
+```python
+from coherence_membrane import creative_profile
+scope = creative_profile()
+scope.requires_gate("publish")   # True  — consequential, gate it
+scope.requires_gate("draw")      # False — reversible/local, flows free
+```
+
+So creative and gamedev flow is frictionless by construction: perception is
+continuous and free; only `publish`/`export`/`overwrite`/`spend`/`delete`/`send`/
+`deploy` touch the gate, and the operator can widen or narrow that set.
+
 ## Design discipline (encoded, not asserted)
 
 - **Inert.** Organs read and report. They never mutate the artifact, the process that
@@ -86,25 +135,29 @@ lattice, so perceived visual drift flows straight into the gate's state check.
   write-gate is where that belongs.
 - A dHash is a coarse 64-bit fingerprint of low-frequency structure, **not** a semantic
   understanding of the image. Distance is advisory evidence.
-- Capture is the **operator's** responsibility and must be of a source the operator
-  **owns or has authorised**. This tool reads artifact bytes you hand it; it never
-  reaches into another process.
+- Capture reads the **composited display output** the operator can already see, via
+  the OS's own screen API — it does **not** inject into, hook, or read another
+  process's memory, and it must be used only on surfaces the operator owns or has
+  authorised. It is perception of the screen, not intrusion into a program.
 
 ## Roadmap
 
-- **Increment 1 (this):** static-artifact perception — PNG identity, dimensions,
-  perceptual hash, drift; the inert organ + selftest contract; `perceive()`; the
-  write-gate bridge.
-- **Next:** more organs (other formats, audio, structured data) on the same contract;
-  a live capture adapter (the inert save→observe→restore interception pattern) for
-  operator-owned render surfaces; richer drift baselines.
+- **Increment 1:** static-artifact perception — PNG identity, dimensions, perceptual
+  hash, drift; the inert organ + selftest contract; `perceive()`; the write-gate bridge.
+- **Increment 2 (this):** the agnostic frame-handoff contract; native universal capture
+  of the composited output (Windows/macOS/Linux via `ctypes`, no shims); the
+  change-proportional, self-throttling continuity loop; consequence-scope.
+- **Next:** macOS/Linux on-platform validation; a raw-frame fast path (hash before
+  encode) for high-rate capture; Wayland/PipeWire backend; more organs (audio,
+  structured data) on the same contract.
 
 ## Install / test
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 47 tests
+python -m pytest          # 75 tests
 python -m coherence_membrane selftest
+python -m coherence_membrane capture frame.png    # native screen grab
 ```
 
 ## License
