@@ -151,6 +151,44 @@ m.propose("draw", "canvas").decision                 # "allow" — reversible, u
 m.propose("publish", "site", authorization=receipt)  # routed to the write-gate
 ```
 
+## The raw-frame fast path (increment 5) — high-rate, encode-free
+
+`ScreenCaptureSource` PNG-encodes every grab so each frame is witnessable on
+disk. At high capture rates that encode is pure overhead — the OS already handed
+over raw pixels. `RawScreenCaptureSource` skips it: each frame carries the raw
+BGRA bytes plus geometry, the continuity loop hashes those bytes for identity
+every tick, and **only a real change** pays the perceptual hash — computed
+directly from the raw pixels (`RawFrameOrgan`), with no PNG encode and no decode,
+ever.
+
+```python
+from coherence_membrane import RawScreenCaptureSource, run_continuity, ResourceBudget
+src = RawScreenCaptureSource(region=(0, 0, 1280, 720))   # raw BGRA, no per-frame encode
+for event in run_continuity(src, budget=ResourceBudget(min_interval_s=0.1), max_frames=600):
+    event.verdict     # MATCH (cheap identity hash) / DRIFT / UNVERIFIABLE
+    event.distance    # perceptual distance on a real change — from raw pixels
+# The loop selects RawFrameOrgan automatically for raw frames; no organ to pass.
+```
+
+The load-bearing guarantee, proven in the organ's selftest: the raw fast path
+yields the **bit-identical** perceptual hash to the encode→decode path for the
+same pixels. It changes the cost, never the answer.
+
+```bash
+python -m coherence_membrane watch 60 --raw   # always-on perception, fast path
+```
+
+| Path | Per-frame work (unchanged frame) | Per-frame work (changed frame) |
+| --- | --- | --- |
+| `ScreenCaptureSource` (PNG) | capture + convert + **zlib encode** + identity hash | + decode + perceptual hash |
+| `RawScreenCaptureSource` (raw) | capture + identity hash | + convert + perceptual hash (**no encode/decode**) |
+
+Illustrative single-run figures (one Windows machine, 640×480 region, median of
+40 grabs): `grab_raw` ≈ 8 ms vs `grab_png` ≈ 20 ms per grab — and unchanged
+frames skip all perceptual work entirely. Re-derive your own with
+`python scripts/bench_raw_vs_png.py`; the point measurement is reproducible
+rather than asserted.
+
 ## Design discipline (encoded, not asserted)
 
 - **Inert.** Organs read and report. They never mutate the artifact, the process that
@@ -180,6 +218,11 @@ m.propose("publish", "site", authorization=receipt)  # routed to the write-gate
   the OS's own screen API — it does **not** inject into, hook, or read another
   process's memory, and it must be used only on surfaces the operator owns or has
   authorised. It is perception of the screen, not intrusion into a program.
+- The **raw identity** (SHA-256 of BGRA bytes) is *not* equal to the **PNG identity**
+  for the same pixels — they are different byte streams. Only the *perceptual
+  fingerprint* is comparable across the raw and PNG paths; a baseline pinned on raw
+  frames matches raw frames, and one pinned on PNGs matches PNGs. This is stated,
+  and tested, rather than glossed.
 
 ## Roadmap
 
@@ -190,19 +233,25 @@ m.propose("publish", "site", authorization=receipt)  # routed to the write-gate
   change-proportional, self-throttling continuity loop; consequence-scope.
 - **Increment 3:** a second sense (`AudioArtifactOrgan`) on the same contract;
   modality-agnostic baseline memory (drift against an authorized baseline, persisted).
-- **Increment 4 (this):** `LiveMembrane` — the living loop as one configurable object
+- **Increment 4:** `LiveMembrane` — the living loop as one configurable object
   (perceive + remember + mediate consequence).
+- **Increment 5 (this):** the raw-frame fast path — `grab_raw` /
+  `RawScreenCaptureSource` (encode-free native capture), `RawFrameOrgan`
+  (perceptual hash straight from raw pixels), and `perceptual_hash_raw`; the
+  continuity loop auto-selects the raw organ for raw frames. Bit-identical to the
+  PNG path, proven by selftest; validated live on Windows.
 - **Next:** macOS/Linux on-platform validation (the author has Windows only — those
-  backends are implemented to the OS APIs but unvalidated); a raw-frame fast path for
-  high-rate capture; Wayland/PipeWire backend; structured-data organ.
+  backends are implemented to the OS APIs but unvalidated); a structured-data organ
+  (a third modality with semantic, not byte-level, drift); Wayland/PipeWire backend.
 
 ## Install / test
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 97 tests
-python -m coherence_membrane selftest             # every sense proves itself
+python -m pytest          # 118 tests
+python -m coherence_membrane selftest             # every organ proves itself
 python -m coherence_membrane capture frame.png    # native screen grab
+python -m coherence_membrane watch 60 --raw       # always-on perception, fast path
 ```
 
 ## License

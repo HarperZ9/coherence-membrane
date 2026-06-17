@@ -29,9 +29,11 @@ from .live import LiveDecision, LiveMembrane
 from .membrane import build_gate_request, decide
 from .native_capture import (
     CaptureUnavailable,
+    RawScreenCaptureSource,
     ScreenCaptureSource,
     capture_available,
     grab_png,
+    grab_raw,
 )
 from .baseline import Baseline, BaselineEntry, BaselineVerdict
 from .observation import Observation, Provenance, Status, sha256_hex
@@ -39,6 +41,7 @@ from .organs.audio import AudioArtifactOrgan, audio_envelope_hash
 from .pngencode import encode_png
 from .scope import DEFAULT_CONSEQUENTIAL, ConsequenceScope, creative_profile
 from .organ import Check, Organ, SelftestResult, run_selftests
+from .organs.raw import RawFrameOrgan
 from .organs.visual import VisualArtifactOrgan
 from .perception import PerceptionSnapshot, all_organs, default_organs, perceive
 from .phash import (
@@ -50,6 +53,8 @@ from .phash import (
     compare_drift,
     hamming,
     perceptual_hash,
+    perceptual_hash_raw,
+    raw_channels,
 )
 from .pngview import DecodedImage, PngDecodeError, decode_png, is_png, read_ihdr
 
@@ -66,6 +71,7 @@ __all__ = [
     "run_selftests",
     "VisualArtifactOrgan",
     "AudioArtifactOrgan",
+    "RawFrameOrgan",
     "audio_envelope_hash",
     # perception (read-gate)
     "PerceptionSnapshot",
@@ -93,7 +99,9 @@ __all__ = [
     # native, universal capture of the composited output (no shims)
     "capture_available",
     "grab_png",
+    "grab_raw",
     "ScreenCaptureSource",
+    "RawScreenCaptureSource",
     "CaptureUnavailable",
     "encode_png",
     # consequence scope (mediate consequence, never activity)
@@ -110,6 +118,8 @@ __all__ = [
     "is_png",
     "read_ihdr",
     "perceptual_hash",
+    "perceptual_hash_raw",
+    "raw_channels",
     "hamming",
     "compare_drift",
     "DriftVerdict",

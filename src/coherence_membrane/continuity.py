@@ -22,11 +22,12 @@ import time
 from dataclasses import dataclass
 from typing import Any, Callable, Iterator
 
-from .capture import CaptureSource
+from .capture import CaptureSource, Frame
 from .observation import Observation, sha256_hex
 from .organ import Organ
+from .organs.raw import RawFrameOrgan
 from .organs.visual import VisualArtifactOrgan
-from .phash import DRIFT, MATCH, UNVERIFIABLE, hamming
+from .phash import DRIFT, MATCH, UNVERIFIABLE, hamming, raw_channels
 
 
 @dataclass(frozen=True)
@@ -82,7 +83,9 @@ def run_continuity(
     frames pay decode+perceptual-hash, and only until the budget is spent.
     """
     budget = budget or ResourceBudget()
-    organ = organ or VisualArtifactOrgan()
+    forced_organ = organ  # if set, used for every frame; else chosen per frame
+    default_visual: VisualArtifactOrgan | None = None
+    default_raw: RawFrameOrgan | None = None
 
     prev_sha: str | None = None
     prev_phash: int | None = None
@@ -119,7 +122,23 @@ def run_continuity(
             )
             continue
 
-        obs = organ.observe(payload)[0]
+        # Choose the perceiver: an explicit organ wins; otherwise a raw-pixel
+        # frame goes to RawFrameOrgan (no encode/decode) and everything else to
+        # the PNG eye.
+        if forced_organ is not None:
+            perceiver: Organ = forced_organ
+        elif raw_channels(frame.descriptor.pixel_format) is not None:
+            default_raw = default_raw or RawFrameOrgan()
+            perceiver = default_raw
+        else:
+            default_visual = default_visual or VisualArtifactOrgan()
+            perceiver = default_visual
+        # Hand the organ the bytes we ALREADY read (with the descriptor, so raw
+        # geometry travels too).  Re-reading would be a second disk hit for
+        # path-backed frames and could witness different bytes than cur_sha —
+        # one canonical read keeps identity and perception consistent.
+        observed = Frame(descriptor=frame.descriptor, payload=payload)
+        obs = perceiver.observe(observed)[0]
         full_count += 1
         ph_hex = obs.data.get("perceptual_hash")
         cur_phash = int(ph_hex, 16) if ph_hex else None
