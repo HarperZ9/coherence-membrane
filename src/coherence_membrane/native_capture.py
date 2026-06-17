@@ -68,11 +68,14 @@ def capture_available() -> bool:
     return False
 
 
-def grab_png(region: tuple[int, int, int, int] | None = None) -> tuple[bytes, int, int]:
-    """Capture the composited output and return (png_bytes, width, height).
+def grab_raw(region: tuple[int, int, int, int] | None = None) -> tuple[bytes, int, int]:
+    """Capture the composited output as RAW, top-down, tight-row BGRA bytes.
 
-    region = (x, y, w, h); None = the full primary display. Raises
-    CaptureUnavailable on an unsupported platform or any OS-level failure.
+    This is the cheap grab — capture only, no colour conversion and no PNG
+    encode.  The high-rate fast path hashes these bytes directly for identity and
+    perceives them straight (RawFrameOrgan); the per-frame zlib encode that
+    grab_png pays is never incurred.  region = (x, y, w, h); None = full primary
+    display.  Raises CaptureUnavailable on an unsupported platform or OS failure.
     """
     backend = _platform_backend()
     if backend is None or not capture_available():
@@ -81,9 +84,17 @@ def grab_png(region: tuple[int, int, int, int] | None = None) -> tuple[bytes, in
         _, _, w, h = region
         if w <= 0 or h <= 0:
             raise CaptureUnavailable("non-positive capture dimensions")
-    bgra, w, h = backend(region)
-    rgb = bgra_to_rgb(bgra, w, h)
-    return encode_png(w, h, rgb, channels=3), w, h
+    return backend(region)  # (bgra, w, h)
+
+
+def grab_png(region: tuple[int, int, int, int] | None = None) -> tuple[bytes, int, int]:
+    """Capture the composited output and return (png_bytes, width, height).
+
+    region = (x, y, w, h); None = the full primary display. Raises
+    CaptureUnavailable on an unsupported platform or any OS-level failure.
+    """
+    bgra, w, h = grab_raw(region)
+    return encode_png(w, h, bgra_to_rgb(bgra, w, h), channels=3), w, h
 
 
 def _depad(raw: bytes, width: int, height: int, bytes_per_row: int) -> bytes:
@@ -153,13 +164,16 @@ def _win_grab(region):
     screen_dc = user32.GetDC(None)
     if not screen_dc:
         raise CaptureUnavailable("GetDC failed")
-    mem_dc = bmp = None
+    mem_dc = bmp = old_bmp = None
     try:
         mem_dc = gdi32.CreateCompatibleDC(screen_dc)
         bmp = gdi32.CreateCompatibleBitmap(screen_dc, w, h)
         if not mem_dc or not bmp:
             raise CaptureUnavailable("could not allocate device context / bitmap")
-        gdi32.SelectObject(mem_dc, bmp)
+        # Keep the DC's default bitmap so we can restore it before deleting ours:
+        # DeleteObject silently fails on a bitmap still selected into a DC, which
+        # would leak the HBITMAP and its w*h*4 backing memory on every grab.
+        old_bmp = gdi32.SelectObject(mem_dc, bmp)
         if not gdi32.BitBlt(mem_dc, 0, 0, w, h, screen_dc, x, y, _SRCCOPY):
             raise CaptureUnavailable("BitBlt failed")
         bmih = BITMAPINFOHEADER()
@@ -174,6 +188,8 @@ def _win_grab(region):
             raise CaptureUnavailable("GetDIBits returned 0 scanlines")
         return bytes(buf), w, h  # BGRA, top-down, tight rows
     finally:
+        if mem_dc and old_bmp:
+            gdi32.SelectObject(mem_dc, old_bmp)  # deselect ours before deleting it
         if bmp:
             gdi32.DeleteObject(bmp)
         if mem_dc:
@@ -369,7 +385,9 @@ class ScreenCaptureSource:
     """A native CaptureSource: yields PNG frames of the composited output.
 
     Infinite by design (always-on); bound it with run_continuity(max_frames=...)
-    and pace it with ResourceBudget.min_interval_s.
+    and pace it with ResourceBudget.min_interval_s.  Encodes each grab to PNG, so
+    every frame is directly witnessable on disk; for high-rate perception where
+    that encode is wasted work, use RawScreenCaptureSource instead.
     """
 
     def __init__(self, region: tuple[int, int, int, int] | None = None,
@@ -387,5 +405,37 @@ class ScreenCaptureSource:
                     width=w, height=h, pixel_format="png",
                 ),
                 payload=png,
+            )
+            index += 1
+
+
+class RawScreenCaptureSource:
+    """A native CaptureSource yielding RAW BGRA frames — the high-rate fast path.
+
+    No per-frame PNG encode: each frame carries the raw BGRA bytes plus geometry
+    in its descriptor.  The continuity loop hashes those bytes for identity every
+    tick (cheap) and only a real change pays the perceptual hash, computed
+    directly from the raw pixels (RawFrameOrgan) — no encode and no decode, ever.
+
+    Infinite by design; bound with run_continuity(max_frames=...) and pace with
+    ResourceBudget.min_interval_s.  The continuity loop selects RawFrameOrgan
+    automatically for these raw frames, so no organ needs to be passed.
+    """
+
+    def __init__(self, region: tuple[int, int, int, int] | None = None,
+                 source_id: str = "screen-raw"):
+        self.region = region
+        self.source_id = source_id
+
+    def frames(self) -> Iterator[Frame]:
+        index = 0
+        while True:
+            bgra, w, h = grab_raw(self.region)
+            yield Frame(
+                descriptor=FrameDescriptor(
+                    source_id=self.source_id, frame_index=index,
+                    width=w, height=h, pixel_format="bgra",
+                ),
+                payload=bgra,
             )
             index += 1
