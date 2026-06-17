@@ -25,6 +25,7 @@ from .capture import (
     IterableFrameSource,
 )
 from .continuity import ContinuityEvent, ResourceBudget, run_continuity
+from .live import LiveDecision, LiveMembrane
 from .membrane import build_gate_request, decide
 from .native_capture import (
     CaptureUnavailable,
@@ -99,6 +100,9 @@ __all__ = [
     "ConsequenceScope",
     "creative_profile",
     "DEFAULT_CONSEQUENTIAL",
+    # the living loop (perceive + remember + mediate consequence)
+    "LiveMembrane",
+    "LiveDecision",
     # png + perceptual hashing
     "DecodedImage",
     "PngDecodeError",
