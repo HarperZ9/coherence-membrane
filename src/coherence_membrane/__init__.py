@@ -16,8 +16,25 @@ Membrane doctrine, encoded not asserted: externalized, witnessed-not-inferred,
 independently-checkable; an organ without a passing selftest is net-negative.
 """
 
+from .capture import (
+    CallableFrameSource,
+    CaptureSource,
+    DirectoryFrameSource,
+    Frame,
+    FrameDescriptor,
+    IterableFrameSource,
+)
+from .continuity import ContinuityEvent, ResourceBudget, run_continuity
 from .membrane import build_gate_request, decide
+from .native_capture import (
+    CaptureUnavailable,
+    ScreenCaptureSource,
+    capture_available,
+    grab_png,
+)
 from .observation import Observation, Provenance, Status, sha256_hex
+from .pngencode import encode_png
+from .scope import DEFAULT_CONSEQUENTIAL, ConsequenceScope, creative_profile
 from .organ import Check, Organ, SelftestResult, run_selftests
 from .organs.visual import VisualArtifactOrgan
 from .perception import PerceptionSnapshot, default_organs, perceive
@@ -52,6 +69,27 @@ __all__ = [
     # write-gate bridge
     "build_gate_request",
     "decide",
+    # live capture (frame-handoff contract + sources)
+    "FrameDescriptor",
+    "Frame",
+    "CaptureSource",
+    "DirectoryFrameSource",
+    "CallableFrameSource",
+    "IterableFrameSource",
+    # continuity (change-proportional, self-throttling perception loop)
+    "ResourceBudget",
+    "ContinuityEvent",
+    "run_continuity",
+    # native, universal capture of the composited output (no shims)
+    "capture_available",
+    "grab_png",
+    "ScreenCaptureSource",
+    "CaptureUnavailable",
+    "encode_png",
+    # consequence scope (mediate consequence, never activity)
+    "ConsequenceScope",
+    "creative_profile",
+    "DEFAULT_CONSEQUENTIAL",
     # png + perceptual hashing
     "DecodedImage",
     "PngDecodeError",
