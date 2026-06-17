@@ -16,11 +16,19 @@ from typing import Any
 
 from .observation import Observation
 from .organ import Organ
+from .organs.audio import AudioArtifactOrgan
 from .organs.visual import VisualArtifactOrgan
 
 
 def default_organs() -> list[Organ]:
     return [VisualArtifactOrgan()]
+
+
+def all_organs() -> list[Organ]:
+    """Every built-in organ (every sense). Used for selftest and multimodal
+    perception; perceive() defaults to visual-only to avoid redundant
+    identity-only observations across modalities."""
+    return [VisualArtifactOrgan(), AudioArtifactOrgan()]
 
 
 @dataclass(frozen=True)
