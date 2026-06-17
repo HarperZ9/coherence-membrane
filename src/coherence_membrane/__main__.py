@@ -10,9 +10,15 @@ import json
 import sys
 
 from .continuity import ResourceBudget, run_continuity
-from .native_capture import CaptureUnavailable, ScreenCaptureSource, capture_available, grab_png
+from .native_capture import (
+    CaptureUnavailable,
+    RawScreenCaptureSource,
+    ScreenCaptureSource,
+    capture_available,
+    grab_png,
+)
 from .organ import run_selftests
-from .perception import all_organs, default_organs, perceive
+from .perception import all_organs, perceive
 
 
 def _selftest() -> int:
@@ -46,11 +52,12 @@ def _capture(out_path: str) -> int:
         return 2
 
 
-def _watch(frames: int) -> int:
+def _watch(frames: int, raw: bool = False) -> int:
     if not capture_available():
         print(json.dumps({"capture_available": False, "platform": sys.platform}))
         return 2
-    source = ScreenCaptureSource()
+    # raw=True uses the encode-free fast path; the loop selects RawFrameOrgan.
+    source = RawScreenCaptureSource() if raw else ScreenCaptureSource()
     # Modest cadence + a full-observation cap keep an always-on watch cheap.
     budget = ResourceBudget(min_interval_s=0.5, max_full_observations=frames)
     for event in run_continuity(source, budget=budget, max_frames=frames):
@@ -65,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if not args or args[0] in {"-h", "--help"}:
         print("usage: python -m coherence_membrane "
-              "{selftest | perceive <path>... | capture <out.png> | watch [frames]}")
+              "{selftest | perceive <path>... | capture <out.png> | watch [frames] [--raw]}")
         return 0
     cmd, rest = args[0], args[1:]
     if cmd == "selftest":
@@ -81,8 +88,10 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         return _capture(rest[0])
     if cmd == "watch":
-        frames = int(rest[0]) if rest else 10
-        return _watch(frames)
+        raw = "--raw" in rest
+        positional = [a for a in rest if not a.startswith("-")]
+        frames = int(positional[0]) if positional else 10
+        return _watch(frames, raw=raw)
     print(f"unknown command: {cmd}", file=sys.stderr)
     return 2
 

@@ -72,14 +72,14 @@ def _downscale(gray: list[int], w: int, h: int, tw: int, th: int) -> list[int]:
     return out
 
 
-def perceptual_hash(img: DecodedImage) -> int:
-    """64-bit difference hash (dHash) of a decoded image.
+def _dhash_bits(gray: list[int], width: int, height: int) -> int:
+    """The dHash core: box-downscale a grayscale grid to (HASH_W+1) x HASH_H,
+    then set one bit per adjacent-pixel comparison (left brighter than right).
 
-    Downscale to (HASH_W+1) x HASH_H grayscale, then for each row set a bit per
-    adjacent-pixel comparison (left brighter than right).
+    Shared by every perceptual-hash entry point so that the EXACT same bits come
+    out regardless of how the grayscale was obtained (decoded PNG or raw pixels).
     """
-    gray = _to_grayscale(img)
-    small = _downscale(gray, img.width, img.height, HASH_W + 1, HASH_H)
+    small = _downscale(gray, width, height, HASH_W + 1, HASH_H)
     bits = 0
     for y in range(HASH_H):
         row = y * (HASH_W + 1)
@@ -88,6 +88,69 @@ def perceptual_hash(img: DecodedImage) -> int:
             if small[row + x] > small[row + x + 1]:
                 bits |= 1
     return bits
+
+
+def perceptual_hash(img: DecodedImage) -> int:
+    """64-bit difference hash (dHash) of a decoded image."""
+    return _dhash_bits(_to_grayscale(img), img.width, img.height)
+
+
+# Raw pixel layouts the hasher understands: format -> (channels, (r,g,b) byte
+# indices within a pixel, or None for a single grayscale channel).  This is the
+# whole coupling to byte order — BGRA (the OS capture layout) and RGBA both map
+# to the same luma, so a raw hash equals the decoded-PNG hash for the same pixels.
+_RAW_LAYOUTS: dict[str, tuple[int, tuple[int, int, int] | None]] = {
+    "rgba": (4, (0, 1, 2)),
+    "rgb": (3, (0, 1, 2)),
+    "bgra": (4, (2, 1, 0)),
+    "bgr": (3, (2, 1, 0)),
+    "gray": (1, None),
+    "grayscale": (1, None),
+    "l": (1, None),
+}
+
+
+def raw_channels(pixel_format: str | None) -> int | None:
+    """Bytes-per-pixel for a known raw format, or None if it is not raw-hashable.
+    Used to decide whether a frame can be perceived directly from raw pixels."""
+    layout = _RAW_LAYOUTS.get((pixel_format or "").lower())
+    return layout[0] if layout else None
+
+
+def _raw_to_grayscale(pixels: bytes, width: int, height: int, pixel_format: str) -> list[int]:
+    layout = _RAW_LAYOUTS.get((pixel_format or "").lower())
+    if layout is None:
+        raise ValueError(f"unsupported raw pixel format {pixel_format!r}")
+    ch, order = layout
+    n = width * height
+    if len(pixels) < n * ch:
+        raise ValueError("raw buffer smaller than width*height*channels")
+    gray = [0] * n
+    if order is None:  # single grayscale channel
+        for i in range(n):
+            gray[i] = pixels[i * ch]
+    else:  # Rec.601 luma over the format's R/G/B byte positions
+        ri, gi, bi = order
+        for i in range(n):
+            base = i * ch
+            r, g, b = pixels[base + ri], pixels[base + gi], pixels[base + bi]
+            gray[i] = (r * 299 + g * 587 + b * 114) // 1000
+    return gray
+
+
+def perceptual_hash_raw(pixels: bytes, width: int, height: int, pixel_format: str) -> int:
+    """64-bit dHash of a RAW pixel buffer — no PNG encode/decode round-trip.
+
+    This is the high-rate fast path: the OS hands over raw BGRA, and the
+    perceptual hash is computed straight from those bytes.  Because it shares
+    `_dhash_bits` and computes the same Rec.601 luma, the result is bit-identical
+    to perceptual_hash(decode_png(encode_png(...))) for the same pixels — proven
+    in RawFrameOrgan.selftest().  Raises ValueError on unsupported format or a
+    short buffer (caller degrades to identity-only, never a fabricated hash).
+    """
+    if width <= 0 or height <= 0:
+        raise ValueError("non-positive dimensions")
+    return _dhash_bits(_raw_to_grayscale(pixels, width, height, pixel_format), width, height)
 
 
 def hamming(a: int, b: int) -> int:

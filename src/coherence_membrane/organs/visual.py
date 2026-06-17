@@ -104,6 +104,16 @@ class VisualArtifactOrgan:
 
     @staticmethod
     def _read(subject) -> tuple[str, bytes | None]:
+        # Frame-like (a descriptor + a callable read): the continuity loop hands
+        # organs a Frame so any source — file, callback, native grab — is uniform.
+        descriptor = getattr(subject, "descriptor", None)
+        reader = getattr(subject, "read", None)
+        if descriptor is not None and callable(reader):
+            sid = f"{getattr(descriptor, 'source_id', '?')}#{getattr(descriptor, 'frame_index', '?')}"
+            try:
+                return sid, reader()
+            except OSError:
+                return sid, None
         if isinstance(subject, (bytes, bytearray)):
             return "<bytes>", bytes(subject)
         path = Path(subject)
