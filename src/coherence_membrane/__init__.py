@@ -32,12 +32,14 @@ from .native_capture import (
     capture_available,
     grab_png,
 )
+from .baseline import Baseline, BaselineEntry, BaselineVerdict
 from .observation import Observation, Provenance, Status, sha256_hex
+from .organs.audio import AudioArtifactOrgan, audio_envelope_hash
 from .pngencode import encode_png
 from .scope import DEFAULT_CONSEQUENTIAL, ConsequenceScope, creative_profile
 from .organ import Check, Organ, SelftestResult, run_selftests
 from .organs.visual import VisualArtifactOrgan
-from .perception import PerceptionSnapshot, default_organs, perceive
+from .perception import PerceptionSnapshot, all_organs, default_organs, perceive
 from .phash import (
     DRIFT,
     DRIFT_VERDICTS,
@@ -62,10 +64,17 @@ __all__ = [
     "SelftestResult",
     "run_selftests",
     "VisualArtifactOrgan",
+    "AudioArtifactOrgan",
+    "audio_envelope_hash",
     # perception (read-gate)
     "PerceptionSnapshot",
     "perceive",
     "default_organs",
+    "all_organs",
+    # baseline memory (drift against an authorized baseline, across modalities)
+    "Baseline",
+    "BaselineEntry",
+    "BaselineVerdict",
     # write-gate bridge
     "build_gate_request",
     "decide",

@@ -110,6 +110,30 @@ So creative and gamedev flow is frictionless by construction: perception is
 continuous and free; only `publish`/`export`/`overwrite`/`spend`/`delete`/`send`/
 `deploy` touch the gate, and the operator can widen or narrow that set.
 
+## A second sense, and baseline memory (increment 3)
+
+Perception is not only sight. The same inert observe→witness contract extends to
+**hearing**: `AudioArtifactOrgan` perceives a WAV (stdlib `wave`, no third-party
+audio stack) — identity, format, and a 64-bit perceptual fingerprint of the
+loudness envelope — and fails closed to identity-only on anything it can't decode.
+
+```python
+from coherence_membrane import AudioArtifactOrgan, all_organs
+AudioArtifactOrgan().observe("clip.wav")[0].data["perceptual_audio_hash"]
+```
+
+**Baseline memory** turns frame-to-frame drift into accountability over time:
+pin an authorized observation, then check later observations against it. It is
+modality-agnostic — one baseline covers frames and sounds alike — and returns the
+same `MATCH` / `DRIFT` / `UNVERIFIABLE` lattice.
+
+```python
+from coherence_membrane import Baseline
+b = Baseline(); b.pin(authorized_observation)   # the operator authorises a state
+b.check(later_observation).verdict              # MATCH | DRIFT | UNVERIFIABLE
+b.save("baseline.json")                          # drift is tracked across runs
+```
+
 ## Design discipline (encoded, not asserted)
 
 - **Inert.** Organs read and report. They never mutate the artifact, the process that
@@ -144,19 +168,21 @@ continuous and free; only `publish`/`export`/`overwrite`/`spend`/`delete`/`send`
 
 - **Increment 1:** static-artifact perception — PNG identity, dimensions, perceptual
   hash, drift; the inert organ + selftest contract; `perceive()`; the write-gate bridge.
-- **Increment 2 (this):** the agnostic frame-handoff contract; native universal capture
-  of the composited output (Windows/macOS/Linux via `ctypes`, no shims); the
+- **Increment 2:** the agnostic frame-handoff contract; native universal capture of the
+  composited output (Windows/macOS/Linux via `ctypes`, no shims); the
   change-proportional, self-throttling continuity loop; consequence-scope.
-- **Next:** macOS/Linux on-platform validation; a raw-frame fast path (hash before
-  encode) for high-rate capture; Wayland/PipeWire backend; more organs (audio,
-  structured data) on the same contract.
+- **Increment 3 (this):** a second sense (`AudioArtifactOrgan`) on the same contract;
+  modality-agnostic baseline memory (drift against an authorized baseline, persisted).
+- **Next:** macOS/Linux on-platform validation (the author has Windows only — those
+  backends are implemented to the OS APIs but unvalidated); a raw-frame fast path for
+  high-rate capture; Wayland/PipeWire backend; structured-data organ.
 
 ## Install / test
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 75 tests
-python -m coherence_membrane selftest
+python -m pytest          # 91 tests
+python -m coherence_membrane selftest             # every sense proves itself
 python -m coherence_membrane capture frame.png    # native screen grab
 ```
 

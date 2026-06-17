@@ -12,11 +12,11 @@ import sys
 from .continuity import ResourceBudget, run_continuity
 from .native_capture import CaptureUnavailable, ScreenCaptureSource, capture_available, grab_png
 from .organ import run_selftests
-from .perception import default_organs, perceive
+from .perception import all_organs, default_organs, perceive
 
 
 def _selftest() -> int:
-    report = run_selftests(default_organs())
+    report = run_selftests(all_organs())  # every sense proves itself
     print(json.dumps(report, indent=2))
     return 0 if report["passed"] else 1
 
