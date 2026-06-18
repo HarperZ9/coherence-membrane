@@ -131,11 +131,19 @@ regression.
   *untrusted* artifacts across all organs (size/decode/recursion caps + a fuzz
   selftest). Generalises the structured-organ size-cap lesson estate-wide. *(both ·
   mid)*
-- **Machine-checked lattice proofs.** A TLA+ (model-checkable now) — later Lean —
-  spec of the three core algebras (MATCH/DRIFT/UNVERIFIABLE, the witness lattice,
-  monotonic delegation attenuation), with the proof's edge cases *extracted* as
-  conformance vectors. Turns "we reviewed it" into "a checker proves it and the
-  proof generates the regression corpus." Prover is build-time only. *(both · mid)*
+- **Machine-checked lattice proofs.** ✅ **shipped.** `lattice.py` makes the
+  affirmation order of the three core algebras (MATCH/DRIFT/UNVERIFIABLE and the
+  VALID/…/UNVERIFIABLE receipt & VALID/BROKEN/UNVERIFIABLE graph lattices)
+  explicit and proves, by exhaustive enumeration, that each is a bounded lattice;
+  the binding tests prove every adjudicator is **closed** under its set, reaches
+  its affirmative top only on positive evidence (**fail-closed reachability**), and
+  that drift composition is exactly the lattice **meet** (**monotonic attenuation**
+  — composition never amplifies trust). The carriers are finite, so the
+  enumeration is a *complete* decision procedure — for these finite, non-temporal
+  laws, exactly what the explicit-state TLA+/TLC check originally scoped here would
+  compute, but run on every `pytest` rather than build-time only, so there is no
+  separate spec to rot. A Lean development and proof-extracted conformance vectors
+  remain a possible future hardening. *(both · mid)*
 
 ---
 
