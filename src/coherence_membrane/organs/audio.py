@@ -117,15 +117,29 @@ class AudioArtifactOrgan:
 
     @staticmethod
     def _read(subject):
+        # Frame-like (descriptor + callable read): read its bytes and perceive
+        # them like any other bytes (a WAV carried in a frame is still hashed;
+        # anything else degrades to identity-only) — never crash on Path(frame).
+        # Keeps all_organs() total over any subject.
+        descriptor = getattr(subject, "descriptor", None)
+        reader = getattr(subject, "read", None)
+        if descriptor is not None and callable(reader):
+            sid = f"{getattr(descriptor, 'source_id', '?')}#{getattr(descriptor, 'frame_index', '?')}"
+            try:
+                return sid, reader()
+            except OSError:
+                return sid, None
         if isinstance(subject, (bytes, bytearray)):
             return "<bytes>", bytes(subject)
         from pathlib import Path
 
-        p = Path(subject)
         try:
+            p = Path(subject)
             return str(p), p.read_bytes()
         except OSError:
             return str(p), None
+        except (TypeError, ValueError):
+            return repr(subject)[:64], None
 
     def _unreadable(self, path_str: str) -> Observation:
         return Observation(
