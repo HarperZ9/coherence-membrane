@@ -65,6 +65,32 @@ def test_tampering_a_case_is_caught():
     assert run.run_case(case) != case["expected"]
 
 
+def test_corpus_pin_is_sensitive_to_key_reorder():
+    # the canonical-equivalence pair's meaning IS key order, so a key-order edit
+    # to a case input must change the corpus hash (else the coverage is silent).
+    run = _load_run()
+    cases = _vectors()["cases"]
+    original = run.corpus_sha256(cases)
+    reordered = json.loads(json.dumps(cases))  # deep copy
+    for c in reordered:
+        if c["id"] == "canonical-reordered-equal":
+            c["input"]["json"] = {"b": 2, "a": 1}  # same value, different key order
+    assert run.corpus_sha256(reordered) != original
+
+
+def test_canonical_pair_is_byte_different_but_expected_equal():
+    cases = {c["id"]: c for c in _vectors()["cases"]}
+    a, b = cases["canonical-sorted"], cases["canonical-reordered-equal"]
+    assert list(a["input"]["json"]) != list(b["input"]["json"])  # different key order
+    assert a["expected"] == b["expected"]  # yet the same canonical hash
+
+
+def test_perceptual_hash_corpus_has_a_nonzero_case():
+    # guard against a "phash always returns 0" regression passing vacuously
+    phash_expected = [c["expected"] for c in _vectors()["cases"] if c["fn"] == "perceptual_hash"]
+    assert any(e != "0" * 16 for e in phash_expected), phash_expected
+
+
 # --- wire-spec schemas: structural checks (stdlib only) --------------------
 
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")

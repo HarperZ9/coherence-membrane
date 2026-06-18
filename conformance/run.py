@@ -32,7 +32,7 @@ from coherence_membrane.region import compare_region_drift  # noqa: E402
 
 # Pinned SHA-256 of the canonical JSON of vectors.json "cases". Recomputed every
 # run; a mismatch means the corpus was edited without re-pinning -> abort.
-PINNED_CORPUS_SHA256 = "9dc5fcc8d8dd79a4ff4994874dc214627e57eb8112f99663784820200c63dede"
+PINNED_CORPUS_SHA256 = "302bc556cd0f3d965f1ab6590f5ef792617a26175d8bc08eb830661ae42616d0"
 
 
 def _bytes_in(inp: dict) -> bytes:
@@ -76,7 +76,11 @@ def run_case(case: dict):
 
 
 def corpus_sha256(cases: list) -> str:
-    canonical = json.dumps(cases, sort_keys=True, separators=(",", ":"),
+    # sort_keys=False on purpose: a case's object-key ORDER is meaningful here
+    # (the canonical-equivalence pair differs only in key order), so the pin must
+    # be sensitive to a key-order edit. Whitespace is still normalised by the
+    # compact separators, so reformatting the file alone does not trip the pin.
+    canonical = json.dumps(cases, sort_keys=False, separators=(",", ":"),
                            ensure_ascii=True, allow_nan=False).encode("ascii")
     return hashlib.sha256(canonical).hexdigest()
 
