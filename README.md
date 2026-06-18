@@ -432,6 +432,46 @@ timestamps). And keyless binding is self-consistency, not non-repudiable identit
 real anti-forgery needs that external anchor, the same boundary as the receipt and
 the delegation chain.
 
+## Formal lattice verification — the safety claims, proven (increment 13)
+
+Every adjudicator returns a verdict from a small **closed** set: drift is
+`MATCH` / `DRIFT` / `UNVERIFIABLE`, a receipt `VALID` / `DRIFT` / `UNVERIFIABLE`,
+a graph `VALID` / `BROKEN` / `UNVERIFIABLE`. The whole membrane's safety rests on
+three claims the rest of the code only *asserted* in docstrings. `lattice.py`
+turns them into machine-checked proofs. The carriers are finite (three elements
+each), so exhaustive enumeration is a **complete** decision procedure — every law
+checked over every tuple, run on every `pytest`. For these finite, non-temporal
+laws that is exactly what an explicit-state model checker (TLA+/TLC) does —
+enumerate the whole space — so the check lives in the test suite directly, with no
+separate spec or toolchain to rot.
+
+```python
+from coherence_membrane import prove_all
+assert all(p.ok for p in prove_all())   # or: python -m coherence_membrane.lattice
+```
+
+- **Closure** — each adjudicator's verdict is *always* inside its declared set;
+  no out-of-lattice value can escape `compare_drift`, `compare_composite`,
+  `verify_receipt`, `verify()`, `Baseline.check`, `_assess`, or `trace_events`.
+- **Fail-closed reachability** — the affirmative **top** (`MATCH` / `VALID` /
+  `CONVERGED`) is reachable **only** with positive, witnessed evidence: exact byte
+  identity, a matching pinned anchor / a verifier, a fully-consistent graph, a
+  within-tolerance look. Absence of evidence lands at `UNVERIFIABLE` /
+  `INDETERMINATE`; contrary evidence at `DRIFT` / `BROKEN`. The default is never
+  affirmative — proven against the real functions, not asserted.
+- **Monotonic attenuation** (for the *combined* drift lattice) — combination is
+  the lattice **meet**: commutative, associative, idempotent, with `MATCH` as its
+  identity (a confirmed modality composes away) and `DRIFT` as its absorbing
+  element (one confirmed change sinks the composite), and **monotone** (degrading
+  any input never improves the result). `compare_composite` is proved *equal* to
+  this meet over its reported components — so composing observations can never
+  launder a worse set into a better verdict. A missing, duplicated, or extra
+  modality is a *theorem* away from a silent `MATCH`, not a comment.
+
+The abstract laws are trivial for a three-element chain — deliberately. The work,
+and the regression value, is the **binding**: the executable proofs that the
+implementations land in, refine, and aggregate exactly as these structures say.
+
 ## Design discipline (encoded, not asserted)
 
 - **Inert.** Organs read and report. They never mutate the artifact, the process that
@@ -509,12 +549,17 @@ the delegation chain.
   glyph view of a frame) and `CaptionOrgan` (subtitle/transcript text with a
   canonical identity), so perceptive state is cheap to store and "what was said"
   composes with "what was on screen".
-- **Increment 12 (this):** the causal/temporal provenance DAG — `ProvenanceGraph`,
+- **Increment 12:** the causal/temporal provenance DAG — `ProvenanceGraph`,
   a hash-chained, tamper-evident record of what was perceived and done. It shows a
   consequential action has a confirming look as an ancestor (reachability over
   attested edges, not a temporal or causal proof — there are no timestamps).
-- **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Remaining:
-  machine-checked proofs of the verdict lattices + monotonic attenuation.
+- **Increment 13 (this):** formal lattice verification — `lattice.py` proves the
+  verdict sets are bounded lattices, that every adjudicator is closed under its
+  set and reaches the affirmative top only on positive evidence (fail-closed), and
+  that drift composition is exactly the lattice **meet** (monotonic attenuation:
+  composition never amplifies trust). Machine-checked by exhaustion, run on every
+  `pytest`; bound to the real functions, not asserted.
+- **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan.
   `[unvalidatable-here]`: macOS/Linux/Wayland capture validation (the author has
   Windows only — those backends are implemented to the OS APIs but unvalidated).
 
@@ -522,7 +567,7 @@ the delegation chain.
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 278 tests
+python -m pytest          # 294 tests
 python conformance/run.py                         # the read-gate wire contract (Python)
 node   impl/js/run.js                             # the SAME contract, re-derived in JS
 python -m coherence_membrane selftest             # every organ proves itself

@@ -55,6 +55,16 @@ from .native_capture import (
     grab_raw,
 )
 from .baseline import Baseline, BaselineEntry, BaselineVerdict
+from .lattice import (
+    ALL_LATTICES,
+    DRIFT_LATTICE,
+    GRAPH_LATTICE,
+    RECEIPT_LATTICE,
+    Lattice,
+    LatticeProof,
+    prove_all,
+    prove_lattice,
+)
 from .observation import Observation, Provenance, Status, sha256_hex
 from .organs.audio import AudioArtifactOrgan, audio_envelope_hash
 from .organs.structured import StructuredDataOrgan, canonical_json_bytes
@@ -152,6 +162,15 @@ __all__ = [
     "OBSERVED_AFTER",
     "GATED_BY",
     "CAUSED_BY",
+    # formal verdict-lattice verification (machine-checked, fail-closed + meet)
+    "Lattice",
+    "LatticeProof",
+    "DRIFT_LATTICE",
+    "RECEIPT_LATTICE",
+    "GRAPH_LATTICE",
+    "ALL_LATTICES",
+    "prove_all",
+    "prove_lattice",
     # perception (read-gate)
     "PerceptionSnapshot",
     "perceive",
