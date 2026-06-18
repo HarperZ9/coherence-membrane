@@ -232,6 +232,36 @@ identity-only — never a fabricated canonical hash. Canonicalisation runs entir
 in memory with no size cap (peak RAM is a small multiple of the document size);
 bound the artifact size upstream before observing untrusted input.
 
+## The agent loop (increment 7) — make → look → compare → adjust
+
+A state-blind model *reasons* about whether its action worked; the agent loop lets
+it *check*. The agent **makes** (produces an artifact), the membrane **looks**
+(perceives the result) and **compares** it to the intended goal, and recommends
+**adjust** or **converged** — purely advisory iteration control, never gated. The
+one consequential step, **committing** the result, routes through the write-gate,
+measuring drift against the operator-**authorized** baseline (the baseline ladder:
+byte identity → canonical → perceptual).
+
+```python
+from coherence_membrane import AgentLoop, Goal
+loop = AgentLoop(Goal.from_observation(reference_obs, tolerance=4))
+for proposal in loop.iterate(agent.make, max_iterations=10):  # agent makes; loop looks
+    proposal.disposition         # "adjust" ... until "converged"
+loop.authorize()                                 # operator approves the converged result
+loop.commit("publish", "site/index.html", authorization=receipt).decision
+#   "allow"        — result matches the approved baseline, grant valid
+#   "deny"         — result drifted from what was approved (gate sees the DRIFT)
+#   "needs-human"  — committed with no look, or no authorized baseline (fail-closed)
+```
+
+Two comparisons, deliberately separate so nothing is laundered: the **goal +
+tolerance** governs *when to stop iterating* (advisory, never touches the gate);
+the **commit** measures the result against the *authorized* baseline (identical
+bytes — or, for structured data, a canonically-equivalent form), so a model can
+never publish something that doesn't match what it set out to make without the
+gate seeing exactly that. The membrane never makes and never actuates — it
+perceives, compares, and recommends; the operator/runtime commits.
+
 ## Design discipline (encoded, not asserted)
 
 - **Inert.** Organs read and report. They never mutate the artifact, the process that
@@ -283,14 +313,18 @@ bound the artifact size upstream before observing untrusted input.
   (perceptual hash straight from raw pixels), and `perceptual_hash_raw`; the
   continuity loop auto-selects the raw organ for raw frames. Bit-identical to the
   PNG path, proven by selftest; validated live on Windows.
-- **Increment 6 (this):** a third sense — `StructuredDataOrgan` (JSON) with a
+- **Increment 6:** a third sense — `StructuredDataOrgan` (JSON) with a
   canonical (normal-form) identity; baseline memory generalised to a three-rung
   ladder (byte identity → canonical identity → perceptual distance), so drift on
   structured data is measured on the document's normal form, not its raw bytes.
-- **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Near-term: the agent
-  loop (`make → look → compare → adjust` through the write-gate), region/element
-  perception, signed observation receipts (an external anchor across the seam),
-  and conformance vectors + a wire spec to make re-derivability *demonstrable*.
+- **Increment 7 (this):** the agent loop — `AgentLoop` / `Goal` /
+  `AdjustmentProposal`: make → look → compare → adjust as a real, grounded loop,
+  with the one consequential commit routed through the write-gate against the
+  authorized baseline (allow / deny / needs-human, fail-closed).
+- **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Near-term:
+  region/element perception (`RegionOrgan` — *where* it changed), signed
+  observation receipts (an external anchor across the read→write seam), and
+  conformance vectors + a wire spec to make re-derivability *demonstrable*.
   `[unvalidatable-here]`: macOS/Linux/Wayland capture validation (the author has
   Windows only — those backends are implemented to the OS APIs but unvalidated).
 
@@ -298,7 +332,7 @@ bound the artifact size upstream before observing untrusted input.
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 146 tests
+python -m pytest          # 164 tests
 python -m coherence_membrane selftest             # every organ proves itself
 python -m coherence_membrane capture frame.png    # native screen grab
 python -m coherence_membrane watch 60 --raw       # always-on perception, fast path
