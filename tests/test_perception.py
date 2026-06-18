@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from coherence_membrane.observation import Status
 from coherence_membrane.organ import run_selftests
-from coherence_membrane.perception import default_organs, perceive
+from coherence_membrane.perception import all_organs, default_organs, perceive
 
 
 def test_perceive_collects_observations(make_png):
@@ -30,3 +31,27 @@ def test_empty_organ_list_does_not_pass():
     # fail-closed: a membrane with no organs is not "passing"
     report = run_selftests([])
     assert report["passed"] is False
+
+
+def test_all_organs_over_mixed_subjects_does_not_crash(make_png):
+    # perceive() with every organ over image bytes, JSON bytes, and a Frame must
+    # never raise — each organ perceives its modality and degrades on the rest.
+    from coherence_membrane.capture import Frame, FrameDescriptor
+
+    png = make_png(2, 2, bytes(12))
+    frame = Frame(
+        descriptor=FrameDescriptor(source_id="s", frame_index=0,
+                                   width=2, height=2, pixel_format="bgra"),
+        payload=bytes(2 * 2 * 4),
+    )
+    snap = perceive([png, b'{"a": 1}', frame], organs=all_organs())
+    assert len(snap.observations) >= 1  # ran to completion, nothing raised
+    assert snap.by_organ("structured-data")  # the JSON was perceived by its organ
+
+
+def test_all_organs_over_alien_subjects_does_not_crash():
+    # None/int/list are out of contract for every organ; perceive must not raise
+    # (Path(subject) would TypeError) — each non-raw organ degrades, raw skips.
+    snap = perceive([None, 123, ["x"]], organs=all_organs())
+    assert snap.observations  # produced observations, did not crash
+    assert all(o.status == Status.UNVERIFIED for o in snap.observations)

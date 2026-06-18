@@ -189,6 +189,49 @@ frames skip all perceptual work entirely. Re-derive your own with
 `python scripts/bench_raw_vs_png.py`; the point measurement is reproducible
 rather than asserted.
 
+## A third sense, and canonical drift (increment 6)
+
+Sight and hearing perceive pixels and sound. `StructuredDataOrgan` perceives
+**data** — a JSON document the operator owns or has authorised (stdlib `json`,
+no third-party parser). It witnesses two identities: the raw bytes, and a
+**canonical** identity — the digest of the document re-serialised in a normal
+form (sorted keys, no insignificant whitespace).
+
+```python
+from coherence_membrane import StructuredDataOrgan
+obs = StructuredDataOrgan().observe(b'{"b": 2, "a": 1}')[0]
+obs.data["identity_sha256"]    # the exact bytes
+obs.data["canonical_sha256"]   # the document's normal form, hashed
+```
+
+Why two hashes: for an image, byte drift *is* the change. For data it is too
+sensitive — reformatting or reordering keys flips the raw identity while the
+document is unchanged. So **baseline memory now checks on a three-rung ladder**:
+byte identity → canonical (normal-form) identity → perceptual distance. A
+reformatted-but-equivalent document is a `MATCH`; a changed value is a real
+`DRIFT`; array order stays significant because it is meaningful.
+
+```python
+from coherence_membrane import Baseline
+b = Baseline(); b.pin(StructuredDataOrgan().observe(b'{"a": 1, "b": 2}')[0])
+b.check(StructuredDataOrgan().observe(b'{ "b": 2, "a": 1 }')[0]).verdict   # MATCH (reformatted)
+b.check(StructuredDataOrgan().observe(b'{"a": 1, "b": 3}')[0]).verdict     # DRIFT (value changed)
+```
+
+This is **structural** canonicalisation (key order + whitespace + escaping), not
+an understanding of content: canonical-equal is a sufficient-but-not-necessary
+proxy for "the same data" — equal canonical forms are genuinely equivalent, but
+values that *mean* the same can still differ canonically. It normalises key order
+and whitespace and escapes non-ASCII, but does **not** normalise numeric spelling
+(`1` vs `1.0`) or representation (`1e3` vs `1000`), and it inherits IEEE-754 float
+limits — extreme magnitudes can round (e.g. `1e-400` → `0.0`), so the canonical
+form reflects the *parsed* float, which may not equal the source literal.
+`-0.0` and `0.0` differ; duplicate keys collapse to the last value (RFC-8259
+parse). A value with no canonical form (`NaN`/`Infinity`) fails closed to
+identity-only — never a fabricated canonical hash. Canonicalisation runs entirely
+in memory with no size cap (peak RAM is a small multiple of the document size);
+bound the artifact size upstream before observing untrusted input.
+
 ## Design discipline (encoded, not asserted)
 
 - **Inert.** Organs read and report. They never mutate the artifact, the process that
@@ -235,20 +278,24 @@ rather than asserted.
   modality-agnostic baseline memory (drift against an authorized baseline, persisted).
 - **Increment 4:** `LiveMembrane` — the living loop as one configurable object
   (perceive + remember + mediate consequence).
-- **Increment 5 (this):** the raw-frame fast path — `grab_raw` /
+- **Increment 5:** the raw-frame fast path — `grab_raw` /
   `RawScreenCaptureSource` (encode-free native capture), `RawFrameOrgan`
   (perceptual hash straight from raw pixels), and `perceptual_hash_raw`; the
   continuity loop auto-selects the raw organ for raw frames. Bit-identical to the
   PNG path, proven by selftest; validated live on Windows.
+- **Increment 6 (this):** a third sense — `StructuredDataOrgan` (JSON) with a
+  canonical (normal-form) identity; baseline memory generalised to a three-rung
+  ladder (byte identity → canonical identity → perceptual distance), so drift on
+  structured data is measured on the document's normal form, not its raw bytes.
 - **Next:** macOS/Linux on-platform validation (the author has Windows only — those
-  backends are implemented to the OS APIs but unvalidated); a structured-data organ
-  (a third modality with semantic, not byte-level, drift); Wayland/PipeWire backend.
+  backends are implemented to the OS APIs but unvalidated); Wayland/PipeWire
+  backend; more structured formats (CSV/TOML) on the same canonical contract.
 
 ## Install / test
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 118 tests
+python -m pytest          # 146 tests
 python -m coherence_membrane selftest             # every organ proves itself
 python -m coherence_membrane capture frame.png    # native screen grab
 python -m coherence_membrane watch 60 --raw       # always-on perception, fast path

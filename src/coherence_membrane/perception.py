@@ -18,6 +18,7 @@ from .observation import Observation
 from .organ import Organ
 from .organs.audio import AudioArtifactOrgan
 from .organs.raw import RawFrameOrgan
+from .organs.structured import StructuredDataOrgan
 from .organs.visual import VisualArtifactOrgan
 
 
@@ -28,10 +29,18 @@ def default_organs() -> list[Organ]:
 def all_organs() -> list[Organ]:
     """Every built-in organ. Used for selftest and multimodal perception;
     perceive() defaults to visual-only to avoid redundant identity-only
-    observations across modalities. RawFrameOrgan is the same sense as the eye
-    (a raw-pixel fast path); it is included so selftest proves it, and it
-    returns [] for non-Frame subjects, so it adds no noise to perceive()."""
-    return [VisualArtifactOrgan(), AudioArtifactOrgan(), RawFrameOrgan()]
+    observations across modalities. The senses are sight (VisualArtifactOrgan),
+    hearing (AudioArtifactOrgan), and reading structured data
+    (StructuredDataOrgan); RawFrameOrgan is the same sense as the eye (a
+    raw-pixel fast path), included so selftest proves it. Each returns [] or an
+    identity-only observation for subjects outside its modality, so listing them
+    together adds no false signal."""
+    return [
+        VisualArtifactOrgan(),
+        AudioArtifactOrgan(),
+        StructuredDataOrgan(),
+        RawFrameOrgan(),
+    ]
 
 
 @dataclass(frozen=True)

@@ -38,6 +38,7 @@ from .native_capture import (
 from .baseline import Baseline, BaselineEntry, BaselineVerdict
 from .observation import Observation, Provenance, Status, sha256_hex
 from .organs.audio import AudioArtifactOrgan, audio_envelope_hash
+from .organs.structured import StructuredDataOrgan, canonical_json_bytes
 from .pngencode import encode_png
 from .scope import DEFAULT_CONSEQUENTIAL, ConsequenceScope, creative_profile
 from .organ import Check, Organ, SelftestResult, run_selftests
@@ -72,7 +73,9 @@ __all__ = [
     "VisualArtifactOrgan",
     "AudioArtifactOrgan",
     "RawFrameOrgan",
+    "StructuredDataOrgan",
     "audio_envelope_hash",
+    "canonical_json_bytes",
     # perception (read-gate)
     "PerceptionSnapshot",
     "perceive",
