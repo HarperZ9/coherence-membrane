@@ -27,6 +27,14 @@
       "expected": "0000000000000000"
     },
     {
+      "id": "phash-inverted-gradient-16x16",
+      "fn": "perceptual_hash",
+      "input": {
+        "png_hex": "89504e470d0a1a0a0000000d4948445200000010000000100802000000909168360000004249444154789c63f8ffffffbb77efeedebd7be6cc99ddbb77af5ab56ae6cc991d1d1de5e5e5696969a1a1a12e2e2ec6c6c64a4a4a8282820c4030aa6154c3f0d500008d5a7e9059ca250f0000000049454e44ae426082"
+      },
+      "expected": "ffffffffffffffff"
+    },
+    {
       "id": "drift-match",
       "fn": "compare_drift",
       "input": {

@@ -10,7 +10,7 @@ green.
 Status today: increments 1–8 shipped (perception + native capture + continuity +
 consequence-scope + living loop + raw fast path + audio + structured-data +
 3-rung baseline + the agent loop + region perception + signed receipts +
-conformance/wire-spec). 201 tests; every organ self-proves.
+conformance/wire-spec). 204 tests; every organ self-proves.
 
 ---
 

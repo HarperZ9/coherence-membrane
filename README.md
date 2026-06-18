@@ -381,7 +381,7 @@ python conformance/run.py     # all cases re-derive; corpus hash pinned
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 201 tests
+python -m pytest          # 204 tests
 python conformance/run.py                         # the read-gate wire contract
 python -m coherence_membrane selftest             # every organ proves itself
 python -m coherence_membrane capture frame.png    # native screen grab

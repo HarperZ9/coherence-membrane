@@ -104,19 +104,22 @@ class RegionArtifactOrgan:
     # --- selftest ---------------------------------------------------------
 
     def _make_png(self, *, altered_tile: int | None = None) -> bytes:
-        """A 16x16 RGB image with per-tile horizontal structure; optionally flip
-        the structure of exactly one tile so a localized change is detectable."""
-        w = h = 16
-        tile_w = w // self.cols
-        tile_h = h // self.rows
+        """An RGB image sized to the grid (each tile 4x4 px) with per-tile
+        horizontal structure; optionally flip exactly one tile so a localized
+        change is detectable. The canvas SCALES with rows/cols so the selftest
+        works for any grid (a fixed 16x16 canvas could not represent >16 tiles
+        per axis and divided by zero)."""
+        tile_w = tile_h = 4
+        w = self.cols * tile_w
+        h = self.rows * tile_h
         px = bytearray()
         for y in range(h):
             tr = y // tile_h
             for x in range(w):
                 tc = x // tile_w
                 idx = tr * self.cols + tc
-                local = (x % tile_w)
-                v = (local * 255) // max(1, tile_w - 1)
+                local = x % tile_w
+                v = (local * 255) // (tile_w - 1)  # 0, 85, 170, 255 across the tile
                 if altered_tile is not None and idx == altered_tile:
                     v = 255 - v  # flip this tile's horizontal gradient
                 px += bytes([v, v, v])
@@ -145,13 +148,16 @@ class RegionArtifactOrgan:
                             obs.data.get("region_hashes") == obs2.data.get("region_hashes")))
 
         # The load-bearing check: a change confined to ONE tile is localized to
-        # exactly that tile — "where it changed", not just "it changed".
-        altered = self.observe(self._make_png(altered_tile=0))[0]
+        # exactly that tile — "where it changed", not just "it changed". Alter an
+        # interior tile when the grid has one, so all four tile boundaries are
+        # exercised (a corner tile can't catch a left/up under-read).
+        interior = (self.rows // 2) * self.cols + (self.cols // 2)
+        altered = self.observe(self._make_png(altered_tile=interior))[0]
         report = compare_region_drift(region_hashes, altered.data.get("region_hashes"),
                                       self.rows, self.cols)
         checks.append(Check("localized change is isolated to its tile",
-                            report.verdict == "DRIFT" and report.changed_regions == [0],
-                            f"changed={report.changed_regions}"))
+                            report.verdict == "DRIFT" and report.changed_regions == [interior],
+                            f"changed={report.changed_regions} (altered {interior})"))
 
         checks.append(Check("status is advisory (not authority)",
                             obs.status in {Status.PASS, Status.WARN, Status.UNVERIFIED,
