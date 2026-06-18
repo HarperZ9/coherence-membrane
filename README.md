@@ -296,15 +296,41 @@ verify_receipt(receipt).verdict                          # UNVERIFIABLE (no anch
 **Conformance vectors + a wire spec — re-derivability made *demonstrable*.**
 `conformance/vectors.json` is a frozen, hash-pinned corpus; `conformance/run.py`
 re-derives every case through this implementation; `schemas/` holds JSON Schemas
-for the `Observation` and `DriftVerdict` wire shapes. Today this pins the contract
-and guards regressions through *this* implementation; cross-implementation
-re-derivability is *proven* when a second, independent implementation passes the
-same corpus (the corpus is exactly the artifact that makes that possible). Only
-one implementation exists so far — that second core is on the roadmap.
+for the `Observation` and `DriftVerdict` wire shapes. A second, independent
+JavaScript implementation (`impl/js/`) now re-derives the **same** corpus — so
+re-derivability is **demonstrated, not asserted** (increment 9).
 
 ```bash
 python conformance/run.py     # all cases re-derive; corpus hash pinned
 ```
+
+## Re-derivability, demonstrated (increment 9)
+
+A second implementation, in JavaScript (`impl/js/membrane.js`), sharing **no code**
+with the Python reference (Node built-ins only — `crypto`, `zlib`), independently
+re-derives every value in `conformance/vectors.json`: SHA-256, PNG-decode + dHash,
+the drift lattice, canonical-JSON, region drift, and the receipt anchor. The
+Python suite runs the JS harness and checks the two agree **value-for-value**.
+
+```bash
+node impl/js/run.js     # {"impl":"js","cases":16,"passed":16,"failed":0}
+```
+
+This retires the honest caveat increment 8 shipped with: a witness two independent
+implementations agree on — across the **frozen contract corpus** — is a *proof*,
+not a claim. It is also the on-ramp for the JS-native worlds (editors, CI, Node
+tooling) that need the inert read core without a Python runtime — and deliberately
+does **not** port native capture, which is OS-specific and unvalidatable off the
+author's platform.
+
+**Known fidelity boundary (honest).** The demonstration is over the corpus, not a
+proof of total equivalence. The one place the two languages can't trivially agree
+is numbers: a JSON float like `1.0` parses to the integer `1` in JS, and JS can't
+reproduce Python's float repr. So the JS `canonical()` **throws** on any
+non-safe-integer number rather than silently diverging — floats and integers
+beyond 2⁵³ are out of the JS core's contract (the corpus uses only safe integers).
+Strings, bools, null, arrays, objects, PNG-decode + dHash, the drift/region
+lattices, and receipt anchors agree exactly.
 
 ## Design discipline (encoded, not asserted)
 
@@ -365,15 +391,20 @@ python conformance/run.py     # all cases re-derive; corpus hash pinned
   `AdjustmentProposal`: make → look → compare → adjust as a real, grounded loop,
   with the one consequential commit routed through the write-gate against the
   authorized baseline (allow / deny / needs-human, fail-closed).
-- **Increment 8 (this):** finer eyes, an external anchor, and a contract —
+- **Increment 8:** finer eyes, an external anchor, and a contract —
   `RegionArtifactOrgan` + `compare_region_drift` (where it changed), `WitnessReceipt`
   + `verify_receipt` (a pinned/signed anchor across the read→write seam), and a
   hash-pinned conformance corpus + JSON-Schema wire spec (re-derivability made
   demonstrable — a second implementation is what proves it).
+- **Increment 9 (this):** a second-language (JavaScript) reference core
+  (`impl/js/`) that independently re-derives the conformance corpus —
+  re-derivability **demonstrated**: two implementations sharing no code agree,
+  value-for-value, on the frozen contract corpus (with an honest, fail-loud number
+  boundary so they never silently diverge beyond it).
 - **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Near/mid-term:
   temporal perception (`EventTrace` — drift episodes over time), multimodal fusion
-  (`CompositeObservation`), a causal/temporal provenance DAG, a second-language
-  (JS) reference core, and TLA+ proofs of the verdict lattices.
+  (`CompositeObservation`), a causal/temporal provenance DAG, and TLA+ proofs of
+  the verdict lattices.
   `[unvalidatable-here]`: macOS/Linux/Wayland capture validation (the author has
   Windows only — those backends are implemented to the OS APIs but unvalidated).
 
@@ -381,8 +412,9 @@ python conformance/run.py     # all cases re-derive; corpus hash pinned
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 204 tests
-python conformance/run.py                         # the read-gate wire contract
+python -m pytest          # 206 tests
+python conformance/run.py                         # the read-gate wire contract (Python)
+node   impl/js/run.js                             # the SAME contract, re-derived in JS
 python -m coherence_membrane selftest             # every organ proves itself
 python -m coherence_membrane capture frame.png    # native screen grab
 python -m coherence_membrane watch 60 --raw       # always-on perception, fast path
