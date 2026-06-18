@@ -7,9 +7,10 @@ workstation. Anything that needs hardware or platforms the author cannot validat
 is flagged `[unvalidatable-here]` and will ship implemented-to-API, never claimed
 green.
 
-Status today: increments 1–7 shipped (perception + native capture + continuity +
+Status today: increments 1–8 shipped (perception + native capture + continuity +
 consequence-scope + living loop + raw fast path + audio + structured-data +
-3-rung baseline + the agent loop). 164 tests; every organ self-proves.
+3-rung baseline + the agent loop + region perception + signed receipts +
+conformance/wire-spec). 201 tests; every organ self-proves.
 
 ---
 
@@ -62,10 +63,10 @@ change?" — the grounding a real agent loop needs.
   needs-human). make → look → compare → adjust, made real and auditable, with the
   goal-tolerance and the commit-integrity kept deliberately separate so nothing is
   laundered. *(both · near)*
-- **Increment 8 — region/element perception.** `RegionOrgan`: a tiled dHash grid
-  with per-region drift, so the membrane reports *which part* of a frame changed,
-  not just that it did. Foundational for creative/gamedev grounding. *(capability ·
-  near)*
+- **Increment 8 — region/element perception.** ✅ **shipped.** `RegionArtifactOrgan`:
+  a tiled dHash grid with per-region drift (`compare_region_drift`), so the
+  membrane reports *which part* of a frame changed, not just that it did. The
+  selftest proves a one-tile change is isolated to that tile. *(capability · near)*
 - **Increment 9 — temporal perception.** `EventTrace` over the continuity stream:
   drift episodes, dwell, settle-detection — "it changed, then settled at T+3"
   instead of a flat event list. *(capability · mid)*
@@ -84,11 +85,12 @@ change?" — the grounding a real agent loop needs.
 
 Make the read→write boundary carry evidence and history, with an external anchor.
 
-- **Signed observation receipts.** Emit a `WitnessReceipt` and verify against a
-  pinned anchor — the external anchor the keyless hashes keep pointing at, applied
-  across the seam. Closes the "self-consistency, not tamper-evidence" gap *at the
-  boundary* (the inert read-gate stays keyless; signing lives at the seam). *(both ·
-  near · highest value/effort ratio)*
+- **Signed observation receipts.** ✅ **shipped.** `emit_receipt` →
+  `WitnessReceipt.anchor()` → `verify_receipt(pinned_anchor=… / signature_verifier=…)`:
+  the external anchor the keyless hashes keep pointing at, applied across the seam,
+  as a closed VALID/DRIFT/UNVERIFIABLE lattice. The inert read-gate stays keyless;
+  signing lives at the seam (operator-supplied verifier; a raising verifier is
+  DRIFT, fail-closed). *(both · near)*
 - **Causal/temporal provenance DAG.** A hash-chained graph of observations
   (re-using the write-gate's proven chain-binding mechanism) that proves a
   consequential action was preceded by a confirming look: publish@T ← MATCH@T-1 ←
@@ -134,11 +136,12 @@ regression.
 Make the trust claim demonstrable and the tool credible — without touching the
 trust path.
 
-- **Increment 11 — conformance + wire spec.** A valid/invalid vector corpus + a
-  `run.py` harness (corpus-hash-pinned, mirroring the estate's existing pattern),
-  plus versioned `Observation`/`DriftVerdict` JSON Schemas. The single normative
-  artifact a second implementer conforms to. *(adoption · near · consolidates
-  several overlapping conformance ideas)*
+- **Increment 11 — conformance + wire spec.** ✅ **shipped.** A frozen,
+  hash-pinned vector corpus (`conformance/vectors.json`) + a `conformance/run.py`
+  harness that re-derives every case through this implementation, plus
+  `Observation`/`DriftVerdict` JSON Schemas (`schemas/`). The single normative
+  artifact a second implementer conforms to — re-derivability demonstrated, not
+  asserted. *(adoption · near)*
 - **A second-language (JS) reference core.** Port *only* the inert compute —
   dHash, SHA-256, the drift lattice, canonical-JSON — and run it through the same
   vectors. Proves re-derivability and is the on-ramp for editor/CI/Node

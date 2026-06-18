@@ -52,7 +52,20 @@ from .pngencode import encode_png
 from .scope import DEFAULT_CONSEQUENTIAL, ConsequenceScope, creative_profile
 from .organ import Check, Organ, SelftestResult, run_selftests
 from .organs.raw import RawFrameOrgan
+from .organs.region import RegionArtifactOrgan
 from .organs.visual import VisualArtifactOrgan
+from .receipt import (
+    DRIFT as RECEIPT_DRIFT,
+    RECEIPT_VERDICTS,
+    RECEIPT_VERSION,
+    UNVERIFIABLE as RECEIPT_UNVERIFIABLE,
+    VALID as RECEIPT_VALID,
+    ReceiptVerdict,
+    WitnessReceipt,
+    emit_receipt,
+    verify_receipt,
+)
+from .region import RegionDriftReport, compare_region_drift, tile_hashes
 from .perception import PerceptionSnapshot, all_organs, default_organs, perceive
 from .phash import (
     DRIFT,
@@ -83,8 +96,23 @@ __all__ = [
     "AudioArtifactOrgan",
     "RawFrameOrgan",
     "StructuredDataOrgan",
+    "RegionArtifactOrgan",
     "audio_envelope_hash",
     "canonical_json_bytes",
+    # region/element perception (where it changed)
+    "tile_hashes",
+    "compare_region_drift",
+    "RegionDriftReport",
+    # signed observation receipts (external anchor across the seam)
+    "WitnessReceipt",
+    "ReceiptVerdict",
+    "emit_receipt",
+    "verify_receipt",
+    "RECEIPT_VERSION",
+    "RECEIPT_VERDICTS",
+    "RECEIPT_VALID",
+    "RECEIPT_DRIFT",
+    "RECEIPT_UNVERIFIABLE",
     # perception (read-gate)
     "PerceptionSnapshot",
     "perceive",
