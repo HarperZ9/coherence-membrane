@@ -332,6 +332,39 @@ beyond 2⁵³ are out of the JS core's contract (the corpus uses only safe integ
 Strings, bools, null, arrays, objects, PNG-decode + dHash, the drift/region
 lattices, and receipt anchors agree exactly.
 
+## Perceiving over time and across senses (increment 10)
+
+**Temporal perception.** The continuity loop emits a flat per-tick stream;
+`EventTrace` structures it into drift **episodes** — when a change began, how far
+it peaked, and when it settled — plus the longest **dwell** (run of unchanged
+ticks).
+
+```python
+from coherence_membrane import trace_events
+trace = trace_events(continuity_events)          # any stream of verdicts
+trace.episodes[0].peak_distance, trace.episodes[0].settled_at
+trace.longest_dwell
+```
+
+So a model grounds "the canvas changed at t=3, peaked at distance 18, settled by
+t=7" rather than only "tick 5 was DRIFT". An episode needs a real `DRIFT`;
+`UNVERIFIABLE` keeps an open episode open (uncertain), never opens one alone.
+
+**Multimodal composition.** `CompositeObservation` bundles several organs' observations
+at one instant (a frame + its audio + the data behind them) into one witnessed
+unit with a single composite identity; `compare_composite` reports drift **per
+modality** and overall.
+
+```python
+from coherence_membrane import perceive_composite, compare_composite
+now = perceive_composite([(eye, "frame.png"), (ear, "clip.wav")])
+compare_composite(authorized, now).verdict        # DRIFT if ANY modality drifted
+```
+
+So "the scene changed but the audio held" is expressible. Same closed lattice,
+fail-closed: `DRIFT` if any component drifted, else `UNVERIFIABLE` if any modality
+is missing/uncomparable, else `MATCH` — a missing modality is never a silent match.
+
 ## Design discipline (encoded, not asserted)
 
 - **Inert.** Organs read and report. They never mutate the artifact, the process that
@@ -396,15 +429,18 @@ lattices, and receipt anchors agree exactly.
   + `verify_receipt` (a pinned/signed anchor across the read→write seam), and a
   hash-pinned conformance corpus + JSON-Schema wire spec (re-derivability made
   demonstrable — a second implementation is what proves it).
-- **Increment 9 (this):** a second-language (JavaScript) reference core
+- **Increment 9:** a second-language (JavaScript) reference core
   (`impl/js/`) that independently re-derives the conformance corpus —
   re-derivability **demonstrated**: two implementations sharing no code agree,
   value-for-value, on the frozen contract corpus (with an honest, fail-loud number
   boundary so they never silently diverge beyond it).
-- **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Near/mid-term:
-  temporal perception (`EventTrace` — drift episodes over time), multimodal fusion
-  (`CompositeObservation`), a causal/temporal provenance DAG, and TLA+ proofs of
-  the verdict lattices.
+- **Increment 10 (this):** perceiving over time and across senses — `EventTrace`
+  (drift episodes / settle-detection / dwell over the continuity stream) and
+  `CompositeObservation` + `compare_composite` (one witnessed instant across
+  modalities, with per-modality drift).
+- **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Remaining: a
+  causal/temporal provenance DAG (prove a consequential action followed a
+  confirming look), and machine-checked proofs of the verdict lattices.
   `[unvalidatable-here]`: macOS/Linux/Wayland capture validation (the author has
   Windows only — those backends are implemented to the OS APIs but unvalidated).
 
@@ -412,7 +448,7 @@ lattices, and receipt anchors agree exactly.
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 206 tests
+python -m pytest          # 232 tests
 python conformance/run.py                         # the read-gate wire contract (Python)
 node   impl/js/run.js                             # the SAME contract, re-derived in JS
 python -m coherence_membrane selftest             # every organ proves itself
