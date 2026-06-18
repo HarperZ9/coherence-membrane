@@ -6,14 +6,23 @@ authorized this state". That is EMET's anchor pattern, generalised to perception
 and across modalities: a Baseline pins an observation's identity (and perceptual
 fingerprint) per subject; later observations are checked against it.
 
-Modality-agnostic: it reads identity and a perceptual fingerprint out of any
-organ's Observation (visual `perceptual_hash` or audio `perceptual_audio_hash`),
-so one baseline can cover frames and sounds alike.
+Modality-agnostic: it reads identity, an optional *canonical* (normal-form)
+identity, and an optional perceptual fingerprint out of any organ's Observation
+(visual `perceptual_hash`, audio `perceptual_audio_hash`, structured-data
+`canonical_sha256`), so one baseline can cover frames, sounds, and documents
+alike.
 
-Verdict is the same closed lattice as drift: MATCH (identity equal), DRIFT (it
-changed — distance quantifies it when both fingerprints exist), UNVERIFIABLE
-(no baseline for this subject, or a fingerprint is missing). Never a silent MATCH
-on a change.
+The check is a three-rung ladder, strongest first:
+  1. byte identity equal           -> MATCH (the strongest statement).
+  2. canonical identity equal      -> MATCH (canonically equivalent though the
+                                     bytes differ — e.g. reformatted/reordered
+                                     JSON; a canonical difference is real DRIFT).
+                                     Structural equivalence, not an understanding
+                                     of meaning.
+  3. perceptual fingerprint        -> DRIFT, distance-quantified where both
+                                     fingerprints exist (visual/audio).
+Verdict is the same closed lattice: MATCH / DRIFT / UNVERIFIABLE (no baseline for
+this subject, or no identity to compare). Never a silent MATCH on a change.
 """
 
 from __future__ import annotations
@@ -34,6 +43,13 @@ def _identity(obs: Observation) -> str | None:
     return obs.data.get("identity_sha256")
 
 
+def _canonical(obs: Observation) -> str | None:
+    """A canonical (normal-form) identity that ignores insignificant byte
+    differences — structural, not semantic (currently the structured-data
+    organ's canonical_sha256)."""
+    return obs.data.get("canonical_sha256")
+
+
 def _fingerprint(obs: Observation) -> str | None:
     for key in _FINGERPRINT_KEYS:
         value = obs.data.get(key)
@@ -48,6 +64,7 @@ class BaselineEntry:
     subject: str
     identity_sha256: str
     fingerprint: str | None
+    canonical_sha256: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -55,6 +72,7 @@ class BaselineEntry:
             "subject": self.subject,
             "identity_sha256": self.identity_sha256,
             "fingerprint": self.fingerprint,
+            "canonical_sha256": self.canonical_sha256,
         }
 
     @classmethod
@@ -64,6 +82,7 @@ class BaselineEntry:
             subject=str(d["subject"]),
             identity_sha256=str(d["identity_sha256"]),
             fingerprint=d.get("fingerprint"),
+            canonical_sha256=d.get("canonical_sha256"),  # tolerant of older baselines
         )
 
 
@@ -90,6 +109,7 @@ class Baseline:
             subject=observation.subject,
             identity_sha256=identity,
             fingerprint=_fingerprint(observation),
+            canonical_sha256=_canonical(observation),
         )
 
     def check(self, observation: Observation) -> BaselineVerdict:
@@ -102,8 +122,24 @@ class Baseline:
         if not cur_identity:
             return BaselineVerdict(UNVERIFIABLE, None,
                                    "observation has no identity to compare")
+        # Rung 1: exact byte identity.
         if cur_identity == entry.identity_sha256:
             return BaselineVerdict(MATCH, 0, "matches the pinned baseline (identity equal)")
+
+        # Rung 2: canonical (normal-form) identity — bytes differ but the
+        # canonical form is unchanged (e.g. reformatted/reordered JSON) is still a
+        # MATCH; a canonical difference is a real change, not a perceptual one.
+        # Structural equivalence, not an understanding of meaning.
+        if entry.canonical_sha256 and (cur_canonical := _canonical(observation)):
+            if cur_canonical == entry.canonical_sha256:
+                return BaselineVerdict(
+                    MATCH, 0,
+                    "canonical form equal (normalised bytes match; raw bytes differ)")
+            return BaselineVerdict(
+                DRIFT, None,
+                "canonical form changed from the baseline (normalised content differs)")
+
+        # Rung 3: perceptual fingerprint distance (visual/audio).
         cur_fp = _fingerprint(observation)
         if entry.fingerprint is None or cur_fp is None:
             return BaselineVerdict(

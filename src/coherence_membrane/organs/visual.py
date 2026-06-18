@@ -116,11 +116,14 @@ class VisualArtifactOrgan:
                 return sid, None
         if isinstance(subject, (bytes, bytearray)):
             return "<bytes>", bytes(subject)
-        path = Path(subject)
         try:
+            path = Path(subject)
             return str(path), path.read_bytes()
         except OSError:
             return str(path), None
+        except (TypeError, ValueError):
+            # not bytes, not a Frame, not a path-like -> unperceivable, not a crash
+            return repr(subject)[:64], None
 
     def selftest(self) -> SelftestResult:
         """Re-derive this organ's own claims from a fixed, known artifact."""
