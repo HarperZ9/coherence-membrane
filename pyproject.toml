@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "coherence-membrane"
 version = "0.1.0"
-description = "An inert, host-adjudicated perception membrane: it turns real artifacts into witnessed, re-derivable observations a model can ground on. The read-gate complement to proof-surface's write-gate."
+description = "An inert, host-adjudicated perception membrane for inspectable model context."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
