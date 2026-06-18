@@ -262,6 +262,50 @@ never publish something that doesn't match what it set out to make without the
 gate seeing exactly that. The membrane never makes and never actuates — it
 perceives, compares, and recommends; the operator/runtime commits.
 
+## Finer eyes, an external anchor, and a contract (increment 8)
+
+Three advances that deepen the read-gate's granularity, trust, and credibility.
+
+**Region/element perception — *where* it changed.** `RegionArtifactOrgan` emits
+the same whole-image facts (so it still slots into baseline memory and the gate)
+plus a row-major grid of per-tile dHashes; `compare_region_drift` localises a
+change to the tiles that actually moved.
+
+```python
+from coherence_membrane import RegionArtifactOrgan, compare_region_drift
+a = RegionArtifactOrgan(rows=4, cols=4).observe("before.png")[0]
+b = RegionArtifactOrgan(rows=4, cols=4).observe("after.png")[0]
+compare_region_drift(a.data["region_hashes"], b.data["region_hashes"], 4, 4).changed_regions
+# -> [5]   the change is isolated to tile 5, not "the whole screen changed"
+```
+
+**Signed observation receipts — the external anchor across the seam.** A bare
+SHA-256 is keyless self-consistency, not tamper-evidence. A `WitnessReceipt` wraps
+an observation's witnessed facts with a content hash (its `anchor`); the operator
+pins that anchor out-of-band (and may sign it), and `verify_receipt` re-derives
+and checks it — a closed `VALID / DRIFT / UNVERIFIABLE` lattice, fail-closed.
+
+```python
+from coherence_membrane import emit_receipt, verify_receipt
+receipt = emit_receipt(observation)
+anchor = receipt.anchor()                         # operator pins / signs this
+verify_receipt(receipt, pinned_anchor=anchor).verdict   # VALID
+verify_receipt(receipt).verdict                          # UNVERIFIABLE (no anchor — honest)
+```
+
+**Conformance vectors + a wire spec — re-derivability made *demonstrable*.**
+`conformance/vectors.json` is a frozen, hash-pinned corpus; `conformance/run.py`
+re-derives every case through this implementation; `schemas/` holds JSON Schemas
+for the `Observation` and `DriftVerdict` wire shapes. Today this pins the contract
+and guards regressions through *this* implementation; cross-implementation
+re-derivability is *proven* when a second, independent implementation passes the
+same corpus (the corpus is exactly the artifact that makes that possible). Only
+one implementation exists so far — that second core is on the roadmap.
+
+```bash
+python conformance/run.py     # all cases re-derive; corpus hash pinned
+```
+
 ## Design discipline (encoded, not asserted)
 
 - **Inert.** Organs read and report. They never mutate the artifact, the process that
@@ -317,14 +361,19 @@ perceives, compares, and recommends; the operator/runtime commits.
   canonical (normal-form) identity; baseline memory generalised to a three-rung
   ladder (byte identity → canonical identity → perceptual distance), so drift on
   structured data is measured on the document's normal form, not its raw bytes.
-- **Increment 7 (this):** the agent loop — `AgentLoop` / `Goal` /
+- **Increment 7:** the agent loop — `AgentLoop` / `Goal` /
   `AdjustmentProposal`: make → look → compare → adjust as a real, grounded loop,
   with the one consequential commit routed through the write-gate against the
   authorized baseline (allow / deny / needs-human, fail-closed).
-- **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Near-term:
-  region/element perception (`RegionOrgan` — *where* it changed), signed
-  observation receipts (an external anchor across the read→write seam), and
-  conformance vectors + a wire spec to make re-derivability *demonstrable*.
+- **Increment 8 (this):** finer eyes, an external anchor, and a contract —
+  `RegionArtifactOrgan` + `compare_region_drift` (where it changed), `WitnessReceipt`
+  + `verify_receipt` (a pinned/signed anchor across the read→write seam), and a
+  hash-pinned conformance corpus + JSON-Schema wire spec (re-derivability made
+  demonstrable — a second implementation is what proves it).
+- **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Near/mid-term:
+  temporal perception (`EventTrace` — drift episodes over time), multimodal fusion
+  (`CompositeObservation`), a causal/temporal provenance DAG, a second-language
+  (JS) reference core, and TLA+ proofs of the verdict lattices.
   `[unvalidatable-here]`: macOS/Linux/Wayland capture validation (the author has
   Windows only — those backends are implemented to the OS APIs but unvalidated).
 
@@ -332,7 +381,8 @@ perceives, compares, and recommends; the operator/runtime commits.
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 164 tests
+python -m pytest          # 201 tests
+python conformance/run.py                         # the read-gate wire contract
 python -m coherence_membrane selftest             # every organ proves itself
 python -m coherence_membrane capture frame.png    # native screen grab
 python -m coherence_membrane watch 60 --raw       # always-on perception, fast path

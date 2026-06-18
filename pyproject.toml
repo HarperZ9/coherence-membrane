@@ -22,7 +22,9 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-test = ["pytest>=8"]
+# Test-only — never in the trust path. jsonschema validates the wire-spec schemas
+# (the conformance tests importorskip it, so the suite still runs without it).
+test = ["pytest>=8", "jsonschema>=4"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
