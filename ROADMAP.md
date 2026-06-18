@@ -11,7 +11,8 @@ Status today: increments 1–10 shipped (perception + native capture + continuit
 consequence-scope + living loop + raw fast path + audio + structured-data +
 3-rung baseline + the agent loop + region perception + signed receipts +
 conformance/wire-spec + a JS reference core + temporal EventTrace + multimodal
-CompositeObservation). 232 tests; every organ self-proves; re-derivability is
+CompositeObservation + ascii-view + caption). 261 tests; every organ self-proves;
+re-derivability is
 demonstrated (Python + JS agree on the corpus).
 
 > The README's *Roadmap* section is the authoritative shipped sequence (by ship

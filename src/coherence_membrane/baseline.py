@@ -118,6 +118,11 @@ class Baseline:
         if entry is None:
             return BaselineVerdict(UNVERIFIABLE, None,
                                    "no baseline pinned for this subject")
+        if entry.organ != observation.organ:
+            # subjects can collide across organs (e.g. the constant "<bytes>");
+            # a baseline pinned by one organ must not adjudicate another's.
+            return BaselineVerdict(UNVERIFIABLE, None,
+                                   "baseline is for a different organ (subject key collision)")
         cur_identity = _identity(observation)
         if not cur_identity:
             return BaselineVerdict(UNVERIFIABLE, None,

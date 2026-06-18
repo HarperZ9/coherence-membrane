@@ -88,8 +88,10 @@ class VisualArtifactOrgan:
             data["decoded"] = False
             data["decode_note"] = str(exc)
             if status == Status.PASS:
-                # Identity is solid, but we could not perceive the pixels.
+                # Identity is solid, but we could not perceive the pixels -> not a
+                # full PASS; downgrade so status alone reflects "not fully perceived".
                 summary = "artifact observed (identity only; pixels not decoded)"
+                status = Status.UNVERIFIED
 
         return [
             Observation(
@@ -112,18 +114,19 @@ class VisualArtifactOrgan:
             sid = f"{getattr(descriptor, 'source_id', '?')}#{getattr(descriptor, 'frame_index', '?')}"
             try:
                 return sid, reader()
-            except OSError:
+            except Exception:
                 return sid, None
         if isinstance(subject, (bytes, bytearray)):
             return "<bytes>", bytes(subject)
         try:
             path = Path(subject)
-            return str(path), path.read_bytes()
-        except OSError:
-            return str(path), None
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OSError):
             # not bytes, not a Frame, not a path-like -> unperceivable, not a crash
             return repr(subject)[:64], None
+        try:
+            return str(path), path.read_bytes()
+        except (OSError, ValueError):
+            return str(path), None
 
     def selftest(self) -> SelftestResult:
         """Re-derive this organ's own claims from a fixed, known artifact."""
