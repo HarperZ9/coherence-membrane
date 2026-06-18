@@ -32,7 +32,7 @@ from coherence_membrane.region import compare_region_drift  # noqa: E402
 
 # Pinned SHA-256 of the canonical JSON of vectors.json "cases". Recomputed every
 # run; a mismatch means the corpus was edited without re-pinning -> abort.
-PINNED_CORPUS_SHA256 = "302bc556cd0f3d965f1ab6590f5ef792617a26175d8bc08eb830661ae42616d0"
+PINNED_CORPUS_SHA256 = "0748fc1adef9753d9874d1abe3046aea5d3e8a5dd472e99660eaecd33b15802b"
 
 
 def _bytes_in(inp: dict) -> bytes:
