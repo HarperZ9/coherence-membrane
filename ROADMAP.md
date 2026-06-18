@@ -7,9 +7,9 @@ workstation. Anything that needs hardware or platforms the author cannot validat
 is flagged `[unvalidatable-here]` and will ship implemented-to-API, never claimed
 green.
 
-Status today: increments 1–6 shipped (perception + native capture + continuity +
+Status today: increments 1–7 shipped (perception + native capture + continuity +
 consequence-scope + living loop + raw fast path + audio + structured-data +
-3-rung baseline). 146 tests; every organ self-proves.
+3-rung baseline + the agent loop). 164 tests; every organ self-proves.
 
 ---
 
@@ -55,11 +55,13 @@ accountability-adjacent repos):
 Turn "did it change?" into "*where*, *when*, and *across which senses* did it
 change?" — the grounding a real agent loop needs.
 
-- **Increment 7 — the agent loop.** `AdjustmentProposal`: a model proposes an
-  adjustment, the membrane perceives the result, computes drift vs. the intended
-  baseline, and routes the *consequence* through the write-gate. This is
-  make → look → compare → adjust made real and auditable — the headline
-  capability item. *(both · near)*
+- **Increment 7 — the agent loop.** ✅ **shipped.** `AgentLoop` / `Goal` /
+  `AdjustmentProposal`: the agent makes, the membrane looks and compares to the
+  intended goal (advisory iteration), and the one consequential commit routes
+  through the write-gate against the *authorized* baseline (allow / deny /
+  needs-human). make → look → compare → adjust, made real and auditable, with the
+  goal-tolerance and the commit-integrity kept deliberately separate so nothing is
+  laundered. *(both · near)*
 - **Increment 8 — region/element perception.** `RegionOrgan`: a tiled dHash grid
   with per-region drift, so the membrane reports *which part* of a frame changed,
   not just that it did. Foundational for creative/gamedev grounding. *(capability ·

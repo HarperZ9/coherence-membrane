@@ -16,6 +16,15 @@ Membrane doctrine, encoded not asserted: externalized, witnessed-not-inferred,
 independently-checkable; an organ without a passing selftest is net-negative.
 """
 
+from .agent_loop import (
+    ADJUST,
+    CONVERGED,
+    DISPOSITIONS,
+    INDETERMINATE,
+    AdjustmentProposal,
+    AgentLoop,
+    Goal,
+)
 from .capture import (
     CallableFrameSource,
     CaptureSource,
@@ -114,6 +123,14 @@ __all__ = [
     # the living loop (perceive + remember + mediate consequence)
     "LiveMembrane",
     "LiveDecision",
+    # the agent loop (make -> look -> compare -> adjust, grounded and gated)
+    "AgentLoop",
+    "Goal",
+    "AdjustmentProposal",
+    "CONVERGED",
+    "ADJUST",
+    "INDETERMINATE",
+    "DISPOSITIONS",
     # png + perceptual hashing
     "DecodedImage",
     "PngDecodeError",
