@@ -287,9 +287,12 @@ bound the artifact size upstream before observing untrusted input.
   canonical (normal-form) identity; baseline memory generalised to a three-rung
   ladder (byte identity → canonical identity → perceptual distance), so drift on
   structured data is measured on the document's normal form, not its raw bytes.
-- **Next:** macOS/Linux on-platform validation (the author has Windows only — those
-  backends are implemented to the OS APIs but unvalidated); Wayland/PipeWire
-  backend; more structured formats (CSV/TOML) on the same canonical contract.
+- **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Near-term: the agent
+  loop (`make → look → compare → adjust` through the write-gate), region/element
+  perception, signed observation receipts (an external anchor across the seam),
+  and conformance vectors + a wire spec to make re-derivability *demonstrable*.
+  `[unvalidatable-here]`: macOS/Linux/Wayland capture validation (the author has
+  Windows only — those backends are implemented to the OS APIs but unvalidated).
 
 ## Install / test
 
