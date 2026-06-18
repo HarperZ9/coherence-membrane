@@ -18,6 +18,7 @@ from .observation import Observation
 from .organ import Organ
 from .organs.audio import AudioArtifactOrgan
 from .organs.raw import RawFrameOrgan
+from .organs.region import RegionArtifactOrgan
 from .organs.structured import StructuredDataOrgan
 from .organs.visual import VisualArtifactOrgan
 
@@ -40,6 +41,7 @@ def all_organs() -> list[Organ]:
         AudioArtifactOrgan(),
         StructuredDataOrgan(),
         RawFrameOrgan(),
+        RegionArtifactOrgan(),
     ]
 
 
