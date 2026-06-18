@@ -7,10 +7,11 @@ workstation. Anything that needs hardware or platforms the author cannot validat
 is flagged `[unvalidatable-here]` and will ship implemented-to-API, never claimed
 green.
 
-Status today: increments 1–8 shipped (perception + native capture + continuity +
+Status today: increments 1–9 shipped (perception + native capture + continuity +
 consequence-scope + living loop + raw fast path + audio + structured-data +
 3-rung baseline + the agent loop + region perception + signed receipts +
-conformance/wire-spec). 204 tests; every organ self-proves.
+conformance/wire-spec + a JS reference core). 206 tests; every organ self-proves;
+re-derivability is demonstrated (Python + JS agree on the corpus).
 
 ---
 
@@ -142,12 +143,13 @@ trust path.
   `Observation`/`DriftVerdict` JSON Schemas (`schemas/`). The single normative
   artifact a second implementer conforms to — re-derivability demonstrated, not
   asserted. *(adoption · near)*
-- **A second-language (JS) reference core.** Port *only* the inert compute —
-  dHash, SHA-256, the drift lattice, canonical-JSON — and run it through the same
-  vectors. Proves re-derivability and is the on-ramp for editor/CI/Node
-  environments. Watch IEEE-754/BigInt parity on the float caveats so divergence
-  fails *loudly*. Deliberately **not** porting native capture (OS-specific,
-  unvalidatable off-Windows). *(both · mid)*
+- **A second-language (JS) reference core.** ✅ **shipped.** `impl/js/membrane.js`
+  + `impl/js/run.js` port the inert compute — SHA-256, PNG-decode + dHash, the
+  drift lattice, canonical-JSON, region drift, receipt anchor (Node built-ins
+  only, 64-bit hashes as BigInt) — and re-derive the same `conformance/vectors.json`
+  value-for-value. Re-derivability **demonstrated**, not asserted; the Python
+  suite runs the JS harness and checks agreement. Native capture deliberately not
+  ported (OS-specific, unvalidatable off-Windows). *(both · mid)*
 - **SPEC.md + THREAT-MODEL.md + SECURITY.md.** Promote the already-honest "what it
   does and does not defend against" prose to normative docs; centralise the
   Windows-only validation caveat once. Most of the hard thinking is done. *(adoption ·
