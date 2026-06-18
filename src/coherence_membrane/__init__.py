@@ -77,6 +77,16 @@ from .receipt import (
     emit_receipt,
     verify_receipt,
 )
+from .provenance import (
+    CAUSED_BY,
+    GATED_BY,
+    GRAPH_VERDICTS,
+    OBSERVED_AFTER,
+    GraphVerdict,
+    ProvenanceGraph,
+    ProvenanceNode,
+    compute_binding,
+)
 from .region import RegionDriftReport, compare_region_drift, tile_hashes
 from .perception import PerceptionSnapshot, all_organs, default_organs, perceive
 from .phash import (
@@ -133,6 +143,15 @@ __all__ = [
     "RECEIPT_VALID",
     "RECEIPT_DRIFT",
     "RECEIPT_UNVERIFIABLE",
+    # causal/temporal provenance DAG (hash-chained, tamper-evident)
+    "ProvenanceGraph",
+    "ProvenanceNode",
+    "GraphVerdict",
+    "compute_binding",
+    "GRAPH_VERDICTS",
+    "OBSERVED_AFTER",
+    "GATED_BY",
+    "CAUSED_BY",
     # perception (read-gate)
     "PerceptionSnapshot",
     "perceive",

@@ -401,6 +401,37 @@ moment = perceive_composite([(eye, "frame.png"), (CaptionOrgan(), caption_bytes)
 Same honesty as the structured organ: canonicalisation normalises Unicode form and
 whitespace only — not case, punctuation, or meaning. Non-UTF-8 fails closed.
 
+## Causal provenance — a tamper-evident record of the loop (increment 12)
+
+`ProvenanceGraph` is a hash-chained DAG of what was perceived and done: nodes are
+observations / actions / gate-decisions, edges are typed (`observed-after`,
+`gated-by`, `caused-by`). Each node's **binding** is a SHA-256 over its content
+plus its parents' bindings — the write-gate's delegation-chain mechanism re-aimed
+at perception — so tampering any surviving node or its edges breaks that binding
+and every one downstream. `verify()` re-derives the whole graph (order-independent):
+`VALID` / `BROKEN` / `UNVERIFIABLE`.
+
+```python
+from coherence_membrane import ProvenanceGraph, CAUSED_BY
+g = ProvenanceGraph()
+g.add_observation("look", confirming_obs)                 # a confirming look
+g.add("adjust", "action", "...", parents=["look"], edge_type=CAUSED_BY)
+g.add("commit", "action", "...", parents=["adjust"], edge_type=CAUSED_BY)
+anchor = g.manifest()                    # operator pins/signs this out-of-band
+g.verify(pinned_manifest=anchor).verdict # VALID — nothing tampered, nothing inserted
+g.has_confirming_look_ancestor("commit") # True — an asserted look is an ancestor of the publish
+```
+
+Honest about what it proves: the per-node chain proves no **surviving** node was
+altered — you can't silently rewrite a digest, re-parent a node, or drop an edge
+without `verify()` catching it. It does **not** by itself catch **membership**
+changes (inserting a fabricated leaf, deleting a childless node) — `manifest()` is
+the anchor that does, pinned out-of-band. It does **not** prove the causality is
+real: a `caused-by` edge and "ancestor" relationship are *asserted* (there are no
+timestamps). And keyless binding is self-consistency, not non-repudiable identity —
+real anti-forgery needs that external anchor, the same boundary as the receipt and
+the delegation chain.
+
 ## Design discipline (encoded, not asserted)
 
 - **Inert.** Organs read and report. They never mutate the artifact, the process that
@@ -474,13 +505,16 @@ whitespace only — not case, punctuation, or meaning. Non-UTF-8 fails closed.
   (drift episodes / settle-detection / dwell over the continuity stream) and
   `CompositeObservation` + `compare_composite` (one witnessed instant across
   modalities, with per-modality drift).
-- **Increment 11 (this):** more senses — `AsciiViewOrgan` (compact, model-readable
+- **Increment 11:** more senses — `AsciiViewOrgan` (compact, model-readable
   glyph view of a frame) and `CaptionOrgan` (subtitle/transcript text with a
   canonical identity), so perceptive state is cheap to store and "what was said"
   composes with "what was on screen".
-- **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Remaining: a
-  causal/temporal provenance DAG (prove a consequential action followed a
-  confirming look), and machine-checked proofs of the verdict lattices.
+- **Increment 12 (this):** the causal/temporal provenance DAG — `ProvenanceGraph`,
+  a hash-chained, tamper-evident record of what was perceived and done. It shows a
+  consequential action has a confirming look as an ancestor (reachability over
+  attested edges, not a temporal or causal proof — there are no timestamps).
+- **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Remaining:
+  machine-checked proofs of the verdict lattices + monotonic attenuation.
   `[unvalidatable-here]`: macOS/Linux/Wayland capture validation (the author has
   Windows only — those backends are implemented to the OS APIs but unvalidated).
 
@@ -488,7 +522,7 @@ whitespace only — not case, punctuation, or meaning. Non-UTF-8 fails closed.
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 261 tests
+python -m pytest          # 278 tests
 python conformance/run.py                         # the read-gate wire contract (Python)
 node   impl/js/run.js                             # the SAME contract, re-derived in JS
 python -m coherence_membrane selftest             # every organ proves itself
