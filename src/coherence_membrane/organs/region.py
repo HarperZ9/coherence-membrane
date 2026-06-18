@@ -76,7 +76,10 @@ class RegionArtifactOrgan:
             data.update({"perceptual_hash": None, "region_hashes": None,
                          "decoded": False, "decode_note": str(exc)})
             if status == Status.PASS:
+                # identity is witnessed, but the pixels were not perceived -> not a
+                # full PASS; downgrade so status alone reflects "not fully perceived".
                 summary = "artifact observed (identity only; pixels not decoded)"
+                status = Status.UNVERIFIED
 
         return [Observation(self.name, path_str, summary, status,
                             Provenance.witness_bytes(path_str, payload, "high"), data)]
@@ -89,17 +92,18 @@ class RegionArtifactOrgan:
             sid = f"{getattr(descriptor, 'source_id', '?')}#{getattr(descriptor, 'frame_index', '?')}"
             try:
                 return sid, reader()
-            except OSError:
+            except Exception:
                 return sid, None
         if isinstance(subject, (bytes, bytearray)):
             return "<bytes>", bytes(subject)
         try:
             path = Path(subject)
-            return str(path), path.read_bytes()
-        except OSError:
-            return str(path), None
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OSError):
             return repr(subject)[:64], None
+        try:
+            return str(path), path.read_bytes()
+        except (OSError, ValueError):
+            return str(path), None
 
     # --- selftest ---------------------------------------------------------
 

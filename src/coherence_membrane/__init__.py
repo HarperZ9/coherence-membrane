@@ -25,6 +25,7 @@ from .agent_loop import (
     AgentLoop,
     Goal,
 )
+from .ascii_view import AsciiDriftReport, ascii_text, ascii_view, compare_ascii_drift
 from .capture import (
     CallableFrameSource,
     CaptureSource,
@@ -60,6 +61,8 @@ from .organs.structured import StructuredDataOrgan, canonical_json_bytes
 from .pngencode import encode_png
 from .scope import DEFAULT_CONSEQUENTIAL, ConsequenceScope, creative_profile
 from .organ import Check, Organ, SelftestResult, run_selftests
+from .organs.ascii_view import AsciiViewOrgan
+from .organs.caption import CaptionOrgan, canonical_caption
 from .organs.raw import RawFrameOrgan
 from .organs.region import RegionArtifactOrgan
 from .organs.visual import VisualArtifactOrgan
@@ -106,8 +109,16 @@ __all__ = [
     "RawFrameOrgan",
     "StructuredDataOrgan",
     "RegionArtifactOrgan",
+    "AsciiViewOrgan",
+    "CaptionOrgan",
     "audio_envelope_hash",
     "canonical_json_bytes",
+    "canonical_caption",
+    # ascii perception (compact, model-readable glyph view)
+    "ascii_view",
+    "ascii_text",
+    "compare_ascii_drift",
+    "AsciiDriftReport",
     # region/element perception (where it changed)
     "tile_hashes",
     "compare_region_drift",

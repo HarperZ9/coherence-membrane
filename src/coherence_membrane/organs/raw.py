@@ -92,7 +92,7 @@ class RawFrameOrgan:
             return None
         try:
             payload = reader()
-        except OSError:
+        except Exception:
             payload = b""
         sid = f"{getattr(descriptor, 'source_id', '?')}#{getattr(descriptor, 'frame_index', '?')}"
         return (sid, payload, getattr(descriptor, "width", None),

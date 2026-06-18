@@ -16,7 +16,9 @@ from typing import Any
 
 from .observation import Observation
 from .organ import Organ
+from .organs.ascii_view import AsciiViewOrgan
 from .organs.audio import AudioArtifactOrgan
+from .organs.caption import CaptionOrgan
 from .organs.raw import RawFrameOrgan
 from .organs.region import RegionArtifactOrgan
 from .organs.structured import StructuredDataOrgan
@@ -42,6 +44,8 @@ def all_organs() -> list[Organ]:
         StructuredDataOrgan(),
         RawFrameOrgan(),
         RegionArtifactOrgan(),
+        AsciiViewOrgan(),
+        CaptionOrgan(),
     ]
 
 

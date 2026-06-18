@@ -138,18 +138,19 @@ class StructuredDataOrgan:
             sid = f"{getattr(descriptor, 'source_id', '?')}#{getattr(descriptor, 'frame_index', '?')}"
             try:
                 return sid, reader()
-            except OSError:
+            except Exception:
                 return sid, None
         if isinstance(subject, (bytes, bytearray)):
             return "<bytes>", bytes(subject)
         try:
             path = Path(subject)
-            return str(path), path.read_bytes()
-        except OSError:
-            return str(path), None
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OSError):
             # not bytes, not a Frame, not a path-like -> unperceivable, not a crash
             return repr(subject)[:64], None
+        try:
+            return str(path), path.read_bytes()
+        except (OSError, ValueError):
+            return str(path), None
 
     def _unreadable(self, path_str: str) -> Observation:
         return Observation(
