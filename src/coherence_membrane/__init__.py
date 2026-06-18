@@ -33,7 +33,16 @@ from .capture import (
     FrameDescriptor,
     IterableFrameSource,
 )
+from .composite import (
+    ComponentDrift,
+    CompositeDriftReport,
+    CompositeObservation,
+    compare_composite,
+    composite_identity,
+    perceive_composite,
+)
 from .continuity import ContinuityEvent, ResourceBudget, run_continuity
+from .events import DriftEpisode, EventTrace, trace_events
 from .live import LiveDecision, LiveMembrane
 from .membrane import build_gate_request, decide
 from .native_capture import (
@@ -148,6 +157,17 @@ __all__ = [
     "ConsequenceScope",
     "creative_profile",
     "DEFAULT_CONSEQUENTIAL",
+    # temporal perception (drift episodes over the continuity stream)
+    "EventTrace",
+    "DriftEpisode",
+    "trace_events",
+    # multimodal composition (one witnessed instant across senses)
+    "CompositeObservation",
+    "CompositeDriftReport",
+    "ComponentDrift",
+    "compare_composite",
+    "composite_identity",
+    "perceive_composite",
     # the living loop (perceive + remember + mediate consequence)
     "LiveMembrane",
     "LiveDecision",

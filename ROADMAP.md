@@ -7,11 +7,16 @@ workstation. Anything that needs hardware or platforms the author cannot validat
 is flagged `[unvalidatable-here]` and will ship implemented-to-API, never claimed
 green.
 
-Status today: increments 1–9 shipped (perception + native capture + continuity +
+Status today: increments 1–10 shipped (perception + native capture + continuity +
 consequence-scope + living loop + raw fast path + audio + structured-data +
 3-rung baseline + the agent loop + region perception + signed receipts +
-conformance/wire-spec + a JS reference core). 206 tests; every organ self-proves;
-re-derivability is demonstrated (Python + JS agree on the corpus).
+conformance/wire-spec + a JS reference core + temporal EventTrace + multimodal
+CompositeObservation). 232 tests; every organ self-proves; re-derivability is
+demonstrated (Python + JS agree on the corpus).
+
+> The README's *Roadmap* section is the authoritative shipped sequence (by ship
+> order). The per-item "shipped" markers below are thematic, grouped by track —
+> not a second numbering scheme.
 
 ---
 
@@ -57,24 +62,25 @@ accountability-adjacent repos):
 Turn "did it change?" into "*where*, *when*, and *across which senses* did it
 change?" — the grounding a real agent loop needs.
 
-- **Increment 7 — the agent loop.** ✅ **shipped.** `AgentLoop` / `Goal` /
+- **the agent loop.** ✅ **shipped.** `AgentLoop` / `Goal` /
   `AdjustmentProposal`: the agent makes, the membrane looks and compares to the
   intended goal (advisory iteration), and the one consequential commit routes
   through the write-gate against the *authorized* baseline (allow / deny /
   needs-human). make → look → compare → adjust, made real and auditable, with the
   goal-tolerance and the commit-integrity kept deliberately separate so nothing is
   laundered. *(both · near)*
-- **Increment 8 — region/element perception.** ✅ **shipped.** `RegionArtifactOrgan`:
+- **region/element perception.** ✅ **shipped.** `RegionArtifactOrgan`:
   a tiled dHash grid with per-region drift (`compare_region_drift`), so the
   membrane reports *which part* of a frame changed, not just that it did. The
   selftest proves a one-tile change is isolated to that tile. *(capability · near)*
-- **Increment 9 — temporal perception.** `EventTrace` over the continuity stream:
-  drift episodes, dwell, settle-detection — "it changed, then settled at T+3"
-  instead of a flat event list. *(capability · mid)*
-- **Increment 10 — multimodal fusion.** `CompositeObservation` + a cross-modal
-  baseline: frame + audio + data witnessed as one instant, drift judged across
-  senses together. *(capability · mid)*
-- **Increment 13 — semantic-equivalence rung.** A 4th baseline rung using only
+- **temporal perception.** ✅ **shipped.** `EventTrace` over the
+  continuity stream: drift episodes, dwell, settle-detection — "it changed, then
+  settled at T+3" instead of a flat event list (`trace_events`). *(capability · mid)*
+- **Multimodal composition.** ✅ **shipped.** `CompositeObservation` +
+  `compare_composite`: frame + audio + data witnessed as one instant, drift judged
+  per-modality and overall (fail-closed; a missing/duplicate/extra modality is
+  UNVERIFIABLE). *(capability · mid)*
+- **semantic-equivalence rung.** A 4th baseline rung using only
   *deterministic* normalizers (numeric normal form so `1 == 1.0`, Unicode NFC,
   RFC-3339 time) — equal normalized forms are genuinely equivalent. Hard line:
   anything needing a *learned* judgment stays an advisory organ, never an
@@ -120,7 +126,7 @@ regression.
 - **Multi-witness corroboration.** An organ that requires ≥2 independent read
   paths to agree before a digest is load-bearing — defends against a single faulty
   decode/capture path. *(both · mid)*
-- **Increment 12 — hardened ingestion.** Bounded, fail-closed perception of
+- **hardened ingestion.** Bounded, fail-closed perception of
   *untrusted* artifacts across all organs (size/decode/recursion caps + a fuzz
   selftest). Generalises the structured-organ size-cap lesson estate-wide. *(both ·
   mid)*
@@ -137,7 +143,7 @@ regression.
 Make the trust claim demonstrable and the tool credible — without touching the
 trust path.
 
-- **Increment 11 — conformance + wire spec.** ✅ **shipped.** A frozen,
+- **conformance + wire spec.** ✅ **shipped.** A frozen,
   hash-pinned vector corpus (`conformance/vectors.json`) + a `conformance/run.py`
   harness that re-derives every case through this implementation, plus
   `Observation`/`DriftVerdict` JSON Schemas (`schemas/`). The single normative
