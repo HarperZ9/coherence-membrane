@@ -11,7 +11,7 @@ Status today: increments 1–10 shipped (perception + native capture + continuit
 consequence-scope + living loop + raw fast path + audio + structured-data +
 3-rung baseline + the agent loop + region perception + signed receipts +
 conformance/wire-spec + a JS reference core + temporal EventTrace + multimodal
-CompositeObservation + ascii-view + caption). 261 tests; every organ self-proves;
+CompositeObservation + ascii-view + caption). 278 tests; every organ self-proves;
 re-derivability is
 demonstrated (Python + JS agree on the corpus).
 
@@ -99,12 +99,12 @@ Make the read→write boundary carry evidence and history, with an external anch
   as a closed VALID/DRIFT/UNVERIFIABLE lattice. The inert read-gate stays keyless;
   signing lives at the seam (operator-supplied verifier; a raising verifier is
   DRIFT, fail-closed). *(both · near)*
-- **Causal/temporal provenance DAG.** A hash-chained graph of observations
-  (re-using the write-gate's proven chain-binding mechanism) that proves a
-  consequential action was preceded by a confirming look: publish@T ← MATCH@T-1 ←
-  adjust resolving DRIFT@T-2. Safety (no action without a look) and capability (a
-  replayable record of the loop). `caused-by` edges are *attested claims*, not
-  adjudicated facts — stated, not glossed. *(both · mid)*
+- **Causal/temporal provenance DAG.** ✅ **shipped.** `ProvenanceGraph`: a
+  hash-chained, tamper-evident DAG of observations/actions/gate-decisions whose
+  per-node binding chains over parents (verify() -> VALID/BROKEN/UNVERIFIABLE);
+  `has_confirming_look_ancestor()` shows a consequential action has a confirming look as an ancestor.
+  `caused-by` edges are attested claims, not adjudicated facts; keyless binding is
+  self-consistency (external anchor for real anti-forgery). *(both · mid)*
 - **Scope/delegation binding.** Bind the consequence-scope gate to a verified
   delegation chain's `effective_scope`, so *what may be acted on* is the monotonic
   intersection of granted authority, not a static set. *(both · mid)*
