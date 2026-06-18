@@ -55,3 +55,24 @@ def test_all_organs_over_alien_subjects_does_not_crash():
     snap = perceive([None, 123, ["x"]], organs=all_organs())
     assert snap.observations  # produced observations, did not crash
     assert all(o.status == Status.UNVERIFIED for o in snap.observations)
+
+
+def test_all_organs_survive_pathological_subjects():
+    # totality holds even for a subject whose __fspath__ raises OSError and a
+    # Frame whose read() raises a non-OSError — every organ degrades, none crash.
+    from coherence_membrane.capture import FrameDescriptor
+
+    class _BadFspath:
+        def __fspath__(self):
+            raise OSError("fspath boom")
+
+    class _BadFrame:
+        descriptor = FrameDescriptor(source_id="s", frame_index=0, pixel_format="bgra")
+
+        def read(self):
+            raise ValueError("read boom")
+
+    # an embedded-null path string: Path() succeeds but read_bytes() raises
+    # ValueError (not OSError) — must still degrade, not crash.
+    snap = perceive([_BadFspath(), _BadFrame(), "foo\x00bar.png"], organs=all_organs())
+    assert all(o.status == Status.UNVERIFIED for o in snap.observations)

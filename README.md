@@ -365,6 +365,42 @@ So "the scene changed but the audio held" is expressible. Same closed lattice,
 fail-closed: `DRIFT` if any component drifted, else `UNVERIFIABLE` if any modality
 is missing/uncomparable, else `MATCH` — a missing modality is never a silent match.
 
+## More senses: glyph view + captions (increment 11)
+
+**ASCII perception — perceptive state as compact, model-readable text.**
+`AsciiViewOrgan` emits the usual identity + dHash (so it slots into baseline and
+the gate) **plus** a tiny grid of glyphs — a coarse luminance projection a text
+model can read in context with no image decode, and a human can eyeball. It is the
+dHash move with a *legible* output, which is what makes it cheap to store and to
+ground on.
+
+```python
+from coherence_membrane import AsciiViewOrgan, compare_ascii_drift
+obs = AsciiViewOrgan(cols=48).observe("frame.png")[0]
+obs.data["ascii_view"]          # ['  ..::-==+*#%@', ...]  the witnessed glyph grid
+obs.data["ascii_sha256"]        # a compact digest of the grid
+compare_ascii_drift(before, after).changed_cells   # per-cell "where the glyphs moved"
+```
+
+Honest: it is luminance glyphs, advisory evidence — **not** OCR or a semantic
+summary. (The idea is [ASCILINE](https://github.com/YusufB5/ASCILINE)'s,
+reimplemented natively — stdlib only, nothing third-party in the trust path.)
+
+**Captions — the membrane reads what was said.** `CaptionOrgan` perceives a
+subtitle/transcript line: raw-byte identity plus a **canonical** text identity
+(Unicode NFC + collapsed whitespace), so it plugs into baseline memory's canonical
+rung and a whitespace-different-but-same caption is a `MATCH`. Composed
+per-timestamp with a frame organ (`perceive_composite`), the membrane witnesses
+*what was on screen* **and** *what was said* as one instant.
+
+```python
+from coherence_membrane import CaptionOrgan, perceive_composite
+moment = perceive_composite([(eye, "frame.png"), (CaptionOrgan(), caption_bytes)])
+```
+
+Same honesty as the structured organ: canonicalisation normalises Unicode form and
+whitespace only — not case, punctuation, or meaning. Non-UTF-8 fails closed.
+
 ## Design discipline (encoded, not asserted)
 
 - **Inert.** Organs read and report. They never mutate the artifact, the process that
@@ -434,10 +470,14 @@ is missing/uncomparable, else `MATCH` — a missing modality is never a silent m
   re-derivability **demonstrated**: two implementations sharing no code agree,
   value-for-value, on the frozen contract corpus (with an honest, fail-loud number
   boundary so they never silently diverge beyond it).
-- **Increment 10 (this):** perceiving over time and across senses — `EventTrace`
+- **Increment 10:** perceiving over time and across senses — `EventTrace`
   (drift episodes / settle-detection / dwell over the continuity stream) and
   `CompositeObservation` + `compare_composite` (one witnessed instant across
   modalities, with per-modality drift).
+- **Increment 11 (this):** more senses — `AsciiViewOrgan` (compact, model-readable
+  glyph view of a frame) and `CaptionOrgan` (subtitle/transcript text with a
+  canonical identity), so perceptive state is cheap to store and "what was said"
+  composes with "what was on screen".
 - **Next:** see [ROADMAP.md](ROADMAP.md) for the full plan. Remaining: a
   causal/temporal provenance DAG (prove a consequential action followed a
   confirming look), and machine-checked proofs of the verdict lattices.
@@ -448,7 +488,7 @@ is missing/uncomparable, else `MATCH` — a missing modality is never a silent m
 
 ```bash
 pip install -e ".[test]"
-python -m pytest          # 232 tests
+python -m pytest          # 261 tests
 python conformance/run.py                         # the read-gate wire contract (Python)
 node   impl/js/run.js                             # the SAME contract, re-derived in JS
 python -m coherence_membrane selftest             # every organ proves itself

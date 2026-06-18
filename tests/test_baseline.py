@@ -134,6 +134,15 @@ def test_canonical_roundtrips_through_save_load(tmp_path):
     assert v.verdict == MATCH
 
 
+def test_cross_organ_subject_collision_is_unverifiable():
+    # bytes-fed observations share the subject "<bytes>"; a baseline pinned by one
+    # organ must not adjudicate another organ's observation on that colliding key.
+    b = Baseline()
+    b.pin(_obs("<bytes>", "a" * 64, organ="caption-text"))
+    v = b.check(_obs("<bytes>", "a" * 64, organ="visual-artifact"))
+    assert v.verdict == UNVERIFIABLE
+
+
 def test_from_dict_tolerates_pre_canonical_baseline():
     # a baseline written before increment 6 has no canonical_sha256 key at all;
     # loading it must not raise and must default the field to None.

@@ -54,6 +54,18 @@ def test_observe_reads_from_path(make_png, tmp_path):
     assert obs.status == Status.PASS
 
 
+def test_structurally_valid_but_undecodable_png_is_unverified(make_png):
+    # an interlaced PNG: the IHDR reads fine but decode_png rejects it. Pixels
+    # were not perceived, so status must be UNVERIFIED (not a full PASS).
+    png = bytearray(make_png(4, 4, bytes(4 * 4 * 3)))
+    png[28] = 1  # flip the IHDR interlace byte (CRC unchecked by the decoder)
+    obs = VisualArtifactOrgan().observe(bytes(png))[0]
+    assert obs.data["format"] == "png"      # header still witnessed
+    assert obs.data["decoded"] is False
+    assert obs.data["perceptual_hash"] is None
+    assert obs.status == Status.UNVERIFIED  # not a silent PASS
+
+
 def test_selftest_passes():
     result = VisualArtifactOrgan().selftest()
     assert result.passed, result.to_dict()
