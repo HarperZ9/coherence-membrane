@@ -127,7 +127,7 @@ class AudioArtifactOrgan:
             sid = f"{getattr(descriptor, 'source_id', '?')}#{getattr(descriptor, 'frame_index', '?')}"
             try:
                 return sid, reader()
-            except OSError:
+            except Exception:
                 return sid, None
         if isinstance(subject, (bytes, bytearray)):
             return "<bytes>", bytes(subject)
@@ -135,11 +135,12 @@ class AudioArtifactOrgan:
 
         try:
             p = Path(subject)
-            return str(p), p.read_bytes()
-        except OSError:
-            return str(p), None
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OSError):
             return repr(subject)[:64], None
+        try:
+            return str(p), p.read_bytes()
+        except (OSError, ValueError):
+            return str(p), None
 
     def _unreadable(self, path_str: str) -> Observation:
         return Observation(
