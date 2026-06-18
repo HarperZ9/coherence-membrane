@@ -1,8 +1,13 @@
-# coherence-membrane
+# Coherence Membrane
 
-**An inert, host-adjudicated perception membrane — the read-gate that gives a model
-real, witnessed eyes, and the read-gate complement to
-[proof-surface](https://github.com/HarperZ9/proof-surface)'s write-gate.**
+> An inert, host-adjudicated perception membrane for inspectable model context.
+
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![python](https://img.shields.io/badge/python-3.11%2B-blue.svg)
+![version](https://img.shields.io/badge/version-0.1.0-informational.svg)
+[![CI](https://github.com/HarperZ9/coherence-membrane/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/coherence-membrane/actions/workflows/ci.yml)
+![deps: none](https://img.shields.io/badge/deps-none-success.svg)
+[![part of: AI-accountability toolkit](https://img.shields.io/badge/part_of-AI--accountability_toolkit-7a5cff.svg)](https://harperz9.github.io)
 
 A model's one structural disability is **state-blindness**: it reasons on its prior
 and on source text, not on what actually happened. When it says "this frame renders
@@ -578,3 +583,8 @@ python -m coherence_membrane watch 60 --raw       # always-on perception, fast p
 ## License
 
 MIT.
+
+---
+**Zain Dana Harper** — small tools with explicit edges.
+[Portfolio](https://harperz9.github.io) · [HarperZ9](https://github.com/HarperZ9)
+<sub>Built with Claude Code; reviewed, tested, and owned by me.</sub>
