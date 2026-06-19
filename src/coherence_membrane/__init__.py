@@ -44,6 +44,16 @@ from .composite import (
 )
 from .continuity import ContinuityEvent, ResourceBudget, run_continuity
 from .events import DriftEpisode, EventTrace, trace_events
+from .external_organs import (
+    build_external_graph,
+    emet_receipt_observation,
+    external_composite,
+    external_report_observation,
+    organ_receipt_bundle_observation,
+    provenance_receipt_observations,
+    raw_health_observation,
+    raw_eye_observation,
+)
 from .live import LiveDecision, LiveMembrane
 from .membrane import build_gate_request, decide
 from .native_capture import (
@@ -76,6 +86,7 @@ from .organs.caption import CaptionOrgan, canonical_caption
 from .organs.raw import RawFrameOrgan
 from .organs.region import RegionArtifactOrgan
 from .organs.visual import VisualArtifactOrgan
+from .organs.web import WebDocumentOrgan
 from .receipt import (
     DRIFT as RECEIPT_DRIFT,
     RECEIPT_VERDICTS,
@@ -125,6 +136,7 @@ __all__ = [
     "SelftestResult",
     "run_selftests",
     "VisualArtifactOrgan",
+    "WebDocumentOrgan",
     "AudioArtifactOrgan",
     "RawFrameOrgan",
     "StructuredDataOrgan",
@@ -210,6 +222,15 @@ __all__ = [
     "EventTrace",
     "DriftEpisode",
     "trace_events",
+    # external organ adapters (RAW/EMET/provenance-sensorium JSON -> native observations)
+    "external_report_observation",
+    "organ_receipt_bundle_observation",
+    "raw_eye_observation",
+    "raw_health_observation",
+    "emet_receipt_observation",
+    "provenance_receipt_observations",
+    "external_composite",
+    "build_external_graph",
     # multimodal composition (one witnessed instant across senses)
     "CompositeObservation",
     "CompositeDriftReport",
