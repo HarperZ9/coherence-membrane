@@ -14,6 +14,8 @@ def test_colorfield_validates_and_accesses():
     assert cf.is_unknown(1, 0) is True
     with pytest.raises(ValueError):
         ColorField(2, 1, ((0.0, 0.0, 0.0),), (False, False))   # lab len != w*h
+    with pytest.raises(ValueError):
+        ColorField(2, 1, ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)), (False,))   # unknown len != w*h
 
 
 def test_color_field_from_png_red():
@@ -24,6 +26,15 @@ def test_color_field_from_png_red():
     exp = srgb_to_oklab((1.0, 0.0, 0.0))
     assert all(abs(cf.at(0, 0)[i] - exp[i]) < 1e-9 for i in range(3))
     assert cf.is_unknown(0, 0) is False
+
+
+def test_color_field_from_png_multipixel():
+    # 2x1 red,green -> per-pixel OKLab at the right row-major offsets
+    png = encode_png(2, 1, bytes([255, 0, 0, 0, 255, 0]), channels=3)
+    cf = color_field_from_png(png)
+    assert (cf.width, cf.height) == (2, 1)
+    assert all(abs(cf.at(0, 0)[i] - srgb_to_oklab((1.0, 0.0, 0.0))[i]) < 1e-9 for i in range(3))
+    assert all(abs(cf.at(1, 0)[i] - srgb_to_oklab((0.0, 1.0, 0.0))[i]) < 1e-9 for i in range(3))
 
 
 def test_color_field_from_png_rejects_garbage():

@@ -48,7 +48,7 @@ def color_field_from_png(payload: bytes) -> ColorField:
     n = img.width * img.height
     ch = img.channels
     px = img.pixels
-    lab: list[Triple] = [(0.0, 0.0, 0.0)] * n
+    lab: list[Triple] = [(0.0, 0.0, 0.0) for _ in range(n)]
     for i in range(n):
         if ch == 1:
             v = px[i] / 255.0
