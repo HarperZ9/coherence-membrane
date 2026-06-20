@@ -38,3 +38,16 @@ def test_contour_organ_fail_closed_on_undecodable():
 def test_contour_organ_selftest_passes():
     result = ContourViewOrgan().selftest()
     assert result.passed
+
+
+def test_contour_organ_fail_closed_on_missing_file():
+    # unreadable-subject branch: read fails -> UNVERIFIED, no identity claimed
+    from pathlib import Path
+    obs = ContourViewOrgan().observe(Path("does-not-exist.png"))[0]
+    assert obs.status == Status.UNVERIFIED
+    assert "identity_sha256" not in obs.data
+
+
+def test_contour_organ_fail_closed_on_unsupported_type():
+    obs = ContourViewOrgan().observe(123)[0]
+    assert obs.status == Status.UNVERIFIED
