@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import math
-
 import pytest
 
 from coherence_membrane.field import Field, FieldKind
@@ -27,11 +25,12 @@ def test_contour_single_vertical_segment():
 
 
 def test_contour_level_shifts_crossing():
-    # values 0 and 1 across the top edge; crossing sits at t = level
-    f = _f(2, 2, [0.0, 1.0, 0.0, 1.0])   # left below, right above
+    # values 0 and 1 across each row; the level shifts the crossing along x.
+    f = _f(2, 2, [0.0, 1.0, 0.0, 1.0])   # left column below, right column above
     g = contour(f, 0.25)
-    xs = sorted({p.x for seg in g.paths for p in seg.points})
-    assert xs == [0.25]                   # crossing at x = 0.25 on both edges
+    assert len(g.paths) == 1
+    assert g.unknown == ()
+    assert set(g.paths[0].points) == {Point(0.25, 0.0), Point(0.25, 1.0)}
 
 
 def test_contour_unknown_corner_is_unverifiable():
@@ -42,9 +41,14 @@ def test_contour_unknown_corner_is_unverifiable():
     assert g.unknown == (Point(0.5, 0.5),)
 
 
-def test_contour_saddle_emits_two_segments():
-    f = _f(2, 2, [1.0, 0.0, 1.0, 0.0])   # NOT a saddle (cols) -> 1 seg; make alt:
+def test_contour_saddle_emits_two_non_crossing_segments():
     f = _f(2, 2, [1.0, 0.0, 0.0, 1.0])   # TL=1 TR=0 / BL=0 BR=1  (alternating)
     g = contour(f, 0.5)
-    assert len(g.paths) == 2
     assert g.unknown == ()
+    # TL & BR are above; the two arcs must isolate those corners, NOT use the
+    # crossing pairing (vertical (0.5,0)-(0.5,1) + horizontal (0,0.5)-(1,0.5)).
+    seg_sets = {frozenset(s.points) for s in g.paths}
+    assert seg_sets == {
+        frozenset({Point(0.5, 0.0), Point(1.0, 0.5)}),
+        frozenset({Point(0.5, 1.0), Point(0.0, 0.5)}),
+    }
