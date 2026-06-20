@@ -126,3 +126,21 @@ def test_simplify_geometry_passes_through():
     assert out.paths[0].points == (Point(0, 0), Point(2, 0))
     assert out.points == (Point(7, 7),)
     assert out.unknown == (Point(8, 8),)
+
+
+def test_simplify_closed_keeps_flag_and_drops_collinear():
+    # closed quad with a redundant collinear midpoint (1,0) on the bottom edge
+    quad = Polyline(
+        (Point(0, 0), Point(1, 0), Point(2, 0), Point(2, 2), Point(0, 2)),
+        closed=True,
+    )
+    out = simplify(quad, 0.01)
+    assert out.closed is True
+    assert Point(1, 0) not in out.points
+    assert len(out.points) >= 3
+
+
+def test_simplify_closed_collapse_guard_returns_original():
+    tri = Polyline((Point(0, 0), Point(4, 0), Point(2, 1)), closed=True)
+    # a large epsilon would collapse it below 3 points -> original returned
+    assert simplify(tri, 100.0) is tri
