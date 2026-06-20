@@ -46,6 +46,9 @@ def check_equation(lhs: Quantity, rhs: Quantity, *, rel_tol: float = 1e-9) -> Ce
     if not (math.isfinite(lhs.magnitude) and math.isfinite(rhs.magnitude)):
         return Certificate(claim, Verdict.UNVERIFIABLE, _ORACLE,
                            (("reason", "non-finite magnitude"),))
+    if not math.isfinite(rel_tol) or rel_tol < 0.0:   # an inf/nan/neg tol would launder a false VERIFIED
+        return Certificate(claim, Verdict.UNVERIFIABLE, _ORACLE,
+                           (("reason", f"invalid rel_tol: {rel_tol!r}"),))
     if lhs.dim != rhs.dim:
         return Certificate(claim, Verdict.REFUTED, _ORACLE,
                            (("lhs_dim", str(lhs.dim)), ("rhs_dim", str(rhs.dim))))

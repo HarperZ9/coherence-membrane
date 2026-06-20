@@ -20,6 +20,14 @@ def test_check_equation_f_equals_ma_verified():
     assert c.oracle == "dimensional-invariant-v1"
 
 
+def test_check_equation_pathological_tol_is_unverifiable():
+    # an infinite/nan/negative rel_tol must NOT launder a false VERIFIED (soundness)
+    a, b = Quantity(1.0, MASS), Quantity(999.0, MASS)
+    assert check_equation(a, b, rel_tol=float("inf")).verdict is Verdict.UNVERIFIABLE
+    assert check_equation(a, b, rel_tol=float("nan")).verdict is Verdict.UNVERIFIABLE
+    assert check_equation(a, b, rel_tol=-1.0).verdict is Verdict.UNVERIFIABLE
+
+
 def test_check_equation_wrong_magnitude_refuted():
     m = Quantity(2.0, MASS)
     a = Quantity(3.0, LENGTH / TIME ** 2)
