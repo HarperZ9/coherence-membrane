@@ -58,3 +58,21 @@ def srgb_to_oklab(rgb: Triple) -> Triple:
 def oklab_to_srgb(lab: Triple) -> Triple:
     """OKLab -> sRGB (gamma), clamped to [0,1]."""
     return tuple(min(1.0, max(0.0, linear_to_srgb(c))) for c in _oklab_to_lin(*lab))
+
+
+def delta_e_ok(lab1: Triple, lab2: Triple) -> float:
+    """Perceptual color difference: Euclidean distance in OKLab."""
+    return math.sqrt(sum((lab1[i] - lab2[i]) ** 2 for i in range(3)))
+
+
+def relative_luminance(rgb: Triple) -> float:
+    """WCAG/BT.709 relative luminance from sRGB (gamma) in [0,1]."""
+    r, g, b = (srgb_to_linear(c) for c in rgb)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def wcag_contrast(rgb1: Triple, rgb2: Triple) -> float:
+    """WCAG contrast ratio between two sRGB colors (1.0 .. 21.0)."""
+    l1, l2 = relative_luminance(rgb1), relative_luminance(rgb2)
+    lighter, darker = max(l1, l2), min(l1, l2)
+    return (lighter + 0.05) / (darker + 0.05)
