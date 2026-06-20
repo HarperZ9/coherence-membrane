@@ -27,6 +27,7 @@ from .organs.region import RegionArtifactOrgan
 from .organs.structured import StructuredDataOrgan
 from .organs.verifier import PropositionalVerifierOrgan
 from .organs.quantity_verifier import QuantityVerifierOrgan
+from .organs.distribution_verifier import DistributionVerifierOrgan
 from .organs.visual import VisualArtifactOrgan
 
 
@@ -55,6 +56,7 @@ def all_organs() -> list[Organ]:
         ColorQuantizeOrgan(),
         PropositionalVerifierOrgan(),
         QuantityVerifierOrgan(),
+        DistributionVerifierOrgan(),
         CaptionOrgan(),
     ]
 
