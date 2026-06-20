@@ -69,3 +69,68 @@ def contour(field: Field, level: float = 0.5) -> Geometry:
                     segs.append(Polyline((top, left)))
                     segs.append(Polyline((right, bottom)))
     return Geometry(paths=tuple(segs), unknown=tuple(unknown))
+
+
+def _next_seg(ends, used, point):
+    for i in ends.get(point, ()):
+        if not used[i]:
+            return i
+    return None
+
+
+def stitch(geometry: Geometry) -> Geometry:
+    """Join open 2-point segments into maximal polylines by exact shared
+    endpoints. A chain returning to its start becomes a closed Polyline. Isolated
+    points, unknown markers, and non-(open 2-point) paths pass through unchanged."""
+    def _is_seg(p: Polyline) -> bool:
+        return len(p.points) == 2 and not p.closed
+
+    segs = [(p.points[0], p.points[1]) for p in geometry.paths if _is_seg(p)]
+    passthrough = tuple(p for p in geometry.paths if not _is_seg(p))
+
+    ends = defaultdict(list)
+    for i, (a, b) in enumerate(segs):
+        ends[a].append(i)
+        ends[b].append(i)
+
+    used = [False] * len(segs)
+    chains: list[Polyline] = []
+    for s0 in range(len(segs)):
+        if used[s0]:
+            continue
+        used[s0] = True
+        a, b = segs[s0]
+        chain = [a, b]
+        # grow at the tail
+        while True:
+            tail = chain[-1]
+            nxt = _next_seg(ends, used, tail)
+            if nxt is None:
+                break
+            used[nxt] = True
+            x, y = segs[nxt]
+            chain.append(y if x == tail else x)
+            if chain[-1] == chain[0]:
+                break
+        # grow at the head (unless already closed)
+        if chain[-1] != chain[0]:
+            while True:
+                head = chain[0]
+                nxt = _next_seg(ends, used, head)
+                if nxt is None:
+                    break
+                used[nxt] = True
+                x, y = segs[nxt]
+                chain.insert(0, y if x == head else x)
+                if chain[0] == chain[-1]:
+                    break
+        closed = len(chain) > 3 and chain[0] == chain[-1]
+        if closed:
+            chain = chain[:-1]
+        chains.append(Polyline(tuple(chain), closed=closed))
+
+    return Geometry(
+        paths=passthrough + tuple(chains),
+        points=geometry.points,
+        unknown=geometry.unknown,
+    )
