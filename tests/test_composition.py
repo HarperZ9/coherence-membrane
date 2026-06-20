@@ -22,7 +22,14 @@ def test_compose_all_verified():
     c = compose([_c(Verdict.VERIFIED), _c(Verdict.VERIFIED)])
     assert c.verdict is Verdict.VERIFIED
     assert c.oracle == "composed-v1"
-    assert dict(c.evidence)["step:o"] == "verified"
+    assert dict(c.evidence)["step0:o"] == "verified"
+
+
+def test_compose_evidence_distinguishes_same_oracle_steps():
+    # two steps from the same oracle must stay distinct in the evidence (indexed keys)
+    c = compose([_c(Verdict.REFUTED, "z"), _c(Verdict.VERIFIED, "z")])
+    ev = dict(c.evidence)
+    assert ev["step0:z"] == "refuted" and ev["step1:z"] == "verified"
 
 
 def test_compose_refuted_dominates():

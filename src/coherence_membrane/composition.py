@@ -27,7 +27,7 @@ def meet_verdicts(verdicts: Iterable[Verdict]) -> Verdict:
     return _L2V[DRIFT_LATTICE.fold_meet(_V2L[v] for v in verdicts)]
 
 
-def compose(certs, *, claim: str | None = None) -> Certificate:
+def compose(certs: Iterable[Certificate], *, claim: str | None = None) -> Certificate:
     """Compose a multi-step argument into one Certificate: the whole holds only if
     every step does. Verdict = the proven meet over the steps. Empty -> UNVERIFIABLE
     (fail-closed: nothing was verified), NOT vacuous VERIFIED. Oracle 'composed-v1';
@@ -39,5 +39,5 @@ def compose(certs, *, claim: str | None = None) -> Certificate:
                            (("reason", "no steps to compose"),))
     verdict = meet_verdicts(c.verdict for c in certs)
     summary = claim if claim is not None else " & ".join(c.claim for c in certs)
-    evidence = tuple((f"step:{c.oracle}", c.verdict.value) for c in certs)
+    evidence = tuple((f"step{i}:{c.oracle}", c.verdict.value) for i, c in enumerate(certs))
     return Certificate(summary, verdict, "composed-v1", evidence)
