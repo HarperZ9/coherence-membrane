@@ -35,6 +35,14 @@ def test_resolution_const_is_unverifiable():
     assert res_check_validity(Or(Var("A"), Const(True))).verdict is Verdict.UNVERIFIABLE
 
 
+def test_resolution_deeply_nested_degrades():
+    # a pathologically deep formula must degrade to UNVERIFIABLE, not raise (fail-closed)
+    f = Var("A")
+    for _ in range(2000):
+        f = Not(f)
+    assert res_check_validity(f).verdict is Verdict.UNVERIFIABLE
+
+
 def test_resolution_agrees_or_abstains_vs_dpll_and_truth_table():
     # three INDEPENDENT paradigms: resolution must AGREE when decisive, or abstain
     # (UNVERIFIABLE on CNF blow-up) — never disagree

@@ -107,19 +107,23 @@ def _resolve_all(clauses) -> bool:
 
 def res_check_validity(formula, *, max_atoms: int = 16) -> Certificate:
     """Valid iff CNF(¬formula) resolves to the empty clause. VERIFIED / REFUTED /
-    UNVERIFIABLE (const, over-cap, or blow-up). SOUNDNESS: never VERIFIED unless the
-    empty clause is derived."""
-    claim = show(formula)
-    if _has_const(formula):
-        return Certificate(claim, Verdict.UNVERIFIABLE, _ORACLE,
-                           (("reason", "Const outside resolution-v1 fragment"),))
-    if len(atoms(formula)) > max_atoms:
-        return Certificate(claim, Verdict.UNVERIFIABLE, _ORACLE,
-                           (("reason", f"{len(atoms(formula))} atoms > cap {max_atoms}"),))
+    UNVERIFIABLE (const, over-cap, blow-up, or too deeply nested). SOUNDNESS: never
+    VERIFIED unless the empty clause is derived.
+
+    max_atoms is tighter than DPLL's (20) on purpose: CNF distribution is worst-case
+    exponential in formula size, so resolution caps conservatively (fail-closed)."""
     try:
+        claim = show(formula)
+        if _has_const(formula):
+            return Certificate(claim, Verdict.UNVERIFIABLE, _ORACLE,
+                               (("reason", "Const outside resolution-v1 fragment"),))
+        if len(atoms(formula)) > max_atoms:
+            return Certificate(claim, Verdict.UNVERIFIABLE, _ORACLE,
+                               (("reason", f"{len(atoms(formula))} atoms > cap {max_atoms}"),))
         unsat = _resolve_all(_clauses(_nnf(formula, True)))   # _nnf(.., True) = NNF(¬formula)
-    except _Blowup:
-        return Certificate(claim, Verdict.UNVERIFIABLE, _ORACLE, (("reason", "CNF/resolution blow-up"),))
+    except (_Blowup, RecursionError):   # a depth/size blow-up must degrade, not crash the caller
+        return Certificate(type(formula).__name__, Verdict.UNVERIFIABLE, _ORACLE,
+                           (("reason", "CNF/resolution blow-up or too deeply nested"),))
     if unsat:
         return Certificate(claim, Verdict.VERIFIED, _ORACLE, (("valid", "negation refuted (empty clause)"),))
     return Certificate(claim, Verdict.REFUTED, _ORACLE, (("invalid", "negation satisfiable (saturated)"),))
