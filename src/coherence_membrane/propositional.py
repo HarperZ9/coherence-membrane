@@ -199,7 +199,12 @@ def check_sat(formula, *, max_atoms: int = 20) -> Certificate:
 def check_validity(formula, *, max_atoms: int = 20, backend=None) -> Certificate:
     """Valid? VERIFIED if the negation is unsat; REFUTED + counterexample if
     falsifiable; over cap, consult an optional `backend` (formula->Certificate|None)
-    then UNVERIFIABLE. SOUNDNESS: never VERIFIED unless the negation is proven unsat."""
+    then UNVERIFIABLE.
+
+    SOUNDNESS: the native path never returns VERIFIED unless the negation is proven
+    unsat. A supplied `backend` is part of the TRUSTED BASE — its verdict is returned
+    as-is, so supply only a sound oracle. The shipped organ passes no backend, so it
+    is unconditionally sound."""
     claim = show(formula)
     try:
         model = solve(Not(formula), max_atoms=max_atoms)
