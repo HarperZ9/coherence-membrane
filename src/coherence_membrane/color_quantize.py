@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from .color import Triple, delta_e_ok, oklab_to_srgb
+from .color_field import ColorField
 
 
 def _median_cut(colors: list[Triple], k: int) -> list[list[Triple]]:
@@ -10,7 +11,7 @@ def _median_cut(colors: list[Triple], k: int) -> list[list[Triple]]:
     boxes: list[list[Triple]] = [list(colors)]
     while len(boxes) < k:
         # pick the splittable box with the largest single-axis extent
-        best_i, best_extent = -1, -1.0
+        best_i, best_axis, best_extent = -1, 0, -1.0
         for i, box in enumerate(boxes):
             if len(box) < 2:
                 continue
@@ -18,12 +19,11 @@ def _median_cut(colors: list[Triple], k: int) -> list[list[Triple]]:
                 vals = [c[ax] for c in box]
                 extent = max(vals) - min(vals)
                 if extent > best_extent:
-                    best_extent, best_i = extent, i
+                    best_extent, best_i, best_axis = extent, i, ax
         if best_i < 0:
             break                                  # nothing left to split
         box = boxes[best_i]
-        axis = max(range(3), key=lambda ax: max(c[ax] for c in box) - min(c[ax] for c in box))
-        box.sort(key=lambda c: c[axis])
+        box.sort(key=lambda c: c[best_axis])       # split along the axis that won selection
         mid = len(box) // 2
         boxes[best_i : best_i + 1] = [box[:mid], box[mid:]]
     return boxes
@@ -43,7 +43,7 @@ def _nearest(lab: Triple, palette: tuple[Triple, ...]) -> int:
     return best_i
 
 
-def quantize(field, k: int) -> tuple[tuple[int, ...], tuple[Triple, ...]]:
+def quantize(field: ColorField, k: int) -> tuple[tuple[int, ...], tuple[Triple, ...]]:
     """Median-cut quantize a ColorField to <= k OKLab colors. Returns
     (indices, palette); UNVERIFIABLE cells get index -1."""
     if k < 1:
@@ -59,7 +59,7 @@ def quantize(field, k: int) -> tuple[tuple[int, ...], tuple[Triple, ...]]:
     return indices, palette
 
 
-def quantization_error(field, indices: tuple[int, ...], palette: tuple[Triple, ...]) -> dict:
+def quantization_error(field: ColorField, indices: tuple[int, ...], palette: tuple[Triple, ...]) -> dict:
     """Mean and max ΔE-OK between each known cell and its assigned palette color."""
     errs = [
         delta_e_ok(field.lab[i], palette[indices[i]])
