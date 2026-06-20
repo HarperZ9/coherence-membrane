@@ -76,3 +76,10 @@ def test_all_organs_survive_pathological_subjects():
     # ValueError (not OSError) — must still degrade, not crash.
     snap = perceive([_BadFspath(), _BadFrame(), "foo\x00bar.png"], organs=all_organs())
     assert all(o.status == Status.UNVERIFIED for o in snap.observations)
+
+
+def test_all_organs_count_and_selftests_pass():
+    # tier-2 registered: 11 (Plan 1) + quantity + distribution = 13, all selftests green
+    organs = all_organs()
+    assert len(organs) == 13
+    assert run_selftests(organs)["passed"]

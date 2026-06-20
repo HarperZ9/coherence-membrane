@@ -80,6 +80,7 @@ from .organs.raw import RawFrameOrgan
 from .organs.region import RegionArtifactOrgan
 from .organs.verifier import PropositionalVerifierOrgan
 from .organs.quantity_verifier import QuantityVerifierOrgan
+from .organs.distribution_verifier import DistributionVerifierOrgan
 from .organs.visual import VisualArtifactOrgan
 from .receipt import (
     DRIFT as RECEIPT_DRIFT,
@@ -141,6 +142,7 @@ __all__ = [
     "CaptionOrgan",
     "PropositionalVerifierOrgan",
     "QuantityVerifierOrgan",
+    "DistributionVerifierOrgan",
     "audio_envelope_hash",
     "canonical_json_bytes",
     "canonical_caption",
