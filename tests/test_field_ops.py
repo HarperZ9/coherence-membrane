@@ -182,3 +182,23 @@ def test_csg_propagates_unknown_and_checks_dims():
     assert union(a, b).is_unknown(0, 0)
     with pytest.raises(ValueError):
         union(a, _sdf(3, 1, [0.0, 0.0, 0.0]))   # dim mismatch
+
+
+def test_diff_is_a_minus_b():
+    from coherence_membrane.field_ops import diff
+    a = _sdf(2, 1, [-1.0, 2.0])
+    b = _sdf(2, 1, [1.0, -2.0])
+    # diff = max(a, -b): max(-1, -1) = -1 ; max(2, 2) = 2
+    assert diff(a, b).values == (-1.0, 2.0)
+
+
+def test_smin_is_smoother_than_min():
+    from coherence_membrane.field_ops import smin
+    a = _sdf(1, 1, [0.0])
+    b = _sdf(1, 1, [0.0])
+    s = smin(a, b, 1.0).at(0, 0)
+    assert s < 0.0                      # smooth dip below min(0,0)=0
+    assert abs(s - (-0.25)) < 1e-9      # IQ poly: h=0.5 -> -k*0.25
+    import pytest
+    with pytest.raises(ValueError):
+        smin(a, b, 0.0)
