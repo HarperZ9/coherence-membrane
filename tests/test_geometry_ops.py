@@ -64,9 +64,12 @@ def test_stitch_joins_open_chain():
     assert len(out.paths) == 1
     chain = out.paths[0]
     assert chain.closed is False
-    # endpoints are the two degree-1 nodes; the chain visits all 4 points
-    assert set(chain.points) == {Point(0, 0), Point(1, 0), Point(2, 0), Point(2, 1)}
-    assert len(chain.points) == 4
+    # the chain is geometrically contiguous (adjacent points share a segment),
+    # in one of the two valid orientations
+    assert chain.points in {
+        (Point(0, 0), Point(1, 0), Point(2, 0), Point(2, 1)),
+        (Point(2, 1), Point(2, 0), Point(1, 0), Point(0, 0)),
+    }
 
 
 def test_stitch_detects_closed_loop():
@@ -89,5 +92,6 @@ def test_stitch_passes_through_points_and_unknown():
         unknown=(Point(9, 9),),
     )
     out = stitch(g)
+    assert len(out.paths) == 1 and out.paths[0].closed is False
     assert out.points == (Point(5, 5),)
     assert out.unknown == (Point(9, 9),)
