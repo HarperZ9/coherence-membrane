@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 
 from coherence_membrane.field import Field, FieldKind
-from coherence_membrane.field_ops import threshold, negate, boundary, downscale, distance
+from coherence_membrane.field_ops import threshold, negate, boundary, downscale, distance, erode, dilate
 
 
 def _f(w, h, vals, unknown=None, kind=FieldKind.LUMINANCE):
@@ -112,3 +112,26 @@ def test_distance_propagates_unknown_and_requires_occupancy():
     import pytest
     with pytest.raises(ValueError):
         distance(_f(2, 1, [0.0, 1.0], kind=FieldKind.LUMINANCE))
+
+
+def _occ5_block():  # 5x5 with a 3x3 inside block at x,y in 1..3
+    vals = [0.0] * 25
+    for y in range(1, 4):
+        for x in range(1, 4):
+            vals[y * 5 + x] = 1.0
+    return _f(5, 5, vals, kind=FieldKind.OCCUPANCY)
+
+
+def test_erode_shrinks_to_core():
+    eroded = erode(_occ5_block(), 2.0)   # keep only sdf <= -2  => center only
+    assert eroded.kind is FieldKind.OCCUPANCY
+    assert eroded.at(2, 2) == 1.0
+    assert sum(eroded.values) == 1.0     # exactly one inside cell remains
+
+
+def test_dilate_grows_to_plus():
+    vals = [0.0] * 25
+    vals[2 * 5 + 2] = 1.0
+    grown = dilate(_f(5, 5, vals, kind=FieldKind.OCCUPANCY), 1.0)  # sdf <= 1
+    inside = {(x, y) for y in range(5) for x in range(5) if grown.at(x, y) == 1.0}
+    assert inside == {(2, 2), (1, 2), (3, 2), (2, 1), (2, 3)}  # plus shape

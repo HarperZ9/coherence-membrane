@@ -112,3 +112,19 @@ def distance(field: Field) -> Field:
             d = min(math.hypot(x - tx, y - ty) for tx, ty in targets)
             values[i] = -d if is_inside else d
     return Field(w, h, FieldKind.SIGNED_DISTANCE, tuple(values), tuple(unknown))
+
+
+def _sdf_le(sdf: Field, level: float) -> Field:
+    """OCCUPANCY 1.0 where the SDF value <= level (unknown propagated)."""
+    values = tuple(1.0 if v <= level else 0.0 for v in sdf.values)
+    return Field(sdf.width, sdf.height, FieldKind.OCCUPANCY, values, sdf.unknown)
+
+
+def erode(field: Field, radius: float) -> Field:
+    """Shrink the inside by `radius`: keep cells at least `radius` deep inside."""
+    return _sdf_le(distance(field), -radius)
+
+
+def dilate(field: Field, radius: float) -> Field:
+    """Grow the inside by `radius`: include cells within `radius` of the inside."""
+    return _sdf_le(distance(field), radius)
