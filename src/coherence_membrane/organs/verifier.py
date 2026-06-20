@@ -28,8 +28,16 @@ class PropositionalVerifierOrgan:
                 Provenance.witness_bytes(str(subject), b"", "low"),
                 {"reason": "unsupported subject (expected a propositional Formula)"},
             )]
-        cert = check_validity(subject, max_atoms=self.max_atoms)
-        claim = show(subject)
+        try:
+            cert = check_validity(subject, max_atoms=self.max_atoms)
+            claim = show(subject)
+        except (TypeError, RecursionError) as exc:   # malformed AST -> fail-closed, never raise
+            return [Observation(
+                self.name, str(subject), "malformed formula",
+                Status.UNVERIFIED,
+                Provenance.witness_bytes(str(subject), b"", "low"),
+                {"reason": f"malformed: {exc}"},
+            )]
         decided = cert.verdict in (Verdict.VERIFIED, Verdict.REFUTED)
         identity = sha256_hex(claim.encode())
         return [Observation(
