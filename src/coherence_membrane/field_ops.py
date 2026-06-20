@@ -160,3 +160,21 @@ def union(a: Field, b: Field) -> Field:
 def intersect(a: Field, b: Field) -> Field:
     """CSG intersection of two SDFs: per-cell maximum (inside-and-inside)."""
     return _csg(a, b, max)
+
+
+def diff(a: Field, b: Field) -> Field:
+    """CSG difference a \\ b: per-cell max(a, -b)."""
+    return _csg(a, b, lambda av, bv: max(av, -bv))
+
+
+def smin(a: Field, b: Field, k: float = 1.0) -> Field:
+    """Smooth CSG union (Inigo Quilez polynomial smin) over two SDFs, blend
+    radius `k`. Reduces to min as k -> 0."""
+    if k <= 0:
+        raise ValueError("smin blend radius k must be positive")
+
+    def _op(av: float, bv: float) -> float:
+        h = min(1.0, max(0.0, 0.5 + 0.5 * (bv - av) / k))
+        return bv * (1.0 - h) + av * h - k * h * (1.0 - h)
+
+    return _csg(a, b, _op)
