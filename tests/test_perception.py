@@ -79,7 +79,7 @@ def test_all_organs_survive_pathological_subjects():
 
 
 def test_all_organs_count_and_selftests_pass():
-    # tier-2 registered: 11 (Plan 1) + quantity + distribution = 13, all selftests green
+    # tier-2 (11+quantity+distribution=13) + tier-3 cross-check = 14, all selftests green
     organs = all_organs()
-    assert len(organs) == 13
+    assert len(organs) == 14
     assert run_selftests(organs)["passed"]
