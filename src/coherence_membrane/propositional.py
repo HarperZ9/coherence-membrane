@@ -175,3 +175,40 @@ def solve(formula, *, max_atoms: int = 20) -> dict | None:
     if not search():
         return None
     return {n: assignment.get(n, False) for n in names}   # complete the partial model
+
+
+_ORACLE = "propositional-dpll-v1"
+
+
+def _model_evidence(prefix: str, model: dict) -> tuple[tuple[str, str], ...]:
+    return tuple((f"{prefix}:{k}", str(int(model[k]))) for k in sorted(model))
+
+
+def check_sat(formula, *, max_atoms: int = 20) -> Certificate:
+    """Satisfiable? VERIFIED + model, REFUTED if unsat, UNVERIFIABLE over cap."""
+    claim = f"SAT {show(formula)}"
+    try:
+        model = solve(formula, max_atoms=max_atoms)
+    except OverCap as exc:
+        return Certificate(claim, Verdict.UNVERIFIABLE, _ORACLE, (("reason", str(exc)),))
+    if model is None:
+        return Certificate(claim, Verdict.REFUTED, _ORACLE, (("unsat", "no satisfying assignment"),))
+    return Certificate(claim, Verdict.VERIFIED, _ORACLE, _model_evidence("model", model))
+
+
+def check_validity(formula, *, max_atoms: int = 20, backend=None) -> Certificate:
+    """Valid? VERIFIED if the negation is unsat; REFUTED + counterexample if
+    falsifiable; over cap, consult an optional `backend` (formula->Certificate|None)
+    then UNVERIFIABLE. SOUNDNESS: never VERIFIED unless the negation is proven unsat."""
+    claim = show(formula)
+    try:
+        model = solve(Not(formula), max_atoms=max_atoms)
+    except OverCap as exc:
+        if backend is not None:
+            cert = backend(formula)
+            if cert is not None:
+                return cert
+        return Certificate(claim, Verdict.UNVERIFIABLE, _ORACLE, (("reason", str(exc)),))
+    if model is None:
+        return Certificate(claim, Verdict.VERIFIED, _ORACLE, (("valid", "negation unsatisfiable"),))
+    return Certificate(claim, Verdict.REFUTED, _ORACLE, _model_evidence("counterexample", model))
