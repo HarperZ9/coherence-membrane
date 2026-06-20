@@ -63,3 +63,21 @@ def to_svg(
         parts.append(f"<!-- {len(geometry.unknown)} UNVERIFIABLE cells omitted -->")
     parts.append("</svg>")
     return "\n".join(parts)
+
+
+def to_coords(geometry: Geometry, *, decimals: int = 2) -> str:
+    """Geometry -> a compact sparse text listing (token-cheap, model-readable).
+    'L'=open polyline, 'P'=closed polygon, 'pt'=isolated point; a trailing
+    'unknown N' line when N>0. Empty geometry -> 'empty'."""
+    lines: list[str] = []
+    for poly in geometry.paths:
+        tag = "P" if poly.closed else "L"
+        coords = " ".join(
+            f"{_fmt(p.x, decimals)},{_fmt(p.y, decimals)}" for p in poly.points
+        )
+        lines.append(f"{tag} {coords}")
+    for pt in geometry.points:
+        lines.append(f"pt {_fmt(pt.x, decimals)},{_fmt(pt.y, decimals)}")
+    if geometry.unknown:
+        lines.append(f"unknown {len(geometry.unknown)}")
+    return "\n".join(lines) if lines else "empty"
