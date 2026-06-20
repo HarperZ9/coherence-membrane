@@ -3,7 +3,7 @@ an ASCII cell; ideal for sparse 'ink = signal' (negative-space) projections."""
 from __future__ import annotations
 
 from .field import Field
-from .field_ops import downscale
+from .field_ops import boundary, downscale, threshold
 
 _BRAILLE_BASE = 0x2800
 # Bit per (row, col) inside a 2-wide x 4-tall cell. Standard braille numbering:
@@ -74,3 +74,21 @@ def braille_view(
     """Downscale a field to a braille dot grid, then pack to glyphs."""
     dot_w, dot_h = target_dot_grid(field, cols, rows)
     return pack_braille(downscale(field, dot_w, dot_h), ink_threshold)
+
+
+def sparse_braille(
+    field: Field,
+    *,
+    threshold_t: float = 0.5,
+    edge_threshold: float = 0.1,
+    cols: int = 64,
+    rows: int | None = None,
+) -> list[str]:
+    """The canonical 'negatives' recipe: downscale -> threshold -> boundary ->
+    braille. Ink = the (sparse) boundary, background = blank => maximum
+    information per token. Computing the boundary at dot resolution keeps edges
+    crisp and cheap."""
+    dot_w, dot_h = target_dot_grid(field, cols, rows)
+    small = downscale(field, dot_w, dot_h)
+    edges = boundary(threshold(small, threshold_t), edge_threshold)
+    return pack_braille(edges, ink_threshold=0.5)
