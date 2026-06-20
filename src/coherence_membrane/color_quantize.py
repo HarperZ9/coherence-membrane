@@ -73,7 +73,7 @@ def quantization_error(field: ColorField, indices: tuple[int, ...], palette: tup
 
 def palette_to_hex(palette: tuple[Triple, ...]) -> tuple[str, ...]:
     """Each OKLab palette color -> #rrggbb (via canonical OKLab->sRGB)."""
-    out = []
+    out: list[str] = []
     for lab in palette:
         r, g, b = (round(c * 255) for c in oklab_to_srgb(lab))
         out.append(f"#{r:02x}{g:02x}{b:02x}")
