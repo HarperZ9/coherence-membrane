@@ -37,3 +37,26 @@ def test_svg_escapes_stroke():
                  stroke='red" onload="x')
     assert 'onload="x' not in svg                 # raw quote did not escape the attr
     assert "&quot;" in svg                        # it was XML-escaped
+
+
+from coherence_membrane.geometry_encode import to_coords
+
+
+def test_coords_lines_and_tags():
+    g = Geometry(
+        paths=(
+            Polyline((Point(0, 0), Point(1, 0))),
+            Polyline((Point(0, 0), Point(2, 0), Point(1, 2)), closed=True),
+        ),
+        points=(Point(5, 6),),
+        unknown=(Point(9, 9),),
+    )
+    out = to_coords(g).splitlines()
+    assert out[0] == "L 0,0 1,0"
+    assert out[1] == "P 0,0 2,0 1,2"
+    assert out[2] == "pt 5,6"
+    assert out[3] == "unknown 1"
+
+
+def test_coords_empty():
+    assert to_coords(Geometry()) == "empty"
