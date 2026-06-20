@@ -3,6 +3,7 @@ an ASCII cell; ideal for sparse 'ink = signal' (negative-space) projections."""
 from __future__ import annotations
 
 from .field import Field
+from .field_ops import downscale
 
 _BRAILLE_BASE = 0x2800
 # Bit per (row, col) inside a 2-wide x 4-tall cell. Standard braille numbering:
@@ -46,3 +47,30 @@ def pack_braille(field: Field, ink_threshold: float = 0.5) -> list[str]:
 def braille_text(view: list[str]) -> str:
     """The view as a single newline-joined string (the witnessed artifact form)."""
     return "\n".join(view)
+
+
+def target_dot_grid(field: Field, cols: int, rows: int | None) -> tuple[int, int]:
+    """Resolve the (dot_width, dot_height) to downscale to. `cols` is glyph
+    columns (2 dots each); `rows` is glyph rows (4 dots each). Never upscales;
+    a None `rows` preserves aspect at the dot level."""
+    if cols <= 0:
+        raise ValueError("cols must be positive")
+    dot_w = min(2 * cols, field.width)
+    if rows is None:
+        dot_h0 = max(1, round(dot_w * field.height / field.width))
+        rows = max(1, (dot_h0 + 3) // 4)
+    if rows <= 0:
+        raise ValueError("rows must be positive")
+    dot_h = min(4 * rows, field.height)
+    return dot_w, dot_h
+
+
+def braille_view(
+    field: Field,
+    cols: int = 64,
+    rows: int | None = None,
+    ink_threshold: float = 0.5,
+) -> list[str]:
+    """Downscale a field to a braille dot grid, then pack to glyphs."""
+    dot_w, dot_h = target_dot_grid(field, cols, rows)
+    return pack_braille(downscale(field, dot_w, dot_h), ink_threshold)
