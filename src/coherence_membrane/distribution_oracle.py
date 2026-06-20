@@ -9,6 +9,7 @@ import math
 from dataclasses import dataclass
 
 from .certificate import Certificate, Verdict
+from .composition import meet_verdicts
 from .distribution import Distribution
 
 _ORACLE = "distribution-invariant-v1"
@@ -74,12 +75,7 @@ def check_distribution(d: Distribution, *, mean=None, variance=None,
     parts = [("normalized", check_normalized(d, tol=tol))]
     if mean is not None or variance is not None:
         parts.append(("moments", check_moments(d, mean=mean, variance=variance, rel_tol=rel_tol)))
-    if any(c.verdict is Verdict.REFUTED for _, c in parts):
-        verdict = Verdict.REFUTED
-    elif any(c.verdict is Verdict.UNVERIFIABLE for _, c in parts):
-        verdict = Verdict.UNVERIFIABLE
-    else:
-        verdict = Verdict.VERIFIED
+    verdict = meet_verdicts(c.verdict for _, c in parts)   # proven lattice meet (no hand-rolled 3-valued logic)
     claim = " & ".join(name for name, _ in parts)
     evidence = tuple((f"{name}:{k}", v) for name, c in parts for k, v in c.evidence)
     return Certificate(claim, verdict, _ORACLE, evidence)
