@@ -57,6 +57,8 @@ def check_moments(d: Distribution, *, mean=None, variance=None,
     for label, claimed in (("mean", mean), ("variance", variance)):
         if claimed is None:
             continue
+        # abs_tol=rel_tol so a true zero mean/variance claim verifies (pure rel_tol
+        # rejects anything compared against 0); sound — inf/nan/neg rel_tol rejected above.
         if not math.isclose(claimed, derived[label], rel_tol=rel_tol, abs_tol=rel_tol):
             return Certificate(claim, Verdict.REFUTED, _ORACLE,
                                ((f"claimed_{label}", repr(claimed)),

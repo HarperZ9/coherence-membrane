@@ -5,8 +5,8 @@ from fractions import Fraction
 import pytest
 
 from coherence_membrane.quantity import (
-    DIMENSIONLESS, LENGTH, MASS, TIME, Dimension, DimensionError, Quantity,
-    hertz, joule, kilogram, metre, newton, second, watt,
+    CURRENT, DIMENSIONLESS, LENGTH, MASS, TIME, Dimension, DimensionError, Quantity,
+    coulomb, hertz, joule, kilogram, metre, newton, ohm, pascal, second, volt, watt,
 )
 
 
@@ -52,3 +52,11 @@ def test_derived_units_have_correct_dimensions():
     assert watt.dim == joule.dim / TIME
     assert newton.magnitude == 1.0
     assert (1 / second).dim == hertz.dim
+
+
+def test_multi_op_derived_units_have_correct_dimensions():
+    # volt/ohm derive through several composed ops — lock their dimensions explicitly
+    assert pascal.dim == MASS / (LENGTH * TIME ** 2)                # Pa = kg·m^-1·s^-2
+    assert coulomb.dim == CURRENT * TIME                            # C = A·s
+    assert volt.dim == MASS * LENGTH ** 2 / (TIME ** 3 * CURRENT)   # V = kg·m^2·s^-3·A^-1
+    assert ohm.dim == volt.dim / CURRENT                           # ohm = V/A
