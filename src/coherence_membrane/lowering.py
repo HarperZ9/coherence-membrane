@@ -31,5 +31,5 @@ def field_from_png(payload: bytes) -> Field:
         height=img.height,
         kind=FieldKind.LUMINANCE,
         values=tuple(values),
-        unknown=tuple([False] * n),
+        unknown=(False,) * n,
     )

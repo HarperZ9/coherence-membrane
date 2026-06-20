@@ -18,6 +18,7 @@ from .observation import Observation
 from .organ import Organ
 from .organs.ascii_view import AsciiViewOrgan
 from .organs.audio import AudioArtifactOrgan
+from .organs.braille import BrailleViewOrgan
 from .organs.caption import CaptionOrgan
 from .organs.raw import RawFrameOrgan
 from .organs.region import RegionArtifactOrgan
@@ -45,6 +46,7 @@ def all_organs() -> list[Organ]:
         RawFrameOrgan(),
         RegionArtifactOrgan(),
         AsciiViewOrgan(),
+        BrailleViewOrgan(),
         CaptionOrgan(),
     ]
 

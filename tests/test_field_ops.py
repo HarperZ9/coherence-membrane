@@ -55,3 +55,31 @@ def test_downscale_box_average_and_unknown():
     assert abs(small.at(0, 0) - 0.5) < 1e-9
     f2 = _f(2, 2, [0.0, 1.0, 1.0, 0.0], unknown=(False, True, False, False))
     assert downscale(f2, 1, 1).is_unknown(0, 0)
+
+
+def test_negate_preserves_unknown_mask():
+    f = _f(2, 1, [0.2, 0.8], unknown=(True, False))
+    out = negate(f)
+    assert out.unknown == (True, False)
+
+
+def test_negate_occupancy_is_one_minus_v():
+    f = _f(2, 1, [0.0, 1.0], kind=FieldKind.OCCUPANCY)
+    out = negate(f)
+    assert out.kind is FieldKind.OCCUPANCY
+    assert out.values == (1.0, 0.0)
+
+
+def test_downscale_raises_on_upscale():
+    import pytest
+    # 2-wide field, asking for 3 cols -> upscale -> ValueError
+    f = _f(2, 2, [0.0, 1.0, 0.5, 0.5])
+    with pytest.raises(ValueError):
+        downscale(f, 3, 1)
+
+
+def test_downscale_raises_on_nonpositive_dims():
+    import pytest
+    f = _f(2, 2, [0.0, 1.0, 0.5, 0.5])
+    with pytest.raises(ValueError):
+        downscale(f, 0, 1)
