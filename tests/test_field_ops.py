@@ -158,3 +158,27 @@ def test_close_fills_hole():
     vals[2 * 5 + 2] = 0.0  # hole
     closed = close_(_f(5, 5, vals, kind=FieldKind.OCCUPANCY), 1.0)
     assert closed.at(2, 2) == 1.0        # hole filled by closing
+
+
+def _sdf(w, h, vals, unknown=None):
+    if unknown is None:
+        unknown = (False,) * (w * h)
+    return Field(w, h, FieldKind.SIGNED_DISTANCE, tuple(vals), tuple(unknown))
+
+
+def test_union_is_min_intersect_is_max():
+    from coherence_membrane.field_ops import union, intersect
+    a = _sdf(2, 1, [-1.0, 2.0])
+    b = _sdf(2, 1, [1.0, -2.0])
+    assert union(a, b).values == (-1.0, -2.0)
+    assert intersect(a, b).values == (1.0, 2.0)
+
+
+def test_csg_propagates_unknown_and_checks_dims():
+    import pytest
+    from coherence_membrane.field_ops import union
+    a = _sdf(2, 1, [0.0, 0.0], unknown=(True, False))
+    b = _sdf(2, 1, [0.0, 0.0])
+    assert union(a, b).is_unknown(0, 0)
+    with pytest.raises(ValueError):
+        union(a, _sdf(3, 1, [0.0, 0.0, 0.0]))   # dim mismatch

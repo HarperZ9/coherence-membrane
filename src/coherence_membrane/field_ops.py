@@ -138,3 +138,25 @@ def open_(field: Field, radius: float) -> Field:
 def close_(field: Field, radius: float) -> Field:
     """Morphological closing: dilate then erode (fills thin gaps/holes)."""
     return erode(dilate(field, radius), radius)
+
+
+def _csg(a: Field, b: Field, op) -> Field:
+    """Per-cell binary op on two same-dim SIGNED_DISTANCE fields. UNVERIFIABLE
+    where either input cell is unknown."""
+    if a.kind is not FieldKind.SIGNED_DISTANCE or b.kind is not FieldKind.SIGNED_DISTANCE:
+        raise ValueError("CSG requires two SIGNED_DISTANCE fields")
+    if a.width != b.width or a.height != b.height:
+        raise ValueError("CSG requires matching dimensions")
+    values = tuple(op(av, bv) for av, bv in zip(a.values, b.values))
+    unknown = tuple(au or bu for au, bu in zip(a.unknown, b.unknown))
+    return Field(a.width, a.height, FieldKind.SIGNED_DISTANCE, values, unknown)
+
+
+def union(a: Field, b: Field) -> Field:
+    """CSG union of two SDFs: per-cell minimum (inside-or-inside)."""
+    return _csg(a, b, min)
+
+
+def intersect(a: Field, b: Field) -> Field:
+    """CSG intersection of two SDFs: per-cell maximum (inside-and-inside)."""
+    return _csg(a, b, max)
