@@ -4,7 +4,7 @@ import pytest
 
 from coherence_membrane.field import Field, FieldKind
 from coherence_membrane.geometry import Geometry, Point, Polyline
-from coherence_membrane.geometry_ops import contour
+from coherence_membrane.geometry_ops import contour, stitch
 
 
 def _f(w, h, vals, unknown=None, kind=FieldKind.LUMINANCE):
@@ -52,3 +52,42 @@ def test_contour_saddle_emits_two_non_crossing_segments():
         frozenset({Point(0.5, 0.0), Point(1.0, 0.5)}),
         frozenset({Point(0.5, 1.0), Point(0.0, 0.5)}),
     }
+
+
+def test_stitch_joins_open_chain():
+    segs = Geometry(paths=(
+        Polyline((Point(0, 0), Point(1, 0))),
+        Polyline((Point(2, 0), Point(1, 0))),   # reversed; shares (1,0)
+        Polyline((Point(2, 0), Point(2, 1))),
+    ))
+    out = stitch(segs)
+    assert len(out.paths) == 1
+    chain = out.paths[0]
+    assert chain.closed is False
+    # endpoints are the two degree-1 nodes; the chain visits all 4 points
+    assert set(chain.points) == {Point(0, 0), Point(1, 0), Point(2, 0), Point(2, 1)}
+    assert len(chain.points) == 4
+
+
+def test_stitch_detects_closed_loop():
+    sq = Geometry(paths=(
+        Polyline((Point(0, 0), Point(1, 0))),
+        Polyline((Point(1, 0), Point(1, 1))),
+        Polyline((Point(1, 1), Point(0, 1))),
+        Polyline((Point(0, 1), Point(0, 0))),
+    ))
+    out = stitch(sq)
+    assert len(out.paths) == 1
+    assert out.paths[0].closed is True
+    assert len(out.paths[0].points) == 4         # 4 distinct corners, seam not repeated
+
+
+def test_stitch_passes_through_points_and_unknown():
+    g = Geometry(
+        paths=(Polyline((Point(0, 0), Point(1, 0))),),
+        points=(Point(5, 5),),
+        unknown=(Point(9, 9),),
+    )
+    out = stitch(g)
+    assert out.points == (Point(5, 5),)
+    assert out.unknown == (Point(9, 9),)
