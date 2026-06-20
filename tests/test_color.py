@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import math
-
 from coherence_membrane.color import (
     linear_to_srgb,
     oklab_to_srgb,
@@ -20,7 +18,7 @@ def test_gamma_roundtrip_and_anchors():
 def test_oklab_canonical_anchors():
     # canonical Ottosson: sRGB white -> (1,0,0), black -> (0,0,0)
     L, a, b = srgb_to_oklab((1.0, 1.0, 1.0))
-    assert abs(L - 1.0) < 1e-3 and abs(a) < 1e-3 and abs(b) < 1e-3
+    assert abs(L - 1.0) < 1e-6 and abs(a) < 1e-6 and abs(b) < 1e-6
     L0, a0, b0 = srgb_to_oklab((0.0, 0.0, 0.0))
     assert abs(L0) < 1e-6 and abs(a0) < 1e-6 and abs(b0) < 1e-6
 
