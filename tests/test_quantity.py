@@ -30,6 +30,12 @@ def test_quantity_add_requires_same_dimension():
         Quantity(1.0, LENGTH) + Quantity(1.0, TIME)
 
 
+def test_quantity_sub_requires_same_dimension():
+    assert (Quantity(3.0, LENGTH) - Quantity(1.0, LENGTH)).magnitude == 2.0
+    with pytest.raises(DimensionError):
+        Quantity(1.0, LENGTH) - Quantity(1.0, TIME)
+
+
 def test_quantity_mul_div_compose_dimension():
     m = Quantity(2.0, MASS)
     a = Quantity(3.0, LENGTH / TIME ** 2)
