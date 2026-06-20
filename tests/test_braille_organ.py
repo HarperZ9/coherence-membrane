@@ -1,4 +1,4 @@
-# tests/test_braille_organ.py
+"""Tests for BrailleViewOrgan — organ-level witness contract."""
 from __future__ import annotations
 
 from coherence_membrane.observation import Status, sha256_hex
@@ -35,3 +35,16 @@ def test_selftest_passes():
     result = BrailleViewOrgan().selftest()
     assert result.passed
     assert len(result.checks) >= 4
+
+
+def test_observe_missing_file_returns_unverified():
+    # OUTER fail-closed: non-existent path -> Status.UNVERIFIED, no crash
+    from pathlib import Path
+    obs = BrailleViewOrgan().observe(Path("does-not-exist.png"))[0]
+    assert obs.status == Status.UNVERIFIED
+
+
+def test_observe_unsupported_type_returns_unverified():
+    # OUTER fail-closed: unsupported subject type -> Status.UNVERIFIED, no crash
+    obs = BrailleViewOrgan().observe(123)[0]
+    assert obs.status == Status.UNVERIFIED

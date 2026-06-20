@@ -55,3 +55,25 @@ def test_sparse_braille_finds_edge_and_stays_sparse():
     glyphs = "".join(sparse_braille(f, cols=4, rows=2))
     assert any(ch != "⠀" for ch in glyphs)   # an edge was found (ink)
     assert any(ch == "⠀" for ch in glyphs)   # background stays blank (sparse)
+
+
+def test_pack_braille_multi_glyph_layout():
+    # 4 wide x 8 tall -> 2 glyph cols x 2 glyph rows
+    # left half all ink, right half blank -> 2 glyphs per row, 2 rows
+    vals = [1.0 if x < 2 else 0.0 for y in range(8) for x in range(4)]
+    f = _occ(4, 8, vals)
+    rows = pack_braille(f)
+    assert len(rows) == 2          # 2 glyph rows (8 dots / 4 per glyph)
+    assert len(rows[0]) == 2       # 2 glyph cols (4 dots / 2 per glyph)
+    assert rows[0][0] != "⠀"      # left glyph has ink
+    assert rows[0][1] == "⠀"      # right glyph is blank
+    assert rows[1][0] != "⠀"      # second row left has ink
+    assert rows[1][1] == "⠀"      # second row right is blank
+
+
+def test_target_dot_grid_raises_on_zero_cols():
+    import pytest
+    from coherence_membrane.braille import target_dot_grid
+    f = _occ(4, 4, [0.0] * 16)
+    with pytest.raises(ValueError):
+        target_dot_grid(f, cols=0, rows=None)

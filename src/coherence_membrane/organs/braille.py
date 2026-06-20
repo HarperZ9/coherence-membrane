@@ -1,4 +1,3 @@
-# src/coherence_membrane/organs/braille.py
 """BrailleViewOrgan — witnessed 'negatives -> braille' perception of a PNG."""
 from __future__ import annotations
 
@@ -35,7 +34,7 @@ class BrailleViewOrgan:
     def observe(self, subject) -> list[Observation]:
         try:
             source, payload = self._read(subject)
-        except (OSError, TypeError) as exc:
+        except (OSError, TypeError, ValueError) as exc:
             return [Observation(
                 self.name, str(subject), "unreadable subject",
                 Status.UNVERIFIED,
