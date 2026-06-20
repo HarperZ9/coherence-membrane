@@ -128,3 +128,13 @@ def erode(field: Field, radius: float) -> Field:
 def dilate(field: Field, radius: float) -> Field:
     """Grow the inside by `radius`: include cells within `radius` of the inside."""
     return _sdf_le(distance(field), radius)
+
+
+def open_(field: Field, radius: float) -> Field:
+    """Morphological opening: erode then dilate (removes thin features/specks)."""
+    return dilate(erode(field, radius), radius)
+
+
+def close_(field: Field, radius: float) -> Field:
+    """Morphological closing: dilate then erode (fills thin gaps/holes)."""
+    return erode(dilate(field, radius), radius)

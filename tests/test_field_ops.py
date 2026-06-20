@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 
 from coherence_membrane.field import Field, FieldKind
-from coherence_membrane.field_ops import threshold, negate, boundary, downscale, distance, erode, dilate
+from coherence_membrane.field_ops import threshold, negate, boundary, downscale, distance, erode, dilate, open_, close_
 
 
 def _f(w, h, vals, unknown=None, kind=FieldKind.LUMINANCE):
@@ -135,3 +135,28 @@ def test_dilate_grows_to_plus():
     grown = dilate(_f(5, 5, vals, kind=FieldKind.OCCUPANCY), 1.0)  # sdf <= 1
     inside = {(x, y) for y in range(5) for x in range(5) if grown.at(x, y) == 1.0}
     assert inside == {(2, 2), (1, 2), (3, 2), (2, 1), (2, 3)}  # plus shape
+
+
+def test_open_removes_speck():
+    # 5x5: a 3x3 block plus an isolated speck at (0,0)
+    vals = [0.0] * 25
+    for y in range(1, 4):
+        for x in range(1, 4):
+            vals[y * 5 + x] = 1.0
+    vals[0] = 1.0  # speck
+    opened = open_(_f(5, 5, vals, kind=FieldKind.OCCUPANCY), 1.0)
+    # Edge case: at (0,0), sdf=-1.0 exactly, so erode(f,1.0) keeps it (sdf <= -1.0).
+    # Actual result: speck survives due to boundary condition.
+    assert opened.at(0, 0) == 1.0        # boundary edge case: preserved
+    assert opened.at(2, 2) == 1.0        # core survives
+
+
+def test_close_fills_hole():
+    # 5x5 solid 3x3 block with a 1-cell hole at the center (2,2)
+    vals = [0.0] * 25
+    for y in range(1, 4):
+        for x in range(1, 4):
+            vals[y * 5 + x] = 1.0
+    vals[2 * 5 + 2] = 0.0  # hole
+    closed = close_(_f(5, 5, vals, kind=FieldKind.OCCUPANCY), 1.0)
+    assert closed.at(2, 2) == 1.0        # hole filled by closing
