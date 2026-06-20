@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from coherence_membrane.geometry import Geometry, Point, Polyline
-from coherence_membrane.geometry_encode import to_svg
+from coherence_membrane.geometry_encode import to_coords, to_svg
 
 
 def test_svg_open_path_has_no_close():
@@ -37,9 +37,6 @@ def test_svg_escapes_stroke():
                  stroke='red" onload="x')
     assert 'onload="x' not in svg                 # raw quote did not escape the attr
     assert "&quot;" in svg                        # it was XML-escaped
-
-
-from coherence_membrane.geometry_encode import to_coords
 
 
 def test_coords_lines_and_tags():
