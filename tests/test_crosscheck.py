@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import pytest
+
 from coherence_membrane.certificate import Certificate, Verdict
 from coherence_membrane.crosscheck import Method, cross_check_validity
-from coherence_membrane.propositional import And, Implies, Var, check_validity, show
+from coherence_membrane.propositional import And, Implies, Not, Var, check_validity, show
 
 
 def _mp():
@@ -45,3 +47,17 @@ def test_cross_check_method_that_raises_is_failclosed():
 
 def test_cross_check_foreign_subject_is_unverifiable():
     assert cross_check_validity("not a formula").verdict is Verdict.UNVERIFIABLE
+
+
+def test_cross_check_min_agree_below_two_rejected():
+    # the tier forbids single-source trust — min_agree < 2 is a contract violation
+    with pytest.raises(ValueError):
+        cross_check_validity(_mp(), min_agree=1)
+
+
+def test_cross_check_deeply_nested_formula_degrades():
+    # a pathologically deep formula must degrade to UNVERIFIABLE, not crash the harness
+    f = Var("A")
+    for _ in range(2000):
+        f = Not(f)
+    assert cross_check_validity(f).verdict is Verdict.UNVERIFIABLE
