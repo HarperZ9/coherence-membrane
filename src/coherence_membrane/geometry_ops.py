@@ -136,3 +136,50 @@ def stitch(geometry: Geometry) -> Geometry:
         points=geometry.points,
         unknown=geometry.unknown,
     )
+
+
+def _perp_dist(p: Point, a: Point, b: Point) -> float:
+    """Perpendicular distance from p to the line through a-b (point distance if
+    a == b)."""
+    dx, dy = b.x - a.x, b.y - a.y
+    if dx == 0.0 and dy == 0.0:
+        return math.hypot(p.x - a.x, p.y - a.y)
+    return abs(dx * (a.y - p.y) - (a.x - p.x) * dy) / math.hypot(dx, dy)
+
+
+def _dp(points: list[Point], eps: float) -> list[Point]:
+    if len(points) < 3:
+        return list(points)
+    a, b = points[0], points[-1]
+    idx, dmax = 0, -1.0
+    for i in range(1, len(points) - 1):
+        d = _perp_dist(points[i], a, b)
+        if d > dmax:
+            idx, dmax = i, d
+    if dmax > eps:
+        left = _dp(points[: idx + 1], eps)
+        right = _dp(points[idx:], eps)
+        return left[:-1] + right
+    return [a, b]
+
+
+def simplify(polyline: Polyline, epsilon: float) -> Polyline:
+    """Douglas-Peucker simplification. Closed polylines keep their first/last
+    anchors and the closed flag."""
+    if epsilon < 0:
+        raise ValueError("epsilon must be >= 0")
+    if len(polyline.points) < 3:
+        return polyline
+    kept = _dp(list(polyline.points), epsilon)
+    if polyline.closed and len(kept) < 3:
+        return polyline
+    return Polyline(tuple(kept), closed=polyline.closed)
+
+
+def simplify_geometry(geometry: Geometry, epsilon: float) -> Geometry:
+    """Douglas-Peucker every path; points + unknown pass through."""
+    return Geometry(
+        paths=tuple(simplify(p, epsilon) for p in geometry.paths),
+        points=geometry.points,
+        unknown=geometry.unknown,
+    )
