@@ -144,10 +144,8 @@ def test_open_removes_speck():
         for x in range(1, 4):
             vals[y * 5 + x] = 1.0
     vals[0] = 1.0  # speck
-    opened = open_(_f(5, 5, vals, kind=FieldKind.OCCUPANCY), 1.0)
-    # Edge case: at (0,0), sdf=-1.0 exactly, so erode(f,1.0) keeps it (sdf <= -1.0).
-    # Actual result: speck survives due to boundary condition.
-    assert opened.at(0, 0) == 1.0        # boundary edge case: preserved
+    opened = open_(_f(5, 5, vals, kind=FieldKind.OCCUPANCY), 2.0)
+    assert opened.at(0, 0) == 0.0        # speck removed by opening
     assert opened.at(2, 2) == 1.0        # core survives
 
 
