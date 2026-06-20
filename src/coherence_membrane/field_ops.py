@@ -77,3 +77,38 @@ def downscale(field: Field, new_width: int, new_height: int) -> Field:
             values[ti] = total / count if count else 0.0
             unknown[ti] = unk
     return Field(new_width, new_height, field.kind, tuple(values), tuple(unknown))
+
+
+def distance(field: Field) -> Field:
+    """OCCUPANCY -> signed distance field (exact Euclidean, brute force).
+    Inside (value >= 0.5) is NEGATIVE distance to the nearest outside cell;
+    outside is POSITIVE distance to the nearest inside cell; the zero level lies
+    between. A cell is UNVERIFIABLE if it is unknown, or if there is no
+    opposite-occupancy known cell (no surface to measure from)."""
+    if field.kind is not FieldKind.OCCUPANCY:
+        raise ValueError("distance requires an OCCUPANCY field")
+    w, h = field.width, field.height
+    inside: list[tuple[int, int]] = []
+    outside: list[tuple[int, int]] = []
+    for y in range(h):
+        for x in range(w):
+            i = y * w + x
+            if field.unknown[i]:
+                continue
+            (inside if field.values[i] >= 0.5 else outside).append((x, y))
+    values = [0.0] * (w * h)
+    unknown = [False] * (w * h)
+    for y in range(h):
+        for x in range(w):
+            i = y * w + x
+            if field.unknown[i]:
+                unknown[i] = True
+                continue
+            is_inside = field.values[i] >= 0.5
+            targets = outside if is_inside else inside
+            if not targets:
+                unknown[i] = True
+                continue
+            d = min(math.hypot(x - tx, y - ty) for tx, ty in targets)
+            values[i] = -d if is_inside else d
+    return Field(w, h, FieldKind.SIGNED_DISTANCE, tuple(values), tuple(unknown))

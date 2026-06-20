@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import math
+
 from coherence_membrane.field import Field, FieldKind
-from coherence_membrane.field_ops import threshold, negate, boundary, downscale
+from coherence_membrane.field_ops import threshold, negate, boundary, downscale, distance
 
 
 def _f(w, h, vals, unknown=None, kind=FieldKind.LUMINANCE):
@@ -83,3 +85,30 @@ def test_downscale_raises_on_nonpositive_dims():
     f = _f(2, 2, [0.0, 1.0, 0.5, 0.5])
     with pytest.raises(ValueError):
         downscale(f, 0, 1)
+
+
+def test_distance_single_inside_cell():
+    # 5x5, single inside cell at (2,2); rest outside
+    vals = [0.0] * 25
+    vals[2 * 5 + 2] = 1.0
+    f = _f(5, 5, vals, kind=FieldKind.OCCUPANCY)
+    sdf = distance(f)
+    assert sdf.kind is FieldKind.SIGNED_DISTANCE
+    assert sdf.at(2, 2) == -1.0          # inside, nearest outside is 1 away
+    assert sdf.at(1, 2) == 1.0           # outside, nearest inside (2,2) is 1 away
+    assert sdf.at(0, 2) == 2.0           # 2 away
+    assert abs(sdf.at(0, 0) - math.hypot(2, 2)) < 1e-9
+
+
+def test_distance_no_surface_is_unverifiable():
+    f = _f(2, 2, [1.0, 1.0, 1.0, 1.0], kind=FieldKind.OCCUPANCY)  # all inside
+    sdf = distance(f)
+    assert all(sdf.is_unknown(x, y) for y in range(2) for x in range(2))
+
+
+def test_distance_propagates_unknown_and_requires_occupancy():
+    f = _f(2, 1, [1.0, 0.0], unknown=(True, False), kind=FieldKind.OCCUPANCY)
+    assert distance(f).is_unknown(0, 0)
+    import pytest
+    with pytest.raises(ValueError):
+        distance(_f(2, 1, [0.0, 1.0], kind=FieldKind.LUMINANCE))
