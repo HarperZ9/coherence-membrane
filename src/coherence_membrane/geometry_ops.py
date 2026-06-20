@@ -151,7 +151,7 @@ def _dp(points: list[Point], eps: float) -> list[Point]:
     if len(points) < 3:
         return list(points)
     a, b = points[0], points[-1]
-    idx, dmax = 0, -1.0
+    idx, dmax = 1, -1.0   # always reassigned before use (first interior pt wins)
     for i in range(1, len(points) - 1):
         d = _perp_dist(points[i], a, b)
         if d > dmax:
@@ -164,8 +164,11 @@ def _dp(points: list[Point], eps: float) -> list[Point]:
 
 
 def simplify(polyline: Polyline, epsilon: float) -> Polyline:
-    """Douglas-Peucker simplification. Closed polylines keep their first/last
-    anchors and the closed flag."""
+    """Douglas-Peucker simplification. A vertex farther than `epsilon` from its
+    working chord is kept (boundary: a vertex at exactly `epsilon` is kept).
+    Closed polylines keep their first/last anchors and the closed flag; if
+    simplifying would drop a closed polyline below 3 points, the original is
+    returned unchanged."""
     if epsilon < 0:
         raise ValueError("epsilon must be >= 0")
     if len(polyline.points) < 3:
