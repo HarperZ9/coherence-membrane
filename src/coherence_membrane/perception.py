@@ -26,6 +26,7 @@ from .organs.raw import RawFrameOrgan
 from .organs.region import RegionArtifactOrgan
 from .organs.structured import StructuredDataOrgan
 from .organs.verifier import PropositionalVerifierOrgan
+from .organs.quantity_verifier import QuantityVerifierOrgan
 from .organs.visual import VisualArtifactOrgan
 
 
@@ -53,6 +54,7 @@ def all_organs() -> list[Organ]:
         ContourViewOrgan(),
         ColorQuantizeOrgan(),
         PropositionalVerifierOrgan(),
+        QuantityVerifierOrgan(),
         CaptionOrgan(),
     ]
 

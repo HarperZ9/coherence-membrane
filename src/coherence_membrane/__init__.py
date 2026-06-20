@@ -79,6 +79,7 @@ from .organs.contour import ContourViewOrgan
 from .organs.raw import RawFrameOrgan
 from .organs.region import RegionArtifactOrgan
 from .organs.verifier import PropositionalVerifierOrgan
+from .organs.quantity_verifier import QuantityVerifierOrgan
 from .organs.visual import VisualArtifactOrgan
 from .receipt import (
     DRIFT as RECEIPT_DRIFT,
@@ -139,6 +140,7 @@ __all__ = [
     "ContourViewOrgan",
     "CaptionOrgan",
     "PropositionalVerifierOrgan",
+    "QuantityVerifierOrgan",
     "audio_envelope_hash",
     "canonical_json_bytes",
     "canonical_caption",
