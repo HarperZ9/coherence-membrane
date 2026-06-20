@@ -81,16 +81,17 @@ def with_z3(methods=DEFAULT_METHODS) -> tuple:
     return tuple(methods) + (m,) if m is not None else tuple(methods)
 
 
-def reach_validity(formula, oracle: Method) -> Certificate:
+def reach_validity(formula, oracle: Method, *, max_atoms: int = 16) -> Certificate:
     """ADVISORY-ONLY reach for claims beyond the native panel: run the external oracle
     but return UNVERIFIABLE, carrying its opinion as labeled evidence. An uncorroborated
     external verdict is NEVER elevated to decisive — the trust basis is named
-    (advisory_oracle), the verdict withheld."""
+    (advisory_oracle), the verdict withheld. max_atoms is forwarded to match the
+    Method.decide(formula, *, max_atoms) contract the cross-check harness uses."""
     claim = show(formula) if is_formula(formula) else str(formula)
     if not is_formula(formula):
         return Certificate(claim, Verdict.UNVERIFIABLE, _REACH, (("reason", "not a formula"),))
     try:
-        cert = oracle.decide(formula)
+        cert = oracle.decide(formula, max_atoms=max_atoms)
     except Exception as exc:
         return Certificate(claim, Verdict.UNVERIFIABLE, _REACH, (("error", f"{oracle.name}: {exc!r}"),))
     return Certificate(claim, Verdict.UNVERIFIABLE, _REACH,

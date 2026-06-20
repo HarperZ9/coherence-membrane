@@ -68,6 +68,16 @@ def test_reach_failclosed_on_raise_and_foreign():
     assert reach_validity("not a formula", boom).verdict is Verdict.UNVERIFIABLE
 
 
+def test_reach_forwards_max_atoms_to_oracle():
+    # an oracle with REQUIRED max_atoms (no default) must still work via reach — the
+    # reach path forwards max_atoms to match the Method.decide(formula, *, max_atoms) contract
+    def strict(f, *, max_atoms):   # no default: would TypeError if reach omitted max_atoms
+        return Certificate(show(f), Verdict.VERIFIED, "strict-v0")
+    c = reach_validity(_mp(), Method("strict", strict))
+    assert c.verdict is Verdict.UNVERIFIABLE
+    assert dict(c.evidence)["advisory_verdict"] == "verified"   # i.e. it ran without TypeError
+
+
 @pytest.mark.skipif(not z3_available(), reason="z3 not installed")
 def test_z3_decide_agrees_with_native_panel_when_present():
     from coherence_membrane.crosscheck import cross_check_validity
