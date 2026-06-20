@@ -61,3 +61,12 @@ def test_cross_check_deeply_nested_formula_degrades():
     for _ in range(2000):
         f = Not(f)
     assert cross_check_validity(f).verdict is Verdict.UNVERIFIABLE
+
+
+def test_default_panel_is_three_way():
+    c = cross_check_validity(_mp())
+    ev = dict(c.evidence)
+    assert ev["method:dpll"] == "verified"
+    assert ev["method:truth-table"] == "verified"
+    assert ev["method:resolution"] == "verified"     # resolution is now in the default panel
+    assert c.verdict is Verdict.VERIFIED
