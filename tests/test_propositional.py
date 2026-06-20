@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from coherence_membrane.certificate import Verdict
 from coherence_membrane.propositional import (
     And, Const, Iff, Implies, Not, Or, Var,
     atoms, evaluate, is_formula, show,
     OverCap, solve,
+    check_sat, check_validity,
 )
 
 
@@ -52,3 +54,32 @@ def test_solve_over_cap():
     f = Or(Or(Var("A"), Var("B")), Var("C"))   # 3 atoms
     with pytest.raises(OverCap):
         solve(f, max_atoms=2)
+
+
+def test_check_validity_verified_and_refuted():
+    A, B = Var("A"), Var("B")
+    mp = Implies(And(A, Implies(A, B)), B)
+    c = check_validity(mp)
+    assert c.verdict is Verdict.VERIFIED and c.oracle == "propositional-dpll-v1"
+    # A -> B is not valid; counterexample A=1, B=0
+    c2 = check_validity(Implies(A, B))
+    assert c2.verdict is Verdict.REFUTED
+    assert dict(c2.evidence) == {"counterexample:A": "1", "counterexample:B": "0"}
+
+
+def test_check_sat_and_excluded_middle():
+    A = Var("A")
+    assert check_sat(And(A, Not(A))).verdict is Verdict.REFUTED      # unsat
+    assert check_validity(Or(A, Not(A))).verdict is Verdict.VERIFIED  # tautology
+
+
+def test_over_cap_is_unverifiable_then_backend():
+    A, B, C = Var("A"), Var("B"), Var("C")
+    f = Or(Or(A, B), C)                       # 3 atoms
+    c = check_validity(f, max_atoms=2)
+    assert c.verdict is Verdict.UNVERIFIABLE   # native gave up, no backend
+    # optional-oracle seam: a backend callable is consulted on over-cap
+    from coherence_membrane.certificate import Certificate
+    sentinel = Certificate("backend", Verdict.VERIFIED, "fake-backend-v0")
+    c2 = check_validity(f, max_atoms=2, backend=lambda _f: sentinel)
+    assert c2 is sentinel
