@@ -81,7 +81,9 @@ def _next_seg(ends, used, point):
 def stitch(geometry: Geometry) -> Geometry:
     """Join open 2-point segments into maximal polylines by exact shared
     endpoints. A chain returning to its start becomes a closed Polyline. Isolated
-    points, unknown markers, and non-(open 2-point) paths pass through unchanged."""
+    points, unknown markers, and non-(open 2-point) paths pass through unchanged.
+    Junctions of >2 segments (T-junctions) are resolved greedily (first unused
+    neighbour wins): the output is valid but non-canonical for branching inputs."""
     def _is_seg(p: Polyline) -> bool:
         return len(p.points) == 2 and not p.closed
 
