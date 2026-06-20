@@ -44,3 +44,14 @@ def test_braille_view_default_rows_preserve_aspect():
     f = _occ(8, 8, [1] * 64)
     view = braille_view(f, cols=2)   # dot_w=4 -> dot_h~4 -> 1 glyph row
     assert len(view) == 1 and len(view[0]) == 2
+
+
+def test_sparse_braille_finds_edge_and_stays_sparse():
+    from coherence_membrane.braille import sparse_braille
+
+    # 8x8: left half dark, right half bright => one vertical edge
+    vals = [0.0 if x < 4 else 1.0 for y in range(8) for x in range(8)]
+    f = Field(8, 8, FieldKind.LUMINANCE, tuple(vals), (False,) * 64)
+    glyphs = "".join(sparse_braille(f, cols=4, rows=2))
+    assert any(ch != "⠀" for ch in glyphs)   # an edge was found (ink)
+    assert any(ch == "⠀" for ch in glyphs)   # background stays blank (sparse)
