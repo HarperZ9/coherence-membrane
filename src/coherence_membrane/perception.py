@@ -20,6 +20,7 @@ from .organs.ascii_view import AsciiViewOrgan
 from .organs.audio import AudioArtifactOrgan
 from .organs.braille import BrailleViewOrgan
 from .organs.caption import CaptionOrgan
+from .organs.color import ColorQuantizeOrgan
 from .organs.contour import ContourViewOrgan
 from .organs.raw import RawFrameOrgan
 from .organs.region import RegionArtifactOrgan
@@ -49,6 +50,7 @@ def all_organs() -> list[Organ]:
         AsciiViewOrgan(),
         BrailleViewOrgan(),
         ContourViewOrgan(),
+        ColorQuantizeOrgan(),
         CaptionOrgan(),
     ]
 

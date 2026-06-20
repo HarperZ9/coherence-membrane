@@ -74,6 +74,7 @@ from .organ import Check, Organ, SelftestResult, run_selftests
 from .organs.ascii_view import AsciiViewOrgan
 from .organs.braille import BrailleViewOrgan
 from .organs.caption import CaptionOrgan, canonical_caption
+from .organs.color import ColorQuantizeOrgan
 from .organs.contour import ContourViewOrgan
 from .organs.raw import RawFrameOrgan
 from .organs.region import RegionArtifactOrgan
@@ -133,6 +134,7 @@ __all__ = [
     "RegionArtifactOrgan",
     "AsciiViewOrgan",
     "BrailleViewOrgan",
+    "ColorQuantizeOrgan",
     "ContourViewOrgan",
     "CaptionOrgan",
     "audio_envelope_hash",
