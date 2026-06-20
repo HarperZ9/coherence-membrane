@@ -4,7 +4,7 @@ import pytest
 
 from coherence_membrane.field import Field, FieldKind
 from coherence_membrane.geometry import Geometry, Point, Polyline
-from coherence_membrane.geometry_ops import contour, stitch
+from coherence_membrane.geometry_ops import contour, stitch, simplify, simplify_geometry
 
 
 def _f(w, h, vals, unknown=None, kind=FieldKind.LUMINANCE):
@@ -95,3 +95,34 @@ def test_stitch_passes_through_points_and_unknown():
     assert len(out.paths) == 1 and out.paths[0].closed is False
     assert out.points == (Point(5, 5),)
     assert out.unknown == (Point(9, 9),)
+
+
+def test_simplify_drops_collinear():
+    line = Polyline((Point(0, 0), Point(1, 0), Point(2, 0), Point(3, 0)))
+    out = simplify(line, 0.01)
+    assert out.points == (Point(0, 0), Point(3, 0))
+
+
+def test_simplify_keeps_significant_vertex():
+    spike = Polyline((Point(0, 0), Point(1, 5), Point(2, 0)))
+    out = simplify(spike, 0.01)
+    assert out.points == (Point(0, 0), Point(1, 5), Point(2, 0))   # spike kept
+
+
+def test_simplify_validates_and_short_circuits():
+    seg = Polyline((Point(0, 0), Point(9, 9)))
+    assert simplify(seg, 1.0) is seg                                # < 3 points: unchanged
+    with pytest.raises(ValueError):
+        simplify(seg, -1.0)
+
+
+def test_simplify_geometry_passes_through():
+    g = Geometry(
+        paths=(Polyline((Point(0, 0), Point(1, 0), Point(2, 0)),),),
+        points=(Point(7, 7),),
+        unknown=(Point(8, 8),),
+    )
+    out = simplify_geometry(g, 0.01)
+    assert out.paths[0].points == (Point(0, 0), Point(2, 0))
+    assert out.points == (Point(7, 7),)
+    assert out.unknown == (Point(8, 8),)
