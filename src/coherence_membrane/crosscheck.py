@@ -52,10 +52,17 @@ def cross_check_validity(formula, *, methods=DEFAULT_METHODS, max_atoms: int = 1
                          min_agree: int = 2) -> Certificate:
     """Cross-check a validity claim across independent methods. VERIFIED/REFUTED only
     on >=min_agree agreement with zero dissent; a split or a shortfall -> UNVERIFIABLE.
-    A method that raises is captured as its own UNVERIFIABLE (fail-closed)."""
+    A method that raises is captured as its own UNVERIFIABLE (fail-closed). Requires
+    min_agree >= 2 — single-source trust is the tier's forbidden state."""
+    if min_agree < 2:
+        raise ValueError("min_agree must be >= 2 (cross-check requires corroboration)")
     if not is_formula(formula):
         return Certificate(str(formula), Verdict.UNVERIFIABLE, _ORACLE, (("reason", "not a formula"),))
-    claim = show(formula)
+    try:
+        claim = show(formula)
+    except RecursionError:   # a pathologically deep formula must degrade, not crash the harness
+        return Certificate(type(formula).__name__, Verdict.UNVERIFIABLE, _ORACLE,
+                           (("reason", "formula too deeply nested"),))
     named: list = []
     for m in methods:
         try:
