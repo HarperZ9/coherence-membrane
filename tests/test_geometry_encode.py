@@ -57,3 +57,8 @@ def test_coords_lines_and_tags():
 
 def test_coords_empty():
     assert to_coords(Geometry()) == "empty"
+
+
+def test_coords_unknown_only_is_not_empty():
+    # geometry with only UNVERIFIABLE markers is not "empty" — it reports them
+    assert to_coords(Geometry(unknown=(Point(9, 9),))) == "unknown 1"
