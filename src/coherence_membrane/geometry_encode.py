@@ -3,6 +3,8 @@ vectors a model can read). Witnessing happens in the organ layer (see
 organs/contour.py), as with the braille encoder."""
 from __future__ import annotations
 
+import html
+
 from .geometry import Geometry, Polyline
 
 
@@ -12,7 +14,7 @@ def _fmt(v: float, decimals: int) -> str:
     s = f"{v:.{decimals}f}"
     if "." in s:
         s = s.rstrip("0").rstrip(".")
-    return "0" if s in ("", "-0") else s
+    return "0" if s == "-0" else s
 
 
 def _path_d(poly: Polyline, decimals: int) -> str:
@@ -34,7 +36,9 @@ def to_svg(
     pad: float = 1.0,
 ) -> str:
     """Geometry -> a standalone <svg> string (paths as <path>, isolated points as
-    <circle>). Unknown markers are reported in a trailing comment, never drawn."""
+    <circle>). Unknown markers are reported in a trailing comment, never drawn.
+    `stroke` is XML-escaped so the output is always well-formed."""
+    stroke = html.escape(stroke, quote=True)
     bb = geometry.bbox()
     if bb is None:
         minx, miny, vw, vh = 0.0, 0.0, 1.0, 1.0

@@ -28,3 +28,12 @@ def test_svg_isolated_point_and_empty():
     assert "<circle" in svg
     empty = to_svg(Geometry())
     assert empty.startswith("<svg") and empty.rstrip().endswith("</svg>")
+    assert 'viewBox="0 0 1 1"' in empty           # empty geometry -> unit viewBox
+
+
+def test_svg_escapes_stroke():
+    # a stroke value containing a quote must not break out of the attribute
+    svg = to_svg(Geometry(paths=(Polyline((Point(0, 0), Point(1, 0))),)),
+                 stroke='red" onload="x')
+    assert 'onload="x' not in svg                 # raw quote did not escape the attr
+    assert "&quot;" in svg                        # it was XML-escaped
