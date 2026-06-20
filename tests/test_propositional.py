@@ -3,6 +3,7 @@ from __future__ import annotations
 from coherence_membrane.propositional import (
     And, Const, Iff, Implies, Not, Or, Var,
     atoms, evaluate, is_formula, show,
+    OverCap, solve,
 )
 
 
@@ -33,3 +34,21 @@ def test_show_is_deterministic():
     assert show(_mp()) == "((A & (A -> B)) -> B)"
     assert show(Not(Var("A"))) == "~A"
     assert show(Const(True)) == "T"
+
+
+def test_solve_sat_unsat():
+    A, B = Var("A"), Var("B")
+    # satisfiable: A & ~B  -> model A=1,B=0
+    m = solve(And(A, Not(B)))
+    assert m == {"A": True, "B": False}
+    # unsatisfiable: A & ~A -> None
+    assert solve(And(A, Not(A))) is None
+    # negation of a tautology is unsat
+    assert solve(Not(Or(A, Not(A)))) is None
+
+
+def test_solve_over_cap():
+    import pytest
+    f = Or(Or(Var("A"), Var("B")), Var("C"))   # 3 atoms
+    with pytest.raises(OverCap):
+        solve(f, max_atoms=2)
