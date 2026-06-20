@@ -14,6 +14,7 @@ from dataclasses import dataclass
 
 from .certificate import Certificate, Verdict
 from .propositional import check_validity, is_formula, show
+from .resolution import res_check_validity
 from .truth_table import tt_check_validity
 
 _ORACLE = "cross-check-v1"
@@ -30,6 +31,7 @@ class Method:
 DEFAULT_METHODS = (
     Method("dpll", check_validity),
     Method("truth-table", tt_check_validity),
+    Method("resolution", res_check_validity),
 )
 
 
