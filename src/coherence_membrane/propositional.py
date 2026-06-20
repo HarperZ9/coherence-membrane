@@ -103,3 +103,75 @@ def show(f) -> str:
     if isinstance(f, Iff):
         return f"({show(f.a)} <-> {show(f.b)})"
     raise TypeError(f"not a formula: {f!r}")
+
+
+class OverCap(Exception):
+    """Raised when a formula exceeds the atom cap; the caller maps it to
+    UNVERIFIABLE (never a hang, never a false verdict)."""
+
+
+def _peval(f, a: dict):
+    """Three-valued partial evaluation: True/False if determined by the partial
+    assignment `a` alone, else None. A True/False result is monotone — it holds
+    under every completion — which is what makes pruning sound."""
+    if isinstance(f, Const):
+        return f.value
+    if isinstance(f, Var):
+        return a.get(f.name)
+    if isinstance(f, Not):
+        v = _peval(f.x, a)
+        return None if v is None else not v
+    if isinstance(f, And):
+        va, vb = _peval(f.a, a), _peval(f.b, a)
+        if va is False or vb is False:
+            return False
+        if va is True and vb is True:
+            return True
+        return None
+    if isinstance(f, Or):
+        va, vb = _peval(f.a, a), _peval(f.b, a)
+        if va is True or vb is True:
+            return True
+        if va is False and vb is False:
+            return False
+        return None
+    if isinstance(f, Implies):
+        va, vb = _peval(f.a, a), _peval(f.b, a)
+        if va is False or vb is True:
+            return True
+        if va is True and vb is False:
+            return False
+        return None
+    if isinstance(f, Iff):
+        va, vb = _peval(f.a, a), _peval(f.b, a)
+        if va is None or vb is None:
+            return None
+        return va == vb
+    raise TypeError(f"not a formula: {f!r}")
+
+
+def solve(formula, *, max_atoms: int = 20) -> dict | None:
+    """DPLL-style search: a satisfying assignment (completed over all atoms) or
+    None if UNSAT. Raises OverCap above the atom cap."""
+    names = sorted(atoms(formula))
+    if len(names) > max_atoms:
+        raise OverCap(f"{len(names)} atoms > cap {max_atoms}")
+    assignment: dict[str, bool] = {}
+
+    def search() -> bool:
+        v = _peval(formula, assignment)
+        if v is True:
+            return True
+        if v is False:
+            return False
+        atom = next(n for n in names if n not in assignment)
+        for val in (False, True):
+            assignment[atom] = val
+            if search():
+                return True
+            del assignment[atom]
+        return False
+
+    if not search():
+        return None
+    return {n: assignment.get(n, False) for n in names}   # complete the partial model
