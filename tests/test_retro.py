@@ -1,8 +1,6 @@
 """Tests for coherence_membrane.retro — vintage CGI render pipeline."""
 from __future__ import annotations
 
-import pytest
-
 from coherence_membrane.color import srgb_to_oklab, oklab_to_srgb
 from coherence_membrane.color_field import ColorField
 from coherence_membrane.dither import ordered_dither
