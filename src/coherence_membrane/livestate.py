@@ -110,15 +110,33 @@ class DiffChain:
     def current(self) -> FieldSnapshot:
         return self._current
 
-    def append(self, field: Field) -> FieldDiff:
-        """Perceive the next same-shape state. (Throttle + shape-change: Task 6.)"""
+    def append(self, field: Field = None, *, throttle_reason: str | None = None) -> FieldDiff:
+        """Perceive the next state. throttle_reason (field ignored) -> whole-field-unknown
+        keyframe (no silent gap). A differently-shaped field -> re-anchor keyframe."""
         new_tick = self.tick + 1
         parent = self._current
+
+        if throttle_reason is not None:
+            pf = parent.field
+            unknown_field = Field(pf.width, pf.height, pf.kind,
+                                  tuple(0.0 for _ in pf.values), tuple(True for _ in pf.values))
+            snap = FieldSnapshot(unknown_field, field_state_sha(unknown_field), new_tick,
+                                 UNVERIFIABLE, throttle_reason)
+            self.entries.append(snap)        # keyframe anchor; recovery is a clean keyframe too
+            self._current = snap
+            return FieldDiff(parent.state_sha, snap.state_sha, (), UNVERIFIABLE, new_tick, throttle_reason)
+
+        if (field.width, field.height) != (parent.field.width, parent.field.height):
+            snap = FieldSnapshot(field, field_state_sha(field), new_tick)
+            self.entries.append(snap)        # re-anchor: a diff requires equal dims
+            self._current = snap
+            return FieldDiff(parent.state_sha, snap.state_sha, (), DRIFT, new_tick)
+
         changes, verdict = field_diff(parent.field, field)
         snap = FieldSnapshot(field, field_state_sha(field), new_tick)
         diff = FieldDiff(parent.state_sha, snap.state_sha, tuple(changes), verdict, new_tick)
         if self.checkpoint_interval and new_tick % self.checkpoint_interval == 0:
-            self.entries.append(snap)     # re-anchor keyframe
+            self.entries.append(snap)
         else:
             self.entries.append(diff)
         self._current = snap
