@@ -90,6 +90,6 @@ def test_check_entails_equality():
 def test_checker_rejects_tampered_farkas():
     # the checker is the trusted base: a bogus multiplier set must NOT validate
     infeas = [constraint({"x": 1}, ">=", 1), constraint({"x": 1}, "<=", 0)]
-    assert check_farkas(infeas, {0: Fraction(1), 1: Fraction(1)}) in (True, False)  # real one may hold
+    assert check_farkas(infeas, {0: Fraction(1), 1: Fraction(1)}) is True            # the genuine certificate validates
     assert check_farkas(infeas, {0: Fraction(0), 1: Fraction(0)}) is False          # trivial: no contradiction
     assert check_model(infeas, {"x": Fraction(5)}) is False                          # x=5 violates x<=0
