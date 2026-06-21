@@ -275,6 +275,43 @@ def spans(nodes: tuple[Node, ...], edges) -> Optional[dict]:
     return parent if len(roots) == 1 else None
 
 
+def connects_all(nodes: tuple[Node, ...], edges) -> bool:
+    """A SECOND, independent connectivity decider: True iff `edges` connect ALL `nodes`
+    into one component, by BFS-reachability over the edge set — DISJOINT from the
+    union-find `spans()` (no shared helper, no shared kernel). Edges naming a node
+    outside `nodes` are skipped (they cannot connect declared nodes); empty `nodes` is
+    False (no single component to span).
+
+    Why a duplicate of `spans()`'s connectivity question on a different algorithm: the
+    bottleneck certificate's load-bearing connectivity checks (is the claim spanning?
+    do sub-bottleneck edges disconnect?) must not both flow through ONE kernel, or a
+    bug in that kernel is a latent false VERIFIED the re-checker cannot see. Two
+    algorithms that AGREE shrink the trusted base to 'they are not both wrong the same
+    way' (cf. crosscheck.py); a disagreement is a caught bug (UNVERIFIABLE), never a
+    guess. Builds its own adjacency inline on purpose so it shares NO code path with
+    union-find. Deterministic; never mutates input."""
+    if not nodes:
+        return False
+    # own adjacency over real edges only — built here, NOT via adjacency()/cut_sides,
+    # so this decider is genuinely disjoint from every other connectivity helper.
+    adj: dict[Node, set[Node]] = {n: set() for n in nodes}
+    node_set = set(nodes)
+    for u, v in edges:
+        if u in node_set and v in node_set:
+            adj[u].add(v)
+            adj[v].add(u)  # connectivity is undirected (same notion spans() decides)
+    start = nodes[0]
+    seen: set[Node] = {start}
+    q: deque[Node] = deque([start])
+    while q:
+        x = q.popleft()
+        for nbr in adj[x]:
+            if nbr not in seen:
+                seen.add(nbr)
+                q.append(nbr)
+    return len(seen) == len(node_set)
+
+
 def cut_sides(nodes: tuple[Node, ...], edges) -> tuple[set, set]:
     """Partition `nodes` into the component containing the smallest node (under
     `edges`) and the rest — the cut a sub-bottleneck edge set fails to bridge, carried
