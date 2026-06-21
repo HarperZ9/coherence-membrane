@@ -95,3 +95,29 @@ def test_corpus_makes_a_repeat_derivative():
     # the SAME render, judged against the now-populated corpus, is derivative
     obs2 = critique_render(r, src, corpus=render_corpus(store), min_distance=5, tolerance=1.0)
     assert obs2.data["verdict"] == "refuted"
+
+
+from coherence_membrane.render_critic import RenderStep, render_and_critique, run_render_critique
+
+
+def test_stream_yields_four_steps_in_order():
+    src = _gradient_png()
+    store = MemoryStore()
+    steps = list(render_and_critique(src, {"target_width": 16, "palette_k": 8, "scanlines": False},
+                                     store, min_distance=5, tolerance=1.0))
+    assert [s.name for s in steps] == ["render", "perceive", "critique", "remember"]
+    assert all(isinstance(s, RenderStep) for s in steps)
+    # each step carries a witnessed observation
+    assert all(s.observation is not None for s in steps)
+    # the critique step's verdict is present; remember grew the corpus
+    critique = next(s for s in steps if s.name == "critique")
+    assert critique.observation.data["verdict"] in ("verified", "refuted", "unverifiable")
+    assert render_corpus(store)   # non-empty after remember
+
+
+def test_run_returns_result_and_observation():
+    src = _gradient_png()
+    store = MemoryStore()
+    result, obs = run_render_critique(src, {"target_width": 16, "palette_k": 8, "scanlines": False},
+                                      store, min_distance=5, tolerance=1.0)
+    assert result.output_png and obs.organ == "render-critic"
