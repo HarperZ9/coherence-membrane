@@ -82,6 +82,7 @@ from .organs.verifier import PropositionalVerifierOrgan
 from .organs.quantity_verifier import QuantityVerifierOrgan
 from .organs.distribution_verifier import DistributionVerifierOrgan
 from .organs.cross_verifier import CrossCheckVerifierOrgan
+from .organs.linarith_verifier import LinearArithmeticVerifierOrgan
 from .organs.visual import VisualArtifactOrgan
 from .receipt import (
     DRIFT as RECEIPT_DRIFT,
@@ -145,6 +146,7 @@ __all__ = [
     "QuantityVerifierOrgan",
     "DistributionVerifierOrgan",
     "CrossCheckVerifierOrgan",
+    "LinearArithmeticVerifierOrgan",
     "audio_envelope_hash",
     "canonical_json_bytes",
     "canonical_caption",
