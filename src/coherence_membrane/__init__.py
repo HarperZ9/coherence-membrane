@@ -93,8 +93,18 @@ from .organs.quantity_verifier import QuantityVerifierOrgan
 from .organs.distribution_verifier import DistributionVerifierOrgan
 from .organs.cross_verifier import CrossCheckVerifierOrgan
 from .organs.linarith_verifier import LinearArithmeticVerifierOrgan
+from .organs.graph_verifier import GraphVerifierOrgan
 from .organs.visual import VisualArtifactOrgan
 from .organs.web import WebDocumentOrgan
+from .graph import Graph
+from .graph_oracle import (
+    BottleneckClaim,
+    ClosureClaim,
+    ReachabilityClaim,
+    bottleneck_criterion,
+    closure_certificate,
+    reachability_criterion,
+)
 from .receipt import (
     DRIFT as RECEIPT_DRIFT,
     RECEIPT_VERDICTS,
@@ -167,6 +177,7 @@ __all__ = [
     "DistributionVerifierOrgan",
     "CrossCheckVerifierOrgan",
     "LinearArithmeticVerifierOrgan",
+    "GraphVerifierOrgan",
     "audio_envelope_hash",
     "canonical_json_bytes",
     "canonical_caption",
@@ -291,6 +302,14 @@ __all__ = [
     "reconcile",
     "novelty_criterion",
     "origin_criterion",
+    # the L0 graph plane (substrate + the three graph reconcile criteria)
+    "Graph",
+    "ReachabilityClaim",
+    "BottleneckClaim",
+    "ClosureClaim",
+    "reachability_criterion",
+    "bottleneck_criterion",
+    "closure_certificate",
     "structural_fitness_criterion",
     "golden_angle_deviation",
     "GOLDEN_ANGLE",
