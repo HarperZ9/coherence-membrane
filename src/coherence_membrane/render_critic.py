@@ -6,8 +6,15 @@ step events. Composes shipped parts; retro.py untouched. Stdlib only; inert.
 """
 from __future__ import annotations
 
+from .certificate import Verdict
 from .color import delta_e_ok
 from .color_field import color_field_from_png, downscale_color_field
+from .composition import compose
+from .novelty import novelty_criterion
+from .observation import Observation, Provenance, Status
+from .phash import hamming, perceptual_hash
+from .pngview import decode_png
+from .structural_fitness import structural_fitness_criterion
 
 FIDELITY_CW = 64
 
@@ -28,3 +35,29 @@ def render_fidelity_deviation(form) -> float:
     if not diffs:
         return float("inf")
     return sum(diffs) / len(diffs)
+
+
+def render_signature(output_png: bytes) -> int:
+    """The novelty signature of a render: 64-bit dHash of its output PNG."""
+    return perceptual_hash(decode_png(output_png))
+
+
+def critique_render(render_result, source_png, *, corpus, min_distance, tolerance) -> Observation:
+    """Judge a render novel-vs-corpus AND structurally faithful; one witnessed Observation."""
+    signature = render_signature(render_result.output_png)
+    deviation = render_fidelity_deviation((source_png, render_result.output_png))
+    nov = novelty_criterion(corpus, distance=hamming, min_distance=min_distance).judge(signature)
+    # judge the precomputed deviation (constant measure -> no double compute)
+    fit = structural_fitness_criterion(lambda _f: deviation, tolerance=tolerance).judge(None)
+    cert = compose([nov, fit], claim="render is novel AND structurally faithful")
+    decided = cert.verdict in (Verdict.VERIFIED, Verdict.REFUTED)
+    return Observation(
+        "render-critic", render_result.output_sha256, f"render critique: {cert.verdict.value}",
+        Status.PASS if decided else Status.UNVERIFIED,
+        Provenance.witness_bytes(render_result.output_sha256, render_result.output_png,
+                                 "high" if decided else "low"),
+        {"verdict": cert.verdict.value,
+         "evidence": [list(e) for e in cert.evidence],
+         "signature": signature, "deviation": deviation,
+         "palette_hex": list(render_result.palette_hex)},
+    )
