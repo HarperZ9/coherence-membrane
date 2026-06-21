@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .observation import sha256_hex
-from .provenance import ProvenanceGraph
+from .provenance import ProvenanceGraph, GraphVerdict, VALID, BROKEN
 
 MEMORY_TYPES = ("fact", "pointer", "decision", "pref")
 RECORD_ALGO = "memory-record-canonical-v1"
@@ -116,3 +116,18 @@ class MemoryStore:
 
     def get(self, id: str) -> MemoryRecord | None:
         return self.records.get(id)
+
+    def verify(self, *, pinned_manifest: str | None = None) -> GraphVerdict:
+        """Two-layer integrity: the graph's hash-chain (+ pinned anchor) AND each
+        record's content digest vs its node digest. Either failing is BROKEN."""
+        gv = self.graph.verify(pinned_manifest=pinned_manifest)
+        if gv.verdict != VALID:
+            return gv
+        reasons: list[str] = []
+        for rid, rec in self.records.items():
+            node = self.graph.nodes.get(rid)
+            if node is None:
+                reasons.append(f"record {rid!r} has no graph node")
+            elif rec.identity_sha256 != node.digest:
+                reasons.append(f"record {rid!r} content digest != node digest (tampered)")
+        return GraphVerdict(BROKEN, reasons) if reasons else GraphVerdict(VALID, [])
