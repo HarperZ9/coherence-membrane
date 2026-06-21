@@ -36,3 +36,36 @@ def test_to_dict_from_dict_roundtrip():
              created="2026-06-20T00:00:00+00:00")
     back = MemoryRecord.from_dict(r.to_dict())
     assert back == r
+
+
+from coherence_membrane.memory import MemoryStore
+
+
+def test_remember_and_get():
+    s = MemoryStore()
+    s.remember(_rec(id="a"))
+    assert s.get("a").claim == "the sky is blue"
+    assert s.get("missing") is None
+
+
+def test_remember_rejects_duplicate_id():
+    s = MemoryStore()
+    s.remember(_rec(id="a"))
+    with pytest.raises(ValueError):
+        s.remember(_rec(id="a"))
+
+
+def test_remember_node_digest_is_record_identity():
+    s = MemoryStore()
+    r = _rec(id="a")
+    s.remember(r)
+    assert s.graph.nodes["a"].digest == r.identity_sha256
+    assert s.graph.nodes["a"].kind == "memory"
+
+
+def test_remember_with_supersedes_edge():
+    s = MemoryStore()
+    s.remember(_rec(id="old", claim="v1"))
+    s.remember(_rec(id="new", claim="v2"), parents=("old",), edge_type="supersedes")
+    assert s.graph.nodes["new"].parents == ("old",)
+    assert s.graph.nodes["new"].edge_type == "supersedes"
