@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 from ..certificate import Verdict
 from ..linarith import LinearConstraint, check_entails, check_feasible, constraint
+from ..lra_dpll import check_valid
 from ..observation import Observation, Provenance, Status, sha256_hex
 from ..organ import Check, SelftestResult
 
@@ -26,6 +27,12 @@ class EntailmentClaim:
     conclusion: LinearConstraint
 
 
+@dataclass(frozen=True)
+class ValidityClaim:
+    claim: str
+    formula: object
+
+
 class LinearArithmeticVerifierOrgan:
     name = "linear-arithmetic-verifier"
 
@@ -34,6 +41,8 @@ class LinearArithmeticVerifierOrgan:
             run = lambda: check_feasible(list(subject.constraints))
         elif isinstance(subject, EntailmentClaim):
             run = lambda: check_entails(list(subject.premises), subject.conclusion)
+        elif isinstance(subject, ValidityClaim):
+            run = lambda: check_valid(subject.formula)
         else:
             return []
         claim = str(subject.claim)   # coerce once: the organ never raises, even on a malformed claim
