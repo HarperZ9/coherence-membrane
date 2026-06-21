@@ -16,56 +16,24 @@ order, so the same claim yields the same Certificate.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Optional
 
 from .certificate import Certificate, Verdict
 from .composition import compose
-from .graph import Edge, Graph, Node, _norm_node
-from .graph_ops import connects_all, cut_sides, find_cycle_through, spans, tree_jump_edges
+from .graph import Edge, Graph, _norm_node
+from .graph_claims import BottleneckClaim, ClosureClaim, ReachabilityClaim
+from .graph_search import connects_all, cut_sides, find_cycle_through, spans, tree_jump_edges
 from .reconcile import Criterion
+
+# Claims re-exported from graph_claims so coherence_membrane.graph_oracle.<Claim> and
+# the package __init__ keep working unchanged after the pure split.
+__all__ = ["ReachabilityClaim", "BottleneckClaim", "ClosureClaim",
+           "reachability_criterion", "bottleneck_criterion", "closure_certificate"]
 
 # Default hard caps. Conservative on purpose: a re-check that cannot be cheaply
 # re-run by a third party is UNVERIFIABLE-in-practice, not VERIFIED.
 DEFAULT_MAX_NODES = 4096
 DEFAULT_MAX_EDGES = 16384
-
-
-# --- claim shapes (the perceived forms the judges consume) --------------------
-
-
-@dataclass(frozen=True)
-class ReachabilityClaim:
-    """`expect_cycle` = does a simple cycle through `label_node` exist in `graph`?
-    The de Bruijn reachability property as a checkable claim."""
-
-    graph: Graph
-    label_node: Node
-    expect_cycle: bool = True
-    claim: str = ""
-
-
-@dataclass(frozen=True)
-class BottleneckClaim:
-    """A claimed minimax (bottleneck) spanning structure: `spanning` edges span the
-    graph and `bottleneck` is the largest weight among them, asserted minimal."""
-
-    graph: Graph
-    spanning: tuple[Edge, ...]
-    bottleneck: float
-    claim: str = ""
-
-
-@dataclass(frozen=True)
-class ClosureClaim:
-    """A reachability fact (`src` reaches `dst`) on a tree rooted at `root`, to be
-    certified by composing the precomputed ancestor jump-edges."""
-
-    graph: Graph
-    root: Node
-    src: Node
-    dst: Node
-    claim: str = ""
 
 
 def _over_cap(g: Graph, max_nodes: int, max_edges: int) -> Optional[str]:
