@@ -161,3 +161,15 @@ def test_refine_fail_closed_on_raising_adjust():
                  target_margin=0.99, cohesion_bar=0.5, max_iter=3)
     assert out.status == "short"
     assert "adjust-failed" in (out.short_axis or "")
+
+
+def test_refine_rejects_negative_thresholds():
+    # the soundness hole: a negative target/bar must NOT let a FAILING axis read as "correct"
+    fail = GradedCriterion("f", "objective", lambda c: 12.0, 10.0)   # deviation 12 > tol 10 -> margin -0.2
+    with pytest.raises(ValueError):
+        refine(lambda s: 0, [fail], lambda r, s: s, target_margin=-0.5, cohesion_bar=-1.0, max_iter=1)
+    with pytest.raises(ValueError):
+        refine(lambda s: 0, [fail], lambda r, s: s, target_margin=0.1, cohesion_bar=-0.1, max_iter=1)
+    # the documented degenerate (0, 0) is still allowed AND a failing axis -> short, never correct
+    out = refine(lambda s: 0, [fail], lambda r, s: s, target_margin=0.0, cohesion_bar=0.0, max_iter=1)
+    assert out.status == "short"
