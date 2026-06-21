@@ -18,8 +18,6 @@ mutable state or error accumulation — fully deterministic.
 """
 from __future__ import annotations
 
-import math
-
 from .color import Triple, delta_e_ok
 from .color_field import ColorField
 
