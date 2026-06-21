@@ -37,3 +37,49 @@ def test_snapshot_holds_sha_and_tick():
     f = _f([0.1, 0.2, 0.3, 0.4], [False] * 4)
     s = FieldSnapshot(f, field_state_sha(f), 0)
     assert s.tick == 0 and s.state_sha == field_state_sha(f) and s.verdict == "MATCH"
+
+
+from coherence_membrane.livestate import field_diff, field_apply
+
+
+def test_diff_sparsity_one_cell():
+    a = _f([0.1, 0.2, 0.3, 0.4], [False] * 4)
+    b = _f([0.1, 0.9, 0.3, 0.4], [False] * 4)
+    changes, verdict = field_diff(a, b)
+    assert changes == [(1, 0.9, False)] and verdict == "DRIFT"
+
+
+def test_diff_no_change_is_match():
+    a = _f([0.1, 0.2, 0.3, 0.4], [False] * 4)
+    changes, verdict = field_diff(a, a)
+    assert changes == [] and verdict == "MATCH"
+
+
+def test_diff_known_to_unknown_is_unverifiable():
+    a = _f([0.1, 0.2, 0.3, 0.4], [False] * 4)
+    b = _f([0.1, 0.2, 0.3, 0.4], [False, True, False, False])
+    changes, verdict = field_diff(a, b)
+    assert changes == [(1, 0.0, True)] and verdict == "UNVERIFIABLE"
+
+
+def test_diff_drift_dominates_unverifiable():
+    # one cell changes value (DRIFT) + one cell becomes unknown (UNVERIFIABLE)
+    a = _f([0.1, 0.2, 0.3, 0.4], [False] * 4)
+    b = _f([0.9, 0.2, 0.3, 0.4], [False, True, False, False])
+    _changes, verdict = field_diff(a, b)
+    assert verdict == "DRIFT"  # DRIFT is the absorbing bottom of DRIFT_LATTICE
+
+
+def test_diff_both_unknown_is_no_change():
+    a = _f([0.1, 5.0, 0.3, 0.4], [False, True, False, False])
+    b = _f([0.1, 9.0, 0.3, 0.4], [False, True, False, False])  # value under mask differs
+    changes, verdict = field_diff(a, b)
+    assert changes == [] and verdict == "MATCH"
+
+
+def test_apply_roundtrips_to_new_state():
+    a = _f([0.1, 0.2, 0.3, 0.4], [False] * 4)
+    b = _f([0.1, 0.9, 0.3, 0.4], [False, True, False, False])
+    changes, _ = field_diff(a, b)
+    rebuilt = field_apply(a, changes)
+    assert field_state_sha(rebuilt) == field_state_sha(b)
