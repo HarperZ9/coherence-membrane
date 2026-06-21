@@ -124,3 +124,19 @@ def test_explicit_checkpoint():
     snap = c.checkpoint()
     from coherence_membrane.livestate import FieldSnapshot
     assert isinstance(c.entries[c.tick], FieldSnapshot) and snap.tick == c.tick
+
+
+def test_reconstruct_every_tick_bit_identical():
+    states = [_f([float(t) / 10, 0.0, 0.0, 0.0], [False] * 4) for t in range(6)]
+    c = DiffChain.from_base(states[0], subject="s", checkpoint_interval=2)  # keyframes at 2,4
+    for s in states[1:]:
+        c.append(s)
+    for t in range(6):
+        r = c.reconstruct(t)
+        assert r.verdict == "MATCH"
+        assert r.state_sha == field_state_sha(states[t]), f"tick {t}"
+
+
+def test_reconstruct_out_of_range_unverifiable():
+    c = DiffChain.from_base(_f([0.0] * 4, [False] * 4), subject="s")
+    assert c.reconstruct(5).verdict == "UNVERIFIABLE"

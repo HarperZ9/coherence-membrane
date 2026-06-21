@@ -121,3 +121,27 @@ class DiffChain:
         """Force the current tick's entry to be a full keyframe."""
         self.entries[self.tick] = self._current
         return self._current
+
+    def reconstruct(self, tick: int) -> FieldSnapshot:
+        """Rebuild the state at `tick`: nearest keyframe <= tick, apply diffs, re-hash."""
+        if tick < 0 or tick > self.tick:
+            return FieldSnapshot(self._current.field, "", tick, UNVERIFIABLE,
+                                 f"tick {tick} out of range [0,{self.tick}]")
+        j = tick
+        while j > 0 and not isinstance(self.entries[j], FieldSnapshot):
+            j -= 1
+        kf: FieldSnapshot = self.entries[j]
+        state = kf.field
+        if field_state_sha(state) != kf.state_sha:
+            return FieldSnapshot(state, "", tick, UNVERIFIABLE, f"keyframe at {j} failed re-hash")
+        for i in range(j + 1, tick + 1):
+            e = self.entries[i]
+            if isinstance(e, FieldSnapshot):
+                state = e.field
+                expect = e.state_sha
+            else:
+                state = field_apply(state, e.changes)
+                expect = e.result_sha
+            if field_state_sha(state) != expect:
+                return FieldSnapshot(state, "", tick, UNVERIFIABLE, f"entry at {i} failed re-hash")
+        return FieldSnapshot(state, field_state_sha(state), tick)
