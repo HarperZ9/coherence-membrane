@@ -180,3 +180,36 @@ def test_evidence_identifies_dominating_step():
     fitness_entries = [e for e in evidence if "structural-fitness" in e[0]]
     assert fitness_entries, "evidence must contain a structural-fitness entry"
     assert fitness_entries[0][1] == "refuted", "the structural-fitness step must be refuted"
+
+
+# C1 regression — the corpus is witnessed (survives save/load) and remember is idempotent
+
+from coherence_membrane.provenance import VALID
+
+
+def test_corpus_survives_save_load_round_trip(tmp_path):
+    # C1: the novelty corpus lives INSIDE the witnessed MemoryRecord (a phash: tag),
+    # so it must survive a save -> load cycle — no side-channel state to lose.
+    src = _gradient_png()
+    r = render_vintage(src, target_width=16, palette_k=8, scanlines=False)
+    store = MemoryStore()
+    remember_render(store, r, critique_render(r, src, corpus=[], min_distance=5, tolerance=1.0))
+    before = render_corpus(store)
+    assert before == [render_signature(r.output_png)]
+    p = tmp_path / "store.json"
+    store.save(p)
+    reloaded = MemoryStore.load(p)
+    assert render_corpus(reloaded) == before              # corpus persisted across save/load
+    assert reloaded.verify().verdict == VALID             # and the witnessed record verifies
+
+
+def test_remember_same_render_twice_is_idempotent():
+    # C1: re-remembering the same render (same output_sha256) must NOT raise a
+    # duplicate-id ValueError, and must not double-count in the corpus.
+    src = _gradient_png()
+    r = render_vintage(src, target_width=16, palette_k=8, scanlines=False)
+    store = MemoryStore()
+    obs = critique_render(r, src, corpus=[], min_distance=5, tolerance=1.0)
+    remember_render(store, r, obs)
+    remember_render(store, r, obs)                         # second time: no crash
+    assert render_corpus(store) == [render_signature(r.output_png)]   # exactly one entry
