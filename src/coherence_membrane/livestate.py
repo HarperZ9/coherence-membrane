@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from .field import Field
 from .observation import sha256_hex
 from .phash import MATCH, DRIFT, UNVERIFIABLE
+from .lattice import DRIFT_LATTICE
 
 CANON_ALGO = b"field-sha256-canonical-v1"
 
@@ -44,3 +45,27 @@ class FieldSnapshot:
     tick: int
     verdict: str = MATCH
     reason: str = ""
+
+
+def field_diff(parent: Field, new: Field):
+    """Sparse moved-cell diff + the tick verdict (DRIFT_LATTICE fold_meet)."""
+    changes = []
+    verdicts = []
+    for i in range(len(parent.values)):
+        au, bu = parent.unknown[i], new.unknown[i]
+        moved = (au != bu) or (not au and not bu and parent.values[i] != new.values[i])
+        if not moved:
+            continue
+        changes.append((i, 0.0 if bu else float(new.values[i]), bu))
+        verdicts.append(UNVERIFIABLE if (bu and not au) else DRIFT)  # known->unknown lost; else change
+    return changes, DRIFT_LATTICE.fold_meet(verdicts)  # empty -> MATCH (top)
+
+
+def field_apply(parent: Field, changes) -> Field:
+    """Apply a sparse change list to a Field, returning a new Field (same dims)."""
+    values = list(parent.values)
+    unknown = list(parent.unknown)
+    for (i, nv, nu) in changes:
+        values[i] = 0.0 if nu else float(nv)
+        unknown[i] = bool(nu)
+    return Field(parent.width, parent.height, parent.kind, tuple(values), tuple(unknown))
