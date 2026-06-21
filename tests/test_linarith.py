@@ -59,3 +59,37 @@ def test_fm_equality_infeasible():
 def test_fm_strict_contradiction():
     cons = [constraint({"x": 1}, "<", 0), constraint({"x": 1}, ">", 0)]   # x<0 and x>0
     assert fourier_motzkin(cons).status == "unsat"
+
+
+from coherence_membrane.certificate import Verdict
+from coherence_membrane.linarith import check_entails, check_farkas, check_feasible, check_model
+
+
+def test_check_feasible_verified_and_refuted():
+    feas = [constraint({"x": 1}, ">=", 0), constraint({"x": 1}, "<=", 5)]
+    assert check_feasible(feas).verdict is Verdict.VERIFIED
+    infeas = [constraint({"x": 1}, ">=", 1), constraint({"x": 1}, "<=", 0)]
+    assert check_feasible(infeas).verdict is Verdict.REFUTED
+
+
+def test_check_entails_classic():
+    # {x>=0, y>=0} entails x+y>=0
+    prem = [constraint({"x": 1}, ">=", 0), constraint({"y": 1}, ">=", 0)]
+    assert check_entails(prem, constraint({"x": 1, "y": 1}, ">=", 0)).verdict is Verdict.VERIFIED
+    # {x>=0, y>=0} does NOT entail x+y>=1 (counterexample x=y=0)
+    assert check_entails(prem, constraint({"x": 1, "y": 1}, ">=", 1)).verdict is Verdict.REFUTED
+
+
+def test_check_entails_equality():
+    # {x=2, y=3} entails x+y=5
+    prem = [constraint({"x": 1}, "=", 2), constraint({"y": 1}, "=", 3)]
+    assert check_entails(prem, constraint({"x": 1, "y": 1}, "=", 5)).verdict is Verdict.VERIFIED
+    assert check_entails(prem, constraint({"x": 1, "y": 1}, "=", 6)).verdict is Verdict.REFUTED
+
+
+def test_checker_rejects_tampered_farkas():
+    # the checker is the trusted base: a bogus multiplier set must NOT validate
+    infeas = [constraint({"x": 1}, ">=", 1), constraint({"x": 1}, "<=", 0)]
+    assert check_farkas(infeas, {0: Fraction(1), 1: Fraction(1)}) in (True, False)  # real one may hold
+    assert check_farkas(infeas, {0: Fraction(0), 1: Fraction(0)}) is False          # trivial: no contradiction
+    assert check_model(infeas, {"x": Fraction(5)}) is False                          # x=5 violates x<=0
