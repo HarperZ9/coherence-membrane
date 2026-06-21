@@ -40,6 +40,8 @@ def test_to_dict_from_dict_roundtrip():
     assert back == r
 
 
+import dataclasses
+
 from coherence_membrane.memory import MemoryStore
 
 
@@ -110,6 +112,27 @@ def test_save_load_roundtrip(tmp_path):
     assert back.get("new").claim == "v2"
     assert back.graph.nodes["new"].parents == ("old",)
     assert back.verify().verdict == VALID
+
+
+def test_verify_detects_edge_tamper():
+    """Tampering an edge_type in place must be detected as BROKEN."""
+    s = MemoryStore()
+    s.remember(_rec(id="old", claim="v1"))
+    s.remember(_rec(id="new", claim="v2"), parents=("old",), edge_type="supersedes")
+    # tamper: replace the node with one that has a different edge_type
+    n = s.graph.nodes["new"]
+    s.graph.nodes["new"] = dataclasses.replace(n, edge_type="derived-from")
+    assert s.verify().verdict == BROKEN
+
+
+def test_verify_detects_delete_via_manifest():
+    """Deleting a node after pinning manifest must be detected as BROKEN."""
+    s = MemoryStore()
+    s.remember(_rec(id="a"))
+    s.remember(_rec(id="b"))
+    pin = s.graph.manifest()
+    del s.graph.nodes["b"]
+    assert s.verify(pinned_manifest=pin).verdict == BROKEN
 
 
 def test_load_handedited_record_is_broken(tmp_path):
