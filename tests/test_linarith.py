@@ -31,3 +31,31 @@ def test_negate():
     assert negate(constraint({"x": 1}, "<=", 3)).coeff("x") == Fraction(-1)
     assert negate(constraint({"x": 1}, "<", 3)).op == "<="   # ¬(x<3) is (x>=3) -> -x <= -3
     assert negate(constraint({"x": 1}, "=", 3)) is None      # disjunction
+
+
+from coherence_membrane.linarith import fourier_motzkin
+
+
+def test_fm_feasible_returns_checkable_model():
+    cons = [constraint({"x": 1}, ">=", 0), constraint({"y": 1}, ">=", 0),
+            constraint({"x": 1, "y": 1}, "<=", 10)]
+    res = fourier_motzkin(cons)
+    assert res.status == "sat"
+    assert all(c.evaluate(res.model) for c in cons)   # the model really satisfies them
+
+
+def test_fm_infeasible_returns_farkas_multipliers():
+    cons = [constraint({"x": 1}, ">=", 1), constraint({"x": 1}, "<=", 0)]   # x>=1 and x<=0
+    res = fourier_motzkin(cons)
+    assert res.status == "unsat"
+    assert res.multipliers is not None and any(m != 0 for m in res.multipliers.values())
+
+
+def test_fm_equality_infeasible():
+    cons = [constraint({"x": 1, "y": 1}, "=", 0), constraint({"x": 1, "y": 1}, "=", 1)]
+    assert fourier_motzkin(cons).status == "unsat"
+
+
+def test_fm_strict_contradiction():
+    cons = [constraint({"x": 1}, "<", 0), constraint({"x": 1}, ">", 0)]   # x<0 and x>0
+    assert fourier_motzkin(cons).status == "unsat"
