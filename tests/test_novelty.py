@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from coherence_membrane.certificate import Verdict
 from coherence_membrane.novelty import novelty_criterion
 from coherence_membrane.phash import hamming
@@ -47,3 +49,11 @@ def test_novelty_via_reconcile():
     assert obs.data["verdict"] == "verified"
     assert obs.data["criterion"] == "novelty-vs-corpus"
     assert obs.data["oracle"] == "novelty-vs-corpus-v1"
+
+
+def test_novelty_rejects_degenerate_min_distance():
+    # a degenerate threshold is a construction-time programmer error, raised loudly:
+    # None/NaN are non-real; 0 would admit exact duplicates as novel (disables anti-collapse).
+    for bad in (None, 0, float("nan"), -1):
+        with pytest.raises(ValueError):
+            novelty_criterion([1, 2], distance=hamming, min_distance=bad)
