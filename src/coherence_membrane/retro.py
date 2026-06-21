@@ -9,28 +9,38 @@ render_vintage composes a 7-step pipeline:
   6. NEW    nearest-neighbor upscale + scanlines (CRT effect)
   7. REUSE  encode_png -> output PNG bytes
 
-Cardinal property: identical (source_png, params) -> identical output bytes
-and identical output_sha256.  Guaranteed by:
-  - All sub-functions are pure and deterministic (verified by their own tests).
-  - No random number generators, timestamps, or external state in the pipeline.
-  - sRGB clamping is deterministic (min/max on fixed inputs).
-  - Bayer thresholds are computed from a fixed recurrence (no seed).
+Palette and colour accuracy
+----------------------------
+``palette_hex`` is the QUANTIZATION palette — the set of colours the image was
+reduced to during step 3/4.  The final PNG equals that palette exactly ONLY
+when ``palette_exact`` (a field of RenderResult) is True, i.e. both
+``scanlines=False`` and ``sdf_shade=False``.  When either effect is active,
+scanlines or SDF intentionally modulate tone for the vintage look, so the
+output PNG contains tones *derived from* the palette colours but not limited
+to them.  This is by design and is disclosed by ``palette_exact = False``.
+
+Determinism
+-----------
+Identical (source_png, params) → identical output_png bytes and output_sha256,
+GUARANTEED on a fixed platform / Python build / zlib build (same machine).
+
+Cross-platform caveat: ``color.py`` uses fractional ``**`` (libm pow) and
+``pngencode`` uses zlib; both are build-dependent, so bit-identical output
+across *different* machines or Python builds is NOT guaranteed.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .color import oklab_to_srgb, Triple, srgb_to_oklab, srgb_to_linear
+from .color import oklab_to_srgb, Triple, srgb_to_oklab
 from .color_field import ColorField, color_field_from_png, downscale_color_field
 from .color_quantize import quantize, palette_to_hex
 from .dither import ordered_dither
 from .field import Field, FieldKind
 from .field_ops import distance, threshold
-from .lowering import field_from_png
 from .observation import sha256_hex
 from .palettes import get_palette
 from .pngencode import encode_png
-from .pngview import decode_png
 
 # Upscale factor for the nearest-neighbor upsample in step 6.
 # Output width = target_width * UPSCALE_FACTOR.
@@ -39,13 +49,21 @@ UPSCALE_FACTOR: int = 4
 
 @dataclass(frozen=True)
 class RenderResult:
-    """Result of render_vintage: output PNG bytes and full provenance."""
+    """Result of render_vintage: output PNG bytes and full provenance.
+
+    palette_hex   — the QUANTIZATION palette used during colour reduction.
+    palette_exact — True IFF the final PNG pixel colours are an exact subset of
+                    palette_hex.  This holds only when both scanlines and
+                    sdf_shade are disabled; either effect intentionally modulates
+                    tone beyond the palette, making palette_exact False.
+    """
 
     output_png: bytes
     source_sha256: str
     params: dict
     output_sha256: str
     palette_hex: list[str]
+    palette_exact: bool
 
 
 # ---------------------------------------------------------------------------
@@ -84,14 +102,17 @@ def _nearest_neighbor_upscale(
     scale: int,
 ) -> list[tuple[int, int, int]]:
     """Nearest-neighbor upscale by integer scale factor. Deterministic."""
+    assert len(pixels_rgb) == src_w * src_h, (
+        f"pixels_rgb length {len(pixels_rgb)} != {src_w}*{src_h}={src_w * src_h}"
+    )
     dst_w = src_w * scale
     dst_h = src_h * scale
-    out: list[tuple[int, int, int]] = [None] * (dst_w * dst_h)  # type: ignore[list-item]
+    out: list[tuple[int, int, int]] = []
     for dy in range(dst_h):
         sy = dy // scale
         for dx in range(dst_w):
             sx = dx // scale
-            out[dy * dst_w + dx] = pixels_rgb[sy * src_w + sx]
+            out.append(pixels_rgb[sy * src_w + sx])
     return out
 
 
@@ -143,13 +164,18 @@ def _apply_sdf_shade(
 ) -> list[Triple]:
     """Modulate brightness by SDF for a vintage early-3D look.
 
-    Cells further inside (large negative SDF) are darker (shadow).
-    Cells near the surface (SDF ≈ 0) keep original brightness.
-    Cells outside (positive SDF) get a slight brightening.
-    Modulation is clamped and deterministic.
+    The SDF field is min-max normalised to [-1, 1] across its known values
+    before applying the effect.  This means the actual geometry (inside vs.
+    outside the original boundary) is NOT the driver; instead the effect is
+    *relative-depth shading*: cells at the low end of the normalised range
+    are darkened, cells at the high end are brightened, and the midpoint is
+    unchanged.  On an all-inside image this still produces useful depth
+    shading because interior SDF magnitudes vary with distance from the
+    nearest boundary.
 
-    The SDF is normalized to a [-1, 1] range before applying so the effect
-    is scale-independent.  Unknown SDF cells are left unmodified.
+    Factor = 1.0 + 0.3 * sdf_norm, clamped to [0.5, 1.3], applied to the
+    OKLab L channel.  Modulation is clamped and deterministic.
+    Unknown SDF cells are left unmodified.
     """
     # Compute SDF range for normalization
     known_vals = [sdf_field.values[i] for i in range(len(sdf_field.values))
@@ -197,7 +223,9 @@ def render_vintage(
 
     Pipeline (step labels match the brief):
       1. REUSE  color_field_from_png(source_png) -> ColorField
-      2. NEW    downscale_color_field(field, target_width) -> smaller ColorField
+      2. NEW    downscale_color_field(field, effective_target_width) -> smaller ColorField
+                effective_target_width = min(target_width, source_width)
+                (target_width larger than source is clamped, never upscales)
       3. REUSE  quantize(field, palette_k) OR palettes.get_palette(palette)
                 -> OKLab palette triples
       4. NEW    ordered_dither (Bayer) mapping -> palette index per pixel
@@ -208,12 +236,24 @@ def render_vintage(
                (scanlines only if scanlines=True)
       7. REUSE  encode_png(...) -> output PNG bytes
 
+    Palette accuracy
+    ----------------
+    ``palette_hex`` is the QUANTIZATION palette — the colours the image was
+    reduced to.  The output PNG equals that palette exactly only when
+    ``result.palette_exact`` is True (i.e. both ``scanlines=False`` and
+    ``sdf_shade=False``).  When either effect is active, the output contains
+    tones derived from but not limited to the palette, and ``palette_exact``
+    is False.  Dithering itself only ever emits palette colours; it does NOT
+    break exactness.
+
     Args:
         source_png:   Raw bytes of an 8-bit RGB/RGBA/grayscale PNG.
-        target_width: Width of the quantized low-res image (before upscale).
-                      Output width = target_width * UPSCALE_FACTOR.
+        target_width: Desired width of the quantized low-res image (before
+                      upscale).  If larger than the source width, it is
+                      clamped to the source width (no upscaling).
+                      Output width = effective_target_width * UPSCALE_FACTOR.
         palette_k:    Number of colors for median-cut quantization (used when
-                      `palette` is None).
+                      ``palette`` is None).
         palette:      Name of a fixed retro palette (e.g. 'cga', 'ega').
                       Overrides palette_k when provided.
         dither:       If True, apply Bayer ordered dithering during palette
@@ -224,10 +264,11 @@ def render_vintage(
 
     Returns:
         RenderResult with output_png bytes, source/output sha256 digests,
-        the params dict, and palette_hex list.
+        the params dict, palette_hex list, and palette_exact flag.
 
-    Cardinal property (determinism): identical (source_png, params) always
-    yields identical output_png bytes and identical output_sha256.
+    Determinism: identical (source_png, params) always yields identical
+    output_png bytes and output_sha256 on the same platform/Python/zlib
+    build.  Cross-machine bit-identity is NOT guaranteed (libm ``**``, zlib).
     """
     # Provenance anchor for the source
     source_sha256 = sha256_hex(source_png)
@@ -239,8 +280,10 @@ def render_vintage(
 
     # ------------------------------------------------------------------
     # Step 2 (NEW): Box-downscale ColorField to target_width
+    # Clamp to source width: downscale_color_field cannot upscale.
     # ------------------------------------------------------------------
-    small_field = downscale_color_field(color_field, target_width)
+    effective_target_width = min(target_width, color_field.width)
+    small_field = downscale_color_field(color_field, effective_target_width)
     small_w, small_h = small_field.width, small_field.height
 
     # ------------------------------------------------------------------
@@ -250,13 +293,8 @@ def render_vintage(
         # Named retro palette: convert RGB -> OKLab
         rgb_palette = get_palette(palette)
         oklab_palette: tuple[Triple, ...] = _palette_from_rgb(rgb_palette)
-        # Build indices by nearest-color mapping (or dither below)
-        # We still need an indices tuple for step 4 — compute it here as nearest
-        from .color_quantize import _nearest as _cn
-        raw_indices = tuple(
-            -1 if small_field.unknown[i] else _cn(lab, oklab_palette)
-            for i, lab in enumerate(small_field.lab)
-        )
+        # raw_indices needed only when dither=False; computed there (I4)
+        raw_indices: tuple[int, ...] = ()
     else:
         raw_indices, oklab_palette = quantize(small_field, palette_k)
 
@@ -266,8 +304,15 @@ def render_vintage(
     if dither:
         palette_indices = ordered_dither(small_field, oklab_palette, bayer_size=4)
     else:
-        # Use raw nearest-neighbor mapping directly
-        palette_indices = tuple(max(0, i) for i in raw_indices)
+        if palette is not None:
+            # Named palette, no dither: compute nearest now (only when used)
+            from .color_quantize import _nearest as _cn
+            raw_indices = tuple(
+                -1 if small_field.unknown[i] else _cn(lab, oklab_palette)
+                for i, lab in enumerate(small_field.lab)
+            )
+        # Preserve -1 sentinel for unknown cells; _palette_indices_to_lab maps -1 -> black
+        palette_indices = tuple(raw_indices)
 
     # ------------------------------------------------------------------
     # Step 5 (REUSE): SDF shading (optional)
@@ -281,8 +326,7 @@ def render_vintage(
         # Derive luminance Field from the small ColorField
         lum_field = _build_luminance_field_from_color_field(small_field)
         # Threshold to OCCUPANCY (pixels brighter than mid-gray = inside)
-        from .field_ops import threshold as _thr
-        occ_field = _thr(lum_field, 0.5)
+        occ_field = threshold(lum_field, 0.5)
         # Compute SDF
         sdf_field = distance(occ_field)
         # Modulate brightness
@@ -328,17 +372,19 @@ def render_vintage(
     # Build palette_hex from the OKLab palette (reuse palette_to_hex)
     hex_colors = list(palette_to_hex(oklab_palette))
 
+    # palette_exact: True only when no post-palette tone modulation is active
+    palette_exact = not (scanlines or sdf_shade)
+
     # Build params dict
     params: dict = {
         "target_width": target_width,
+        "effective_target_width": effective_target_width,
         "palette_k": palette_k,
         "palette": palette,
         "dither": dither,
         "scanlines": scanlines,
         "sdf_shade": sdf_shade,
     }
-    if palette is not None:
-        params["palette"] = palette
 
     return RenderResult(
         output_png=output_png,
@@ -346,4 +392,5 @@ def render_vintage(
         params=params,
         output_sha256=output_sha256,
         palette_hex=hex_colors,
+        palette_exact=palette_exact,
     )
