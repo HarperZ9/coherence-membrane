@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+import dataclasses
+import json
+import pytest
+
 from coherence_membrane.field import Field, FieldKind
-from coherence_membrane.livestate import field_canonical_bytes, field_state_sha, FieldSnapshot
+from coherence_membrane.livestate import (
+    field_canonical_bytes, field_state_sha, FieldSnapshot, DiffChain, ChainLoadError
+)
 
 
 def _f(values, unknown, w=2, h=2, kind=FieldKind.LUMINANCE):
@@ -235,4 +241,75 @@ def test_load_handedited_chain_is_unverifiable(tmp_path):
             e["changes"] = [[0, 42.0, False]]
             break
     Path(p).write_text(json.dumps(data), encoding="utf-8")
-    assert DiffChain.load(p).verify().verdict == "UNVERIFIABLE"
+    # With head_sha commitment the tamper is now caught at load time (fail-closed).
+    # Either raises ChainLoadError on load OR load succeeds but verify detects it —
+    # both count as "tampered chain detected".
+    try:
+        loaded = DiffChain.load(p)
+        assert loaded.verify().verdict == "UNVERIFIABLE"
+    except ChainLoadError:
+        pass  # fail-closed load is the stronger outcome
+
+
+# ── Regression tests for adversarial-review findings ──────────────────────────
+
+def test_verify_detects_inserted_entry():
+    """C1a: inserting a duplicate shifts tick positions; verify must detect this."""
+    c = _chain()  # 5 entries (ticks 0-4), all diffs except base keyframe
+    # duplicate entry[1] at position 2 — now entries[2].tick == 1 but index is 2
+    c.entries.insert(2, c.entries[1])
+    v = c.verify()
+    assert v.verdict == "UNVERIFIABLE"
+
+
+def test_verify_detects_keyframe_field_tamper():
+    """C1a: replacing the base field without updating state_sha must be caught."""
+    c = _chain()
+    other_field = _f([9.9, 9.9, 9.9, 9.9], [False] * 4)
+    c.entries[0] = dataclasses.replace(c.entries[0], field=other_field)
+    v = c.verify()
+    assert v.verdict == "UNVERIFIABLE"
+
+
+def test_load_truncated_manifest_fails_closed(tmp_path):
+    """C1b/C3: n_entries commitment must catch truncated file."""
+    states = [_f([float(t) / 10, 0.0, 0.0, 0.0], [False] * 4) for t in range(4)]
+    c = DiffChain.from_base(states[0], subject="s", checkpoint_interval=10)
+    for s in states[1:]:
+        c.append(s)
+    p = tmp_path / "chain.json"
+    c.save(p)
+    data = json.loads(Path(p).read_text(encoding="utf-8"))
+    # drop last entry but leave n_entries unchanged
+    data["entries"] = data["entries"][:-1]
+    Path(p).write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(ChainLoadError):
+        DiffChain.load(p)
+
+
+def test_load_structurally_malformed_fails_closed(tmp_path):
+    """C3: empty entries and bad JSON must both raise ChainLoadError."""
+    p = tmp_path / "empty.json"
+    p.write_text('{"subject":"s","checkpoint_interval":64,"entries":[]}', encoding="utf-8")
+    with pytest.raises(ChainLoadError):
+        DiffChain.load(p)
+
+    p2 = tmp_path / "bad.json"
+    p2.write_text("{not json", encoding="utf-8")
+    with pytest.raises(ChainLoadError):
+        DiffChain.load(p2)
+
+
+def test_append_requires_field_or_throttle():
+    """C2: calling append() with neither field nor throttle_reason must raise."""
+    c = DiffChain.from_base(_f([0.0] * 4, [False] * 4), subject="s")
+    with pytest.raises(ValueError):
+        c.append()
+
+
+def test_reconstruct_throttled_tick_is_unverifiable():
+    """M1: reconstruct of a throttled tick must propagate verdict=UNVERIFIABLE."""
+    c = DiffChain.from_base(_f([0.1, 0.2, 0.3, 0.4], [False] * 4), subject="s")
+    c.append(throttle_reason="x")
+    r = c.reconstruct(c.tick)
+    assert r.verdict == "UNVERIFIABLE"

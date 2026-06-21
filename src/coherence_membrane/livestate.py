@@ -19,6 +19,10 @@ from .lattice import DRIFT_LATTICE
 CANON_ALGO = b"field-sha256-canonical-v1"
 
 
+class ChainLoadError(ValueError):
+    """A manifest that cannot be safely re-derived (structural malformation)."""
+
+
 def field_canonical_bytes(f: Field) -> bytes:
     """Deterministic identity payload. Unknown cells are forced to 0.0 so the
     identity is (known content + uncertainty shape), never garbage under the mask."""
@@ -122,9 +126,11 @@ class DiffChain:
     def current(self) -> FieldSnapshot:
         return self._current
 
-    def append(self, field: Field = None, *, throttle_reason: str | None = None) -> FieldDiff:
+    def append(self, field: "Field | None" = None, *, throttle_reason: str | None = None) -> FieldDiff:
         """Perceive the next state. throttle_reason (field ignored) -> whole-field-unknown
         keyframe (no silent gap). A differently-shaped field -> re-anchor keyframe."""
+        if field is None and throttle_reason is None:
+            raise ValueError("append requires a field or a throttle_reason")
         new_tick = self.tick + 1
         parent = self._current
 
@@ -181,17 +187,24 @@ class DiffChain:
                 expect = e.result_sha
             if field_state_sha(state) != expect:
                 return FieldSnapshot(state, "", tick, UNVERIFIABLE, f"entry at {i} failed re-hash")
-        return FieldSnapshot(state, field_state_sha(state), tick)
+        target = self.entries[tick]
+        v = target.verdict if isinstance(target, FieldSnapshot) else MATCH
+        reason = target.reason if isinstance(target, FieldSnapshot) else ""
+        return FieldSnapshot(state, field_state_sha(state), tick, v, reason)
 
     def verify(self) -> ChainVerdict:
         """Replay from base, re-hash every entry, confirm all parent->result links."""
         base = self.entries[0]
         if not isinstance(base, FieldSnapshot) or field_state_sha(base.field) != base.state_sha:
             return ChainVerdict(UNVERIFIABLE, "base keyframe failed re-hash", 0)
+        if base.tick != 0:
+            return ChainVerdict(UNVERIFIABLE, "base tick != 0", 0)
         prev_sha = base.state_sha
         state = base.field
         for i in range(1, len(self.entries)):
             e = self.entries[i]
+            if e.tick != i:
+                return ChainVerdict(UNVERIFIABLE, f"entry {i} claims tick {e.tick} (inserted/reordered)", i)
             if isinstance(e, FieldSnapshot):
                 if field_state_sha(e.field) != e.state_sha:
                     return ChainVerdict(UNVERIFIABLE, f"keyframe {i} failed re-hash", i)
@@ -216,27 +229,45 @@ class DiffChain:
 
     def save(self, path) -> None:
         data = {"subject": self.subject, "checkpoint_interval": self.checkpoint_interval,
-                "entries": [self._entry_to_dict(e) for e in self.entries]}
+                "entries": [self._entry_to_dict(e) for e in self.entries],
+                "n_entries": len(self.entries), "head_sha": self._current.state_sha}
         Path(path).write_text(json.dumps(data, indent=2), encoding="utf-8")
 
     @classmethod
     def load(cls, path) -> "DiffChain":
-        data = json.loads(Path(path).read_text(encoding="utf-8"))
-        entries: list = []
-        for d in data["entries"]:
-            if d["kind"] == "keyframe":
-                f = _field_from_dict(d["field"])
-                entries.append(FieldSnapshot(f, str(d["state_sha"]), int(d["tick"]),
-                                             str(d.get("verdict", MATCH)), str(d.get("reason", ""))))
-            else:
-                entries.append(FieldDiff(str(d["parent_sha"]), str(d["result_sha"]),
-                                         tuple(tuple(c) for c in d["changes"]),
-                                         str(d["verdict"]), int(d["tick"]), d.get("throttle_reason")))
-        base = entries[0]
-        chain = cls(base, subject=str(data["subject"]),
-                    checkpoint_interval=int(data["checkpoint_interval"]))
-        chain.entries = entries
-        # set cached current to the last entry's state (reconstruct gives the field)
-        last = entries[-1]
-        chain._current = last if isinstance(last, FieldSnapshot) else chain.reconstruct(len(entries) - 1)
-        return chain
+        try:
+            data = json.loads(Path(path).read_text(encoding="utf-8"))
+            raw = data["entries"]
+            if not raw or raw[0].get("kind") != "keyframe":
+                raise ChainLoadError("manifest must start with a keyframe entry")
+            entries: list = []
+            for d in raw:
+                kind = d["kind"]
+                if kind == "keyframe":
+                    f = _field_from_dict(d["field"])
+                    entries.append(FieldSnapshot(f, str(d["state_sha"]), int(d["tick"]),
+                                                 str(d.get("verdict", MATCH)), str(d.get("reason", ""))))
+                elif kind == "diff":
+                    changes = tuple(tuple(c) for c in d["changes"])
+                    if any(len(c) != 3 for c in changes):
+                        raise ChainLoadError("diff change rows must have arity 3")
+                    entries.append(FieldDiff(str(d["parent_sha"]), str(d["result_sha"]), changes,
+                                             str(d["verdict"]), int(d["tick"]), d.get("throttle_reason")))
+                else:
+                    raise ChainLoadError(f"unknown entry kind {kind!r}")
+            n = data.get("n_entries")
+            if n is not None and int(n) != len(entries):
+                raise ChainLoadError(f"entry count {len(entries)} != n_entries {n} (truncated/inserted)")
+            chain = cls(entries[0], subject=str(data["subject"]),
+                        checkpoint_interval=int(data["checkpoint_interval"]))
+            chain.entries = entries
+            last = entries[-1]
+            chain._current = last if isinstance(last, FieldSnapshot) else chain.reconstruct(len(entries) - 1)
+            head = data.get("head_sha")
+            if head is not None and chain._current.state_sha != str(head):
+                raise ChainLoadError("head_sha mismatch — chain truncated or altered")
+            return chain
+        except ChainLoadError:
+            raise
+        except (KeyError, ValueError, IndexError, TypeError, json.JSONDecodeError) as exc:
+            raise ChainLoadError(f"malformed manifest: {exc!r}") from exc
