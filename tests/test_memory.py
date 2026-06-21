@@ -1,0 +1,38 @@
+# tests/test_memory.py
+from __future__ import annotations
+
+import pytest
+
+from coherence_membrane.memory import (
+    CriterionRef, PerceiveRef, MemoryRecord, MEMORY_TYPES,
+)
+
+
+def _rec(**kw):
+    base = dict(id="m1", type="fact", claim="the sky is blue", tags=("color",))
+    base.update(kw)
+    return MemoryRecord(**base)
+
+
+def test_record_rejects_unknown_type():
+    with pytest.raises(ValueError):
+        _rec(type="nonsense")
+
+
+def test_identity_is_deterministic_and_excludes_created():
+    a = _rec(created="2026-06-20T00:00:00+00:00")
+    b = _rec(created="2099-01-01T00:00:00+00:00")
+    assert a.identity_sha256 == b.identity_sha256          # created is volatile
+    assert len(a.identity_sha256) == 64                    # full-width sha256
+
+
+def test_identity_changes_with_claim():
+    assert _rec().identity_sha256 != _rec(claim="the sky is red").identity_sha256
+
+
+def test_to_dict_from_dict_roundtrip():
+    r = _rec(criterion_ref=CriterionRef("origin", "v1", (("k", "v"),)),
+             perceive_ref=PerceiveRef("read_file", (("path", "/x"),)),
+             created="2026-06-20T00:00:00+00:00")
+    back = MemoryRecord.from_dict(r.to_dict())
+    assert back == r
