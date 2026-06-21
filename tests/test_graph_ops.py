@@ -7,11 +7,12 @@ from coherence_membrane.graph_ops import (
     bfs_shortest_path,
     connected_components,
     de_bruijn_graph,
-    find_cycle_through,
     reaches,
     transitive_closure,
-    tree_jump_edges,
 )
+# find_cycle_through and tree_jump_edges moved to graph_search in the 300-line split
+# (pure refactor; same kernels, new home).
+from coherence_membrane.graph_search import find_cycle_through, tree_jump_edges
 
 
 def test_adjacency_covers_every_node_including_isolated():
