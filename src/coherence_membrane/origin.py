@@ -38,7 +38,9 @@ def origin_criterion() -> Criterion:
     contradictions fix: uncoordinated layers become one composition-sound verdict.
     The judge is TOTAL — malformed input (non-iterable / non-pair) degrades to
     UNVERIFIABLE, never raises; the criterion is independently sound, not merely
-    safe because the reconcile spine catches exceptions."""
+    safe because the reconcile spine catches exceptions. The returned certificate's
+    evidence records each signal as `signal:<name> -> "<raw> -> <mapped-verdict>"`, so
+    the dominating step (which signal drove the meet) is auditable from the proof."""
     def judge(signals) -> Certificate:
         try:
             pairs = list(signals.items()) if hasattr(signals, "items") else list(signals)
@@ -48,7 +50,13 @@ def origin_criterion() -> Criterion:
             certs = [Certificate(f"origin:{name}", _to_verdict(sig), f"provenance-{name}",
                                  (("signal", str(sig)),)) for name, sig in pairs]
             composed = compose(certs, claim="origin (composed provenance)")
-            evidence = tuple((f"signal:{name}", str(sig)) for name, sig in pairs)
+            # Evidence carries each signal's raw value AND its mapped verdict, taken from
+            # the SAME cert that fed the meet — so the dominating step(s) (those whose
+            # verdict equals the composed verdict) are recoverable directly from the
+            # certificate: "which signal refuted origin?" No verdict logic here; the
+            # verdict remains composed.verdict (the proven meet), unchanged.
+            evidence = tuple((f"signal:{name}", f"{sig} -> {cert.verdict.value}")
+                             for (name, sig), cert in zip(pairs, certs))
             return Certificate("origin (composed provenance)", composed.verdict, _ORACLE, evidence)
         except Exception as exc:
             return Certificate("origin (malformed signals)", Verdict.UNVERIFIABLE, _ORACLE,

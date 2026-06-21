@@ -51,3 +51,14 @@ def test_origin_via_reconcile():
                     perceive=lambda s: (s, repr(s).encode()), criterion=origin_criterion())
     assert obs.data["verdict"] == "verified"
     assert obs.data["criterion"] == "origin-composition"
+
+
+def test_origin_evidence_carries_dominating_step():
+    # the composed certificate's evidence records each signal's raw value AND its mapped
+    # verdict, so the step that drove the meet (here the DRIFT watermark that refuted
+    # origin) is directly auditable from the certificate — "which signal refuted origin?"
+    c = origin_criterion().judge([("manifest", VALID), ("watermark", DRIFT)])
+    assert c.verdict is Verdict.REFUTED
+    ev = dict(c.evidence)
+    assert ev["signal:manifest"] == "VALID -> verified"
+    assert ev["signal:watermark"] == "DRIFT -> refuted"   # the dominating (refuting) step
