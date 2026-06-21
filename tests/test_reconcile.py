@@ -69,3 +69,14 @@ def test_identity_perceive():
     form, payload = identity_perceive(_mp())
     assert form == _mp()              # the artifact itself (frozen AST nodes compare by value)
     assert isinstance(payload, bytes)
+
+
+def test_reconcile_fail_closed_on_malformed_certificate():
+    # CARDINAL fail-closed property: a criterion that returns a malformed / non-Certificate
+    # object must degrade to UNVERIFIABLE — reconcile must NEVER raise, even on the
+    # happy-path construction (these would raise before the post-judge block was guarded).
+    none_obs = reconcile(_mp(), criterion=Criterion("rogue", lambda f: None))
+    assert none_obs.status == Status.UNVERIFIED and none_obs.data["verdict"] == "unverifiable"
+    bad = Certificate("c", Verdict.VERIFIED, "x", evidence=123)   # evidence not iterable-of-pairs
+    bad_obs = reconcile(_mp(), criterion=Criterion("rogue2", lambda f: bad))
+    assert bad_obs.status == Status.UNVERIFIED and bad_obs.data["verdict"] == "unverifiable"
