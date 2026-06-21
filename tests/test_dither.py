@@ -152,13 +152,13 @@ def test_ordered_dither_is_deterministic():
     assert i1 == i2
 
 
-def test_ordered_dither_unknown_gets_nearest_without_dither():
-    """Unknown cells must use nearest-without-dither; known cells may be dithered.
+def test_ordered_dither_unknown_returns_sentinel():
+    """Unknown cells must return the -1 sentinel (not a palette index).
 
-    For the unknown cell at position 0: nearest to (0.1,0.1,0.1) is black (index 0)
-    and that must be returned regardless of the Bayer threshold at that position.
-    For the known cell at position 1: the result is valid (in palette range) but
-    may be either color since the dither threshold at (x=1,y=0) can flip it.
+    The -1 sentinel propagates to _palette_indices_to_lab which maps it to
+    black (OKLab (0,0,0)) — honest disclosure of UNVERIFIABLE data rather
+    than silently snapping to a palette colour.
+    For the known cell at position 1: the result is a valid palette index.
     """
     palette = (
         srgb_to_oklab((0.0, 0.0, 0.0)),
@@ -167,5 +167,5 @@ def test_ordered_dither_unknown_gets_nearest_without_dither():
     lab = (srgb_to_oklab((0.1, 0.1, 0.1)), srgb_to_oklab((0.9, 0.9, 0.9)))
     cf = ColorField(2, 1, lab, (True, False))  # first is unknown
     indices = ordered_dither(cf, palette, bayer_size=4)
-    assert indices[0] == 0   # unknown cell: black is nearest, must not be dithered
+    assert indices[0] == -1  # unknown cell: must be -1 sentinel, not a palette index
     assert 0 <= indices[1] < 2  # known cell: valid index, may be dithered to either

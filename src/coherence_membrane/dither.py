@@ -24,7 +24,7 @@ from .color import Triple, delta_e_ok
 from .color_field import ColorField
 
 
-_VALID_N = {2, 4, 8}
+_VALID_N: tuple[int, ...] = (2, 4, 8)
 
 
 def bayer_matrix(n: int) -> list[list[float]]:
@@ -37,7 +37,7 @@ def bayer_matrix(n: int) -> list[list[float]]:
     then divided by n^2 so the result is in [0, 1).
     """
     if n not in _VALID_N:
-        raise ValueError(f"bayer_matrix requires n in {_VALID_N}, got {n}")
+        raise ValueError(f"bayer_matrix requires n in {sorted(_VALID_N)}, got {n}")
 
     # Build the integer matrix first via recurrence, normalize at the end.
     # The standard construction for the n×n Bayer matrix (n = power of 2):
@@ -120,8 +120,13 @@ def ordered_dither(
 
         best_i, second_i, best_d, second_d = _nearest_two(lab, palette)
 
-        if is_unknown or len(palette) == 1:
-            # No dither for unknown cells or single-color palettes
+        if is_unknown:
+            # Unknown cell: preserve the -1 sentinel so downstream renders black
+            result.append(-1)
+            continue
+
+        if len(palette) == 1:
+            # Single-colour palette: no dither possible
             result.append(best_i)
             continue
 
