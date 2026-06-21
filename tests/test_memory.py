@@ -1,7 +1,9 @@
 # tests/test_memory.py
 from __future__ import annotations
 
+import json
 import pytest
+from pathlib import Path
 
 from coherence_membrane.memory import (
     CriterionRef, PerceiveRef, MemoryRecord, MEMORY_TYPES,
@@ -96,3 +98,28 @@ def test_verify_pinned_manifest_catches_insertion():
     pin = s.graph.manifest()
     s.remember(_rec(id="b"))  # inserted after pin
     assert s.verify(pinned_manifest=pin).verdict == BROKEN
+
+
+def test_save_load_roundtrip(tmp_path):
+    s = MemoryStore()
+    s.remember(_rec(id="old", claim="v1"))
+    s.remember(_rec(id="new", claim="v2"), parents=("old",), edge_type="supersedes")
+    p = tmp_path / "mem.json"
+    s.save(p)
+    back = MemoryStore.load(p)
+    assert back.get("new").claim == "v2"
+    assert back.graph.nodes["new"].parents == ("old",)
+    assert back.verify().verdict == VALID
+
+
+def test_load_handedited_record_is_broken(tmp_path):
+    s = MemoryStore()
+    s.remember(_rec(id="a", claim="original"))
+    p = tmp_path / "mem.json"
+    s.save(p)
+    data = json.loads(Path(p).read_text(encoding="utf-8"))
+    for rec in data["records"]:
+        if rec["id"] == "a":
+            rec["claim"] = "HAND-EDITED"  # node digest unchanged → mismatch
+    Path(p).write_text(json.dumps(data), encoding="utf-8")
+    assert MemoryStore.load(p).verify().verdict == BROKEN
