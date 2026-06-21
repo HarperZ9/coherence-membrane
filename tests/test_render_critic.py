@@ -70,3 +70,28 @@ def test_unfit_render_is_refuted():
     r = render_vintage(src, target_width=4, palette_k=2, dither=False, scanlines=True)
     obs = critique_render(r, src, corpus=[0], min_distance=1, tolerance=0.001)
     assert obs.data["verdict"] == "refuted"            # novel but deviation > tiny tolerance
+
+
+from coherence_membrane.memory import MemoryStore
+from coherence_membrane.render_critic import remember_render, render_corpus
+
+
+def test_remember_then_corpus_includes_signature():
+    src = _gradient_png()
+    r = render_vintage(src, target_width=16, palette_k=8, scanlines=False)
+    store = MemoryStore()
+    assert render_corpus(store) == []                       # empty to start
+    obs = critique_render(r, src, corpus=[], min_distance=5, tolerance=1.0)
+    remember_render(store, r, obs)
+    corpus = render_corpus(store)
+    assert render_signature(r.output_png) in corpus         # the remembered render is now in the corpus
+
+
+def test_corpus_makes_a_repeat_derivative():
+    src = _gradient_png()
+    r = render_vintage(src, target_width=16, palette_k=8, scanlines=False)
+    store = MemoryStore()
+    remember_render(store, r, critique_render(r, src, corpus=[], min_distance=5, tolerance=1.0))
+    # the SAME render, judged against the now-populated corpus, is derivative
+    obs2 = critique_render(r, src, corpus=render_corpus(store), min_distance=5, tolerance=1.0)
+    assert obs2.data["verdict"] == "refuted"

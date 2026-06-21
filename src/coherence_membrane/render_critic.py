@@ -10,6 +10,7 @@ from .certificate import Verdict
 from .color import delta_e_ok
 from .color_field import color_field_from_png, downscale_color_field
 from .composition import compose
+from .memory import MemoryRecord, MemoryStore
 from .novelty import novelty_criterion
 from .observation import Observation, Provenance, Status
 from .phash import hamming, perceptual_hash
@@ -61,3 +62,34 @@ def critique_render(render_result, source_png, *, corpus, min_distance, toleranc
          "signature": signature, "deviation": deviation,
          "palette_hex": list(render_result.palette_hex)},
     )
+
+
+def remember_render(store: MemoryStore, render_result, observation, *, source_id=None) -> str:
+    """Store a render-look as a witnessed memory; its signature joins the corpus."""
+    record = MemoryRecord(
+        id=render_result.output_sha256,
+        type="pref",
+        claim=render_result.output_sha256,
+        tags=("render",),
+    )
+    edges = ()
+    if source_id is not None and source_id in store.records:
+        edges = (source_id,)
+    store.remember(record, parents=edges, edge_type="derived-from")
+    # stash the recall-relevant signature/verdict on the store-side record map
+    store.records[record.id] = record
+    _RENDER_SIGS.setdefault(id(store), {})[record.id] = (
+        observation.data["signature"], observation.data["verdict"],
+        tuple(observation.data["palette_hex"]),
+    )
+    return record.id
+
+
+# render signatures are perceptual hashes, not part of the canonical MemoryRecord
+# identity (which is stdlib-serialisable); keep them in a side index keyed by store.
+_RENDER_SIGS: dict[int, dict[str, tuple]] = {}
+
+
+def render_corpus(store: MemoryStore) -> list[int]:
+    """Perceptual signatures of all remembered renders in this store = the novelty corpus."""
+    return [sig for (sig, _v, _p) in _RENDER_SIGS.get(id(store), {}).values()]
