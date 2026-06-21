@@ -7,6 +7,8 @@ Stdlib only; no embeddings — recall is by id/type/tag/structure/graph-traversa
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from .reconcile import reconcile
 from .memory import MemoryRecord, MemoryStore
 from .phash import MATCH, DRIFT, UNVERIFIABLE
@@ -41,3 +43,40 @@ def verify_fresh(record: MemoryRecord, store: MemoryStore, *,
     if record.criterion_ref is not None or record.perceive_ref is not None:
         return UNVERIFIABLE, "criterion/perceiver unregistered — cannot re-check"
     return MATCH, "no source and not superseded"
+
+
+@dataclass(frozen=True)
+class RecalledMemory:
+    record: MemoryRecord
+    freshness: str = ""   # MATCH/DRIFT/UNVERIFIABLE when re-verified, else ""
+    reason: str = ""
+
+
+def recall(store: MemoryStore, *, type=None, tags=None, match=None, traverse_from=None,
+           verdict=None, reverify=False, criteria=None, perceivers=None, limit=None):
+    """Symbolic recall. Facets AND together; verdict= forces re-verification + filters."""
+    ids = set(store.records)
+    if traverse_from is not None:
+        node_id, _edge = traverse_from
+        ids &= store.graph.ancestors(node_id) if node_id in store.graph.nodes else set()
+    candidates = [store.records[i] for i in ids]
+    if type is not None:
+        candidates = [r for r in candidates if r.type == type]
+    if tags:
+        want = set(tags)
+        candidates = [r for r in candidates if want <= set(r.tags)]
+    if match is not None:
+        candidates = [r for r in candidates if match in r.claim]
+    candidates.sort(key=lambda r: r.id)  # deterministic order
+
+    must_verify = reverify or verdict is not None
+    out: list[RecalledMemory] = []
+    for r in candidates:
+        if must_verify:
+            v, reason = verify_fresh(r, store, criteria=criteria, perceivers=perceivers)
+            if verdict is not None and v != verdict:
+                continue
+            out.append(RecalledMemory(r, v, reason))
+        else:
+            out.append(RecalledMemory(r))
+    return out[:limit] if limit is not None else out
