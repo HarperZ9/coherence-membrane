@@ -111,6 +111,9 @@ from .novelty import novelty_criterion
 from .origin import origin_criterion
 from .phyllotaxis import GOLDEN_ANGLE, golden_angle_deviation
 from .structural_fitness import structural_fitness_criterion
+from .memory import MemoryRecord, MemoryStore, CriterionRef, PerceiveRef
+from .recall import recall, RecalledMemory, verify_fresh
+from .registries import CriterionRegistry, PerceiverRegistry
 from .reconcile import Criterion, identity_perceive, reconcile
 from .phash import (
     DRIFT,
@@ -249,6 +252,18 @@ __all__ = [
     "ADJUST",
     "INDETERMINATE",
     "DISPOSITIONS",
+    # accountable memory
+    "MemoryRecord",
+    "MemoryStore",
+    "CriterionRef",
+    "PerceiveRef",
+    # symbolic recall + re-verification
+    "recall",
+    "RecalledMemory",
+    "verify_fresh",
+    # registries
+    "CriterionRegistry",
+    "PerceiverRegistry",
     # the reconcile spine
     "Criterion",
     "identity_perceive",

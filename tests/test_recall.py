@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from coherence_membrane.certificate import Certificate, Verdict
 from coherence_membrane.reconcile import Criterion
 from coherence_membrane.memory import MemoryRecord, MemoryStore, CriterionRef, PerceiveRef
@@ -83,8 +85,35 @@ def test_recall_by_tag_and_match():
 
 
 def test_recall_traverse_ancestors():
-    out = recall(_store(), traverse_from=("d2", "derived-from"))
-    assert {r.record.id for r in out} == {"d1"}      # d1 is an ancestor of d2
+    """Non-vacuous mixed-edge-type traversal test.
+
+    Graph:  A  <--derived-from-- B  <--supersedes-- C
+    - recall(traverse_from=("C","supersedes")) must return exactly {B}
+      (follows C's supersedes edge to B; B's edge_type is "derived-from" so stops)
+    - recall(traverse_from=("C","derived-from")) must return set()
+      (C's edge to B is "supersedes", not "derived-from" — no match)
+    - recall(traverse_from=("B","derived-from")) must return {A}
+      (follows B's derived-from edge to A)
+    """
+    s = MemoryStore()
+    a = MemoryRecord(id="A", type="decision", claim="root")
+    b = MemoryRecord(id="B", type="decision", claim="derived")
+    c = MemoryRecord(id="C", type="decision", claim="superseder")
+    s.remember(a)
+    s.remember(b, parents=("A",), edge_type="derived-from")
+    s.remember(c, parents=("B",), edge_type="supersedes")
+
+    # C's edge to B is "supersedes": following "supersedes" from C reaches B
+    out = recall(s, traverse_from=("C", "supersedes"))
+    assert {r.record.id for r in out} == {"B"}
+
+    # C's edge to B is "supersedes", not "derived-from": no match
+    out2 = recall(s, traverse_from=("C", "derived-from"))
+    assert {r.record.id for r in out2} == set()
+
+    # B's edge to A is "derived-from": following "derived-from" from B reaches A
+    out3 = recall(s, traverse_from=("B", "derived-from"))
+    assert {r.record.id for r in out3} == {"A"}
 
 
 def test_recall_reverify_attaches_freshness():
@@ -92,7 +121,8 @@ def test_recall_reverify_attaches_freshness():
     s.remember(MemoryRecord(id="old", type="decision", claim="x"))
     s.remember(MemoryRecord(id="new", type="decision", claim="y"),
                parents=("old",), edge_type="supersedes")
-    out = recall(s, type="decision", reverify=True)
+    crits, percs = CriterionRegistry(), PerceiverRegistry()
+    out = recall(s, type="decision", reverify=True, criteria=crits, perceivers=percs)
     fresh = {r.record.id: r.freshness for r in out}
     assert fresh["old"] == DRIFT and fresh["new"] == MATCH
 
@@ -102,9 +132,24 @@ def test_recall_verdict_filter_drifted_only():
     s.remember(MemoryRecord(id="old", type="decision", claim="x"))
     s.remember(MemoryRecord(id="new", type="decision", claim="y"),
                parents=("old",), edge_type="supersedes")
-    drifted = recall(s, verdict=DRIFT)
+    crits, percs = CriterionRegistry(), PerceiverRegistry()
+    drifted = recall(s, verdict=DRIFT, criteria=crits, perceivers=percs)
     assert [r.record.id for r in drifted] == ["old"]
 
 
 def test_recall_limit_truncates():
     assert len(recall(_store(), limit=1)) == 1
+
+
+def test_recall_verdict_filter_without_registries_raises():
+    """recall(store, verdict=MATCH) with no registries raises ValueError."""
+    s = _store()
+    with pytest.raises(ValueError, match="requires criteria and perceivers"):
+        recall(s, verdict=MATCH)
+
+
+def test_recall_reverify_without_registries_raises():
+    """recall(store, reverify=True) with no registries raises ValueError."""
+    s = _store()
+    with pytest.raises(ValueError, match="requires criteria and perceivers"):
+        recall(s, reverify=True)

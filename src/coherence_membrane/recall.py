@@ -16,6 +16,28 @@ from .phash import MATCH, DRIFT, UNVERIFIABLE
 _VERDICT_MAP = {"verified": MATCH, "refuted": DRIFT, "unverifiable": UNVERIFIABLE}
 
 
+def _typed_ancestors(store: MemoryStore, node_id: str, edge_type: str) -> set:
+    """Ancestors reachable by following only edges of `edge_type`. A node's
+    edge_type is its relation to its parents; recurse a node's parents only
+    when that node's edge_type matches."""
+    g = store.graph
+    if node_id not in g.nodes:
+        return set()
+    out, seen, stack = set(), set(), [node_id]
+    while stack:
+        nid = stack.pop()
+        if nid in seen:
+            continue
+        seen.add(nid)
+        node = g.nodes.get(nid)
+        if node is None or node.edge_type != edge_type:
+            continue
+        for p in node.parents:
+            out.add(p)
+            stack.append(p)
+    return out
+
+
 def _is_superseded(record_id: str, store: MemoryStore) -> bool:
     """True iff some node supersedes record_id (reverse-edge scan)."""
     for node in store.graph.nodes.values():
@@ -55,10 +77,13 @@ class RecalledMemory:
 def recall(store: MemoryStore, *, type=None, tags=None, match=None, traverse_from=None,
            verdict=None, reverify=False, criteria=None, perceivers=None, limit=None):
     """Symbolic recall. Facets AND together; verdict= forces re-verification + filters."""
+    must_verify = reverify or verdict is not None
+    if must_verify and (criteria is None or perceivers is None):
+        raise ValueError("reverify/verdict filter requires criteria and perceivers")
     ids = set(store.records)
     if traverse_from is not None:
-        node_id, _edge = traverse_from
-        ids &= store.graph.ancestors(node_id) if node_id in store.graph.nodes else set()
+        node_id, edge = traverse_from
+        ids &= _typed_ancestors(store, node_id, edge)
     candidates = [store.records[i] for i in ids]
     if type is not None:
         candidates = [r for r in candidates if r.type == type]
@@ -69,7 +94,6 @@ def recall(store: MemoryStore, *, type=None, tags=None, match=None, traverse_fro
         candidates = [r for r in candidates if match in r.claim]
     candidates.sort(key=lambda r: r.id)  # deterministic order
 
-    must_verify = reverify or verdict is not None
     out: list[RecalledMemory] = []
     for r in candidates:
         if must_verify:

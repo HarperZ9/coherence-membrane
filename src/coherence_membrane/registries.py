@@ -17,7 +17,13 @@ class CriterionRegistry:
         self._by_key: dict[tuple[str, str], Criterion] = {}
 
     def register(self, criterion: Criterion, *, version: str) -> None:
-        self._by_key[(criterion.name, version)] = criterion
+        key = (criterion.name, version)
+        existing = self._by_key.get(key)
+        if existing is not None and existing is not criterion:
+            raise ValueError(
+                f"version collision: ({criterion.name!r},{version!r}) already bound to a different criterion"
+            )
+        self._by_key[key] = criterion
 
     def get(self, name: str, version: str) -> Criterion | None:
         return self._by_key.get((name, version))
