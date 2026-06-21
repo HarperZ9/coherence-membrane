@@ -81,6 +81,13 @@ class FieldDiff:
     throttle_reason: str | None = None
 
 
+@dataclass(frozen=True)
+class ChainVerdict:
+    verdict: str
+    reason: str
+    broken_entry: int | None = None
+
+
 class DiffChain:
     """A witnessed, replayable record of a Field stream over time."""
 
@@ -145,3 +152,25 @@ class DiffChain:
             if field_state_sha(state) != expect:
                 return FieldSnapshot(state, "", tick, UNVERIFIABLE, f"entry at {i} failed re-hash")
         return FieldSnapshot(state, field_state_sha(state), tick)
+
+    def verify(self) -> ChainVerdict:
+        """Replay from base, re-hash every entry, confirm all parent->result links."""
+        base = self.entries[0]
+        if not isinstance(base, FieldSnapshot) or field_state_sha(base.field) != base.state_sha:
+            return ChainVerdict(UNVERIFIABLE, "base keyframe failed re-hash", 0)
+        prev_sha = base.state_sha
+        state = base.field
+        for i in range(1, len(self.entries)):
+            e = self.entries[i]
+            if isinstance(e, FieldSnapshot):
+                if field_state_sha(e.field) != e.state_sha:
+                    return ChainVerdict(UNVERIFIABLE, f"keyframe {i} failed re-hash", i)
+                state, prev_sha = e.field, e.state_sha
+            else:  # FieldDiff
+                if e.parent_sha != prev_sha:
+                    return ChainVerdict(UNVERIFIABLE, f"diff {i} parent_sha breaks the chain", i)
+                state = field_apply(state, e.changes)
+                if field_state_sha(state) != e.result_sha:
+                    return ChainVerdict(UNVERIFIABLE, f"diff {i} result_sha != re-derived state", i)
+                prev_sha = e.result_sha
+        return ChainVerdict(MATCH, "chain intact", None)
