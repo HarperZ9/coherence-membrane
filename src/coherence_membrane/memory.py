@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .observation import sha256_hex
+from .provenance import ProvenanceGraph
 
 MEMORY_TYPES = ("fact", "pointer", "decision", "pref")
 RECORD_ALGO = "memory-record-canonical-v1"
@@ -93,3 +94,25 @@ class MemoryRecord:
             perceive_ref=PerceiveRef.from_dict(d["perceive_ref"]) if d.get("perceive_ref") else None,
             created=str(d.get("created", "")),
         )
+
+
+class MemoryStore:
+    """An append-only store of witnessed memory records over a ProvenanceGraph."""
+
+    def __init__(self) -> None:
+        self.graph = ProvenanceGraph()
+        self.records: dict[str, MemoryRecord] = {}
+
+    def remember(self, record: MemoryRecord, *, parents: tuple | list = (),
+                 edge_type: str = "derived-from") -> str:
+        """Store a record and add its witnessed node. `parents` are ids of EXISTING
+        memories this one relates to via `edge_type` (e.g. 'supersedes')."""
+        if record.id in self.records:
+            raise ValueError(f"duplicate memory id {record.id!r}")
+        self.graph.add(record.id, "memory", record.identity_sha256,
+                       parents=tuple(parents), edge_type=edge_type)
+        self.records[record.id] = record
+        return record.id
+
+    def get(self, id: str) -> MemoryRecord | None:
+        return self.records.get(id)
