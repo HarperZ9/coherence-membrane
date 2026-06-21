@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from .observation import sha256_hex
@@ -131,3 +132,19 @@ class MemoryStore:
             elif rec.identity_sha256 != node.digest:
                 reasons.append(f"record {rid!r} content digest != node digest (tampered)")
         return GraphVerdict(BROKEN, reasons) if reasons else GraphVerdict(VALID, [])
+
+    def save(self, path) -> None:
+        data = {"graph": self.graph.to_dict(),
+                "records": [r.to_dict() for r in self.records.values()]}
+        Path(path).write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+
+    @classmethod
+    def load(cls, path) -> "MemoryStore":
+        """Reconstruct the store. Caller runs verify() to re-validate (resume)."""
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        store = cls()
+        store.graph = ProvenanceGraph.from_dict(data["graph"])
+        for rd in data.get("records", []):
+            rec = MemoryRecord.from_dict(rd)
+            store.records[rec.id] = rec
+        return store
