@@ -41,6 +41,67 @@ class ColorField:
         return self.unknown[self.index(x, y)]
 
 
+def downscale_color_field(
+    field: ColorField,
+    new_width: int,
+    new_height: int | None = None,
+) -> ColorField:
+    """Box-average (average-pool) a ColorField to a smaller size.
+
+    If new_height is None, it is computed from new_width to preserve the
+    original aspect ratio (integer, rounded down, minimum 1).
+
+    Each output cell is the per-channel arithmetic mean of all source cells in
+    its footprint.  A target cell is UNVERIFIABLE if ANY source cell in its
+    footprint is UNVERIFIABLE (conservative, matching field_ops.downscale).
+
+    This is the color analogue of field_ops.downscale (which is luminance-only).
+    Pure function; deterministic.
+    """
+    if new_height is None:
+        new_height = max(1, round(new_width * field.height / field.width))
+    if new_width <= 0 or new_height <= 0:
+        raise ValueError("target dimensions must be positive")
+    if new_width > field.width or new_height > field.height:
+        raise ValueError("downscale_color_field cannot upscale")
+
+    w, h = field.width, field.height
+    lab_out: list[Triple] = []
+    unknown_out: list[bool] = []
+
+    for ty in range(new_height):
+        y0 = ty * h // new_height
+        y1 = (ty + 1) * h // new_height
+        if y1 <= y0:
+            y1 = y0 + 1
+        for tx in range(new_width):
+            x0 = tx * w // new_width
+            x1 = (tx + 1) * w // new_width
+            if x1 <= x0:
+                x1 = x0 + 1
+
+            sum_L = sum_a = sum_b = 0.0
+            count = 0
+            unk = False
+            for sy in range(y0, y1):
+                for sx in range(x0, x1):
+                    j = sy * w + sx
+                    unk = unk or field.unknown[j]
+                    L, a, b = field.lab[j]
+                    sum_L += L
+                    sum_a += a
+                    sum_b += b
+                    count += 1
+
+            if count:
+                lab_out.append((sum_L / count, sum_a / count, sum_b / count))
+            else:
+                lab_out.append((0.0, 0.0, 0.0))
+            unknown_out.append(unk)
+
+    return ColorField(new_width, new_height, tuple(lab_out), tuple(unknown_out))
+
+
 def color_field_from_png(payload: bytes) -> ColorField:
     """Lower an 8-bit PNG into an OKLab ColorField. Raises PngDecodeError on
     anything undecodable (the caller fail-closes)."""
