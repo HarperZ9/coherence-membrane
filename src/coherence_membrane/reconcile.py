@@ -16,13 +16,59 @@ from .certificate import Certificate, Verdict
 from .observation import Observation, Provenance, Status, sha256_hex
 
 
+# --- SPEC: making "a criterion it did NOT author" WITNESSABLE (additive) -------------
+# The reconcile's central claim is judgement "against a criterion it did NOT author".
+# Until now that independence was asserted by discipline and UNVERIFIED by the system's
+# own standard: a Criterion carried no provenance and reconcile() never recorded who
+# produced the artifact, so a SELF-graded reconcile (the judge's author == the
+# artifact's producer) was byte-indistinguishable from an independent one. This makes
+# the property a recorded, checkable WITNESS rather than a hope:
+#   * Criterion may OPTIONALLY carry an `author` provenance id (who wrote the judge).
+#   * reconcile() may OPTIONALLY accept a `producer` id (who produced the artifact).
+#   * reconcile() records both and computes an `independence` field on the Observation:
+#       - "witnessed-independent": both present AND differ (author != producer).
+#       - "self-authored":         both present AND equal (author == producer).
+#       - "unwitnessed":           either absent — THE DEFAULT.
+# DEFAULT-PRESERVING: when independence is "unwitnessed" the author/producer ids are NOT
+# written into `data`, so every existing call is byte-for-byte unchanged in content (it
+# only gains the honest annotation independence="unwitnessed"); two reconciles that
+# differ ONLY in an un-witnessed author/producer are byte-identical, exactly as before.
+# STRICT MODE (opt-in, default OFF): when enabled, a DECIDED verdict (VERIFIED/REFUTED)
+# carried by a `self-authored` criterion is DOWNGRADED to UNVERIFIABLE — the system now
+# refuses to launder a self-graded decision as a witnessed one. Default mode leaves
+# every verdict EXACTLY as today and only adds the `independence` annotation.
+# Soundness over completeness: the absence of a witness is "unwitnessed" (honest),
+# never silently "independent".
+# -------------------------------------------------------------------------------------
+
+# Sentinel reason emitted when strict mode refuses a self-graded decision.
+_SELF_AUTHORED_DOWNGRADE_REASON = "verdict from a self-authored criterion (independence not witnessed)"
+
+
+def witness_independence(author, producer) -> str:
+    """Resolve (criterion author, artifact producer) to the independence tri-state.
+
+    "witnessed-independent" iff BOTH are present and DIFFER; "self-authored" iff both
+    present and equal; "unwitnessed" iff either is absent (the default — an unsupplied
+    witness is honestly unknown, never assumed independent). Pure + deterministic."""
+    if author is None or producer is None:
+        return "unwitnessed"
+    return "self-authored" if author == producer else "witnessed-independent"
+
+
 @dataclass(frozen=True)
 class Criterion:
     """A named, independent judge: a perceived form -> a Certificate. The 'criterion it
-    did not author' is the anti-hallucination heart of the reconcile."""
+    did not author' is the anti-hallucination heart of the reconcile.
+
+    `author` is an OPTIONAL provenance id naming who wrote this judge. It defaults to
+    None (unwitnessed), so existing Criterion(name, judge) call sites are unchanged. When
+    set, reconcile() can witness it against the artifact's producer to mark independence
+    (see witness_independence / reconcile's `independence` annotation)."""
 
     name: str
     judge: Callable[[Any], Certificate]
+    author: str | None = None
 
 
 def identity_perceive(artifact):
@@ -41,38 +87,75 @@ def _safe_str(x) -> str:
         return "<unrepresentable>"
 
 
-def reconcile(artifact, *, perceive=identity_perceive, criterion) -> Observation:
+def reconcile(artifact, *, perceive=identity_perceive, criterion, producer=None,
+              strict=False) -> Observation:
     """Perceive -> judge -> witness, as ONE witnessed Observation carrying the verdict.
 
     perceive(artifact) -> (form, payload_bytes); criterion.judge(form) -> Certificate.
     Fail-closed: ANY exception (perceive, judge, or constructing the witnessed result
     from a malformed Certificate) yields an UNVERIFIABLE Observation; reconcile never
     raises and never alters a verdict — it is a faithful wrapper (the recorded verdict
-    is always the criterion's own, passed through)."""
+    is always the criterion's own, passed through).
+
+    `producer` (optional) is the provenance id of whoever produced the artifact. Together
+    with criterion.author it lets reconcile WITNESS the spine's "criterion it did not
+    author" claim: the emitted Observation carries an `independence` field
+    (witnessed-independent / self-authored / unwitnessed — see witness_independence).
+    When BOTH ids are absent (the default) independence is "unwitnessed" and the ids are
+    NOT recorded, so existing calls are byte-for-byte unchanged in content.
+
+    `strict` (optional, default OFF — so existing tests are untouched): when True, a
+    DECIDED verdict (VERIFIED/REFUTED) carried by a `self-authored` criterion is
+    DOWNGRADED to UNVERIFIABLE (reason: independence not witnessed). Default mode leaves
+    every verdict EXACTLY as today and only annotates `independence`."""
     label = f"reconcile:{criterion.name}"
+    independence = witness_independence(getattr(criterion, "author", None), producer)
     try:
         form, payload = perceive(artifact)
         cert = criterion.judge(form)
         # ALL post-judge construction stays inside the try: a malformed Certificate from
         # an untrusted criterion must degrade to UNVERIFIABLE, never raise (fail-closed).
         decided = cert.verdict in (Verdict.VERIFIED, Verdict.REFUTED)
+        verdict_value = cert.verdict.value
+        downgraded = False
+        # STRICT: refuse to launder a self-graded decision as a witnessed one. Only a
+        # DECIDED verdict on a self-authored criterion is touched; default mode (strict
+        # False) and every other independence value pass the criterion's verdict through.
+        if strict and decided and independence == "self-authored":
+            verdict_value = Verdict.UNVERIFIABLE.value
+            decided = False
+            downgraded = True
         payload = bytes(payload) if isinstance(payload, (bytes, bytearray)) else str(payload).encode()
         claim = cert.claim if isinstance(cert.claim, str) else str(cert.claim)
+        data = {"oracle": cert.oracle, "verdict": verdict_value, "claim": claim,
+                "criterion": criterion.name, "evidence": [list(p) for p in cert.evidence],
+                "identity_sha256": sha256_hex(claim.encode()), "independence": independence}
+        # Only record the witnessing ids when independence is actually witnessed — this
+        # keeps the default ("unwitnessed") Observation byte-identical to the legacy one
+        # and makes two un-witnessed reconciles indistinguishable, as before.
+        if independence != "unwitnessed":
+            data["criterion_author"] = getattr(criterion, "author", None)
+            data["artifact_producer"] = producer
+        if downgraded:
+            data["downgrade_reason"] = _SELF_AUTHORED_DOWNGRADE_REASON
         return Observation(
-            label, claim, f"reconcile {cert.verdict.value}",
+            label, claim, f"reconcile {verdict_value}",
             Status.PASS if decided else Status.UNVERIFIED,
             Provenance.witness_bytes(claim, payload, "high" if decided else "low"),
-            {"oracle": cert.oracle, "verdict": cert.verdict.value, "claim": claim,
-             "criterion": criterion.name, "evidence": [list(p) for p in cert.evidence],
-             "identity_sha256": sha256_hex(claim.encode())},
+            data,
         )
     except Exception as exc:
         # A criterion-UNVERIFIABLE (a real verdict) and this exception-UNVERIFIABLE both
         # collapse to Status.UNVERIFIED by design (both mean "no decision"); the exception
         # path is distinguishable by its "reason" key and the absent oracle/evidence.
         subject = _safe_str(artifact)
+        data = {"verdict": "unverifiable", "criterion": criterion.name, "reason": repr(exc),
+                "independence": independence}
+        if independence != "unwitnessed":
+            data["criterion_author"] = getattr(criterion, "author", None)
+            data["artifact_producer"] = producer
         return Observation(
             label, subject, "reconcile unverifiable", Status.UNVERIFIED,
             Provenance.witness_bytes(subject, b"", "low"),
-            {"verdict": "unverifiable", "criterion": criterion.name, "reason": repr(exc)},
+            data,
         )

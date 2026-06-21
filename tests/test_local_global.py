@@ -9,15 +9,29 @@ def _local(verdict, oracle="locus"):
     return Certificate("locus claim", verdict, oracle)
 
 
+def _in_class_witness(_loci):
+    """A WITNESSED in-class class-membership criterion: returns a VERIFIED Certificate
+    attesting the claim lies in a proven completeness class (e.g. genus-0 conics)."""
+    return Certificate("in completeness class", Verdict.VERIFIED, "class-witness-v1")
+
+
+def _out_of_class_witness(_loci):
+    """A WITNESSED out-of-class criterion: returns a REFUTED Certificate (positive proof
+    the claim lies OUTSIDE a proven completeness class — e.g. Selmer's cubic)."""
+    return Certificate("in completeness class", Verdict.REFUTED, "class-witness-v1")
+
+
 def test_genus0_in_class_lifts_to_verified():
     # the Hasse principle HOLDS here (quadratic-form / genus-0 conic): unanimous locals
-    # + a witnessed in-class certificate -> the global property is VERIFIED.
+    # + a WITNESSED in-class certificate -> the global property is VERIFIED.
     locals_ = [_local(Verdict.VERIFIED), _local(Verdict.VERIFIED), _local(Verdict.VERIFIED)]
-    c = cross_check_local("conic has a rational point", locals_, in_completeness_class=True)
+    c = cross_check_local("conic has a rational point", locals_,
+                          in_completeness_class=_in_class_witness)
     assert c.verdict is Verdict.VERIFIED
     assert c.oracle == "cross-check-local-v1"
     ev = dict(c.evidence)
     assert ev["in_completeness_class"] == "true"
+    assert ev["class_witness"] == "certificate"   # lifted only on a witnessed certificate
     # the loci are carried in the proof
     assert ev["locus0:locus"] == "verified"
 
@@ -26,8 +40,10 @@ def test_selmer_style_out_of_class_is_unverifiable():
     # THE headline soundness test. Selmer's cubic 3x^3+4y^3+5z^3=0 is solvable in every
     # local field yet has no global rational solution: unanimous locals OUTSIDE a proven
     # completeness class must NEVER lift to VERIFIED — it downgrades to UNVERIFIABLE.
+    # The out-of-class status is itself WITNESSED (a REFUTED class certificate).
     locals_ = [_local(Verdict.VERIFIED), _local(Verdict.VERIFIED), _local(Verdict.VERIFIED)]
-    c = cross_check_local("cubic has a rational point", locals_, in_completeness_class=False)
+    c = cross_check_local("cubic has a rational point", locals_,
+                          in_completeness_class=_out_of_class_witness)
     assert c.verdict is Verdict.UNVERIFIABLE
     reason = dict(c.evidence)["reason"]
     assert "local-global" in reason and "Hasse" in reason
@@ -37,9 +53,9 @@ def test_selmer_style_out_of_class_is_unverifiable():
 
 def test_single_local_refuted_refutes_global():
     # the sound direction: ONE local obstruction kills the global property, even with a
-    # true in-class certificate (a real obstruction beats the lifting guard).
+    # witnessed in-class certificate (a real obstruction beats the lifting guard).
     locals_ = [_local(Verdict.VERIFIED), _local(Verdict.REFUTED, "bad-prime"), _local(Verdict.VERIFIED)]
-    c = cross_check_local("has a global point", locals_, in_completeness_class=True)
+    c = cross_check_local("has a global point", locals_, in_completeness_class=_in_class_witness)
     assert c.verdict is Verdict.REFUTED
 
 
@@ -67,12 +83,50 @@ def test_raising_class_predicate_fails_closed():
 
 
 def test_callable_class_predicate_in_class_verifies():
-    # the injected criterion may be a predicate over the loci (mirrors distance/deviation
-    # injection): a True-returning predicate + unanimous locals -> VERIFIED.
+    # the injected criterion is a predicate over the loci returning a witnessed Certificate
+    # (mirrors distance/deviation injection): a VERIFIED-returning predicate + unanimous
+    # locals -> VERIFIED.
     locals_ = [_local(Verdict.VERIFIED), _local(Verdict.VERIFIED)]
-    c = cross_check_local("claim", locals_, in_completeness_class=lambda loci: len(loci) == 2)
+    c = cross_check_local(
+        "claim", locals_,
+        in_completeness_class=lambda loci: Certificate(
+            "membership", Verdict.VERIFIED if len(loci) == 2 else Verdict.REFUTED, "class-v1"),
+    )
     assert c.verdict is Verdict.VERIFIED
     assert dict(c.evidence)["in_completeness_class"] == "true"
+
+
+def test_bare_bool_true_is_asserted_not_witnessed():
+    # THE Hasse-seam closure: a bare True is membership ASSERTED, not WITNESSED — it must
+    # NEVER lift unanimous-local to VERIFIED (same root seam as reconcile's independence).
+    locals_ = [_local(Verdict.VERIFIED), _local(Verdict.VERIFIED)]
+    c = cross_check_local("claim", locals_, in_completeness_class=True)
+    assert c.verdict is Verdict.UNVERIFIABLE
+    ev = dict(c.evidence)
+    assert ev["in_completeness_class"] == "asserted"
+    assert ev["reason"] == "class membership asserted, not witnessed"
+
+
+def test_callable_returning_bare_bool_is_asserted():
+    # a callable that returns a bare bool is ALSO only an assertion, not a witness ->
+    # UNVERIFIABLE (no Certificate => nothing witnessed).
+    locals_ = [_local(Verdict.VERIFIED), _local(Verdict.VERIFIED)]
+    c = cross_check_local("claim", locals_, in_completeness_class=lambda loci: len(loci) == 2)
+    assert c.verdict is Verdict.UNVERIFIABLE
+    assert dict(c.evidence)["in_completeness_class"] == "asserted"
+
+
+def test_unverifiable_class_certificate_does_not_lift():
+    # an UNVERIFIABLE class certificate witnesses neither in- nor out-of-class -> unknown,
+    # fail-closed to UNVERIFIABLE with the Hasse reason (never VERIFIED).
+    locals_ = [_local(Verdict.VERIFIED), _local(Verdict.VERIFIED)]
+    c = cross_check_local(
+        "claim", locals_,
+        in_completeness_class=lambda loci: Certificate("m", Verdict.UNVERIFIABLE, "class-v1"))
+    assert c.verdict is Verdict.UNVERIFIABLE
+    ev = dict(c.evidence)
+    assert ev["in_completeness_class"] == "unknown"
+    assert "Hasse" in ev["reason"]
 
 
 def test_local_unverifiable_attenuates():

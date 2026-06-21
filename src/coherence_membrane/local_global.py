@@ -37,26 +37,45 @@ from .composition import meet_verdicts
 
 _ORACLE = "cross-check-local-v1"
 _HASSE_REASON = "local-global-unproven (Hasse)"
+# Same root seam as reconcile's independence witness: membership in the completeness
+# class must be WITNESSED (a Certificate), not ASSERTED (a bare bool). A bare True used
+# to lift unanimous-local straight to a global VERIFIED — laundering an un-witnessed
+# membership claim into authority. Now ONLY a witnessed in-class Certificate lifts; a
+# bare bool is recorded as "asserted" and fails CLOSED to UNVERIFIABLE.
+_ASSERTED_REASON = "class membership asserted, not witnessed"
 
 
-def _class_holds(in_completeness_class, loci) -> bool | None:
-    """Resolve the injected completeness-class certificate to a strict tri-state.
+def _class_membership(in_completeness_class, loci) -> str:
+    """Resolve the injected completeness-class witness to a strict state.
 
-    Returns True (proven in-class), False (proven out-of-class), or None (unknown /
-    not witnessed / the predicate raised). A bool flag is taken as-is; a callable is
-    invoked with the loci. ANY ambiguity or error becomes None so the caller fails
-    CLOSED — a missing class certificate is never read as "in class"."""
+    Returns one of:
+      * "in-class"     — a WITNESSED in-class Certificate (verdict VERIFIED). The ONLY
+                         state that may lift unanimous-local to a global VERIFIED.
+      * "out-of-class" — a witnessed Certificate with verdict REFUTED.
+      * "asserted"     — a bare bool (or a callable returning a bare bool): membership
+                         ASSERTED, not witnessed. Never lifts (fail-closed soundness).
+      * "unknown"      — None / a raising predicate / a non-Certificate, non-bool result
+                         / an UNVERIFIABLE class Certificate. Never lifts.
+
+    A callable is invoked with the loci; its RETURN is classified the same way (so the
+    witnessed path is `f(loci) -> Certificate`). ANY error becomes "unknown" so the
+    caller fails CLOSED — a missing/asserted class witness is never read as in-class."""
     if in_completeness_class is None:
-        return None
+        return "unknown"
     try:
-        decided = in_completeness_class(loci) if callable(in_completeness_class) else in_completeness_class
+        result = in_completeness_class(loci) if callable(in_completeness_class) else in_completeness_class
     except Exception:
-        return None
-    if decided is True:
-        return True
-    if decided is False:
-        return False
-    return None   # anything non-bool is treated as unknown, not coerced
+        return "unknown"
+    # A bare bool is an un-witnessed assertion — regardless of value it cannot lift.
+    if isinstance(result, bool):
+        return "asserted"
+    if isinstance(result, Certificate):
+        if result.verdict is Verdict.VERIFIED:
+            return "in-class"
+        if result.verdict is Verdict.REFUTED:
+            return "out-of-class"
+        return "unknown"   # an UNVERIFIABLE class Certificate witnesses nothing
+    return "unknown"   # anything else is treated as unknown, not coerced
 
 
 def cross_check_local(claim, local_results, *, in_completeness_class) -> Certificate:
@@ -64,16 +83,21 @@ def cross_check_local(claim, local_results, *, in_completeness_class) -> Certifi
 
     `local_results` is an iterable of per-locus `Certificate`s (one per prime /
     component / coordinate of the decomposition). `in_completeness_class` is the
-    INJECTED criterion-it-did-not-author: a bool, or a predicate `f(loci) -> bool`,
-    witnessing that the claim lies where local->global is PROVEN. It is injected here
-    exactly as `distance`/`deviation` are in `novelty`/`structural_fitness`, so this
-    module carries no domain coupling.
+    INJECTED criterion-it-did-not-author: a WITNESSED predicate `f(loci) -> Certificate`
+    (in-class iff its verdict is VERIFIED) attesting that the claim lies where
+    local->global is PROVEN. It is injected here exactly as `distance`/`deviation` are in
+    `novelty`/`structural_fitness`, so this module carries no domain coupling. A BARE
+    bool (or a callable returning a bare bool) is treated as an un-witnessed ASSERTION
+    and NEVER lifts — membership must be witnessed, not asserted (same seam as
+    reconcile's independence witness).
 
     Verdict rules (the soundness core):
-      * all locals VERIFIED **and** class True  -> VERIFIED (evidence carries the
-        class certificate + the loci).
-      * all locals VERIFIED **but** class False/unknown -> UNVERIFIABLE, reason
+      * all locals VERIFIED **and** a WITNESSED in-class Certificate -> VERIFIED
+        (evidence carries the witnessed class certificate + the loci).
+      * all locals VERIFIED **but** class out-of-class/unknown -> UNVERIFIABLE, reason
         ``local-global-unproven (Hasse)`` — NEVER VERIFIED (Selmer's cubic refutes it).
+      * all locals VERIFIED **but** membership only ASSERTED (a bare bool) ->
+        UNVERIFIABLE, reason ``class membership asserted, not witnessed`` — NEVER VERIFIED.
       * any local REFUTED -> REFUTED (one local obstruction kills the global property —
         the sound direction).
       * empty / a local that is itself UNVERIFIABLE / mixed-inconclusive / the class
@@ -120,16 +144,23 @@ def cross_check_local(claim, local_results, *, in_completeness_class) -> Certifi
                                (("reason", "locals not unanimously decisive"),) + loci_ev)
 
         # local_meet is VERIFIED: unanimous local VERIFIED. The Hasse guard decides
-        # whether that lifts globally — and ONLY a witnessed in-class certificate does.
-        holds = _class_holds(in_completeness_class, locals_list)
-        if holds is True:
+        # whether that lifts globally — and ONLY a WITNESSED in-class Certificate does.
+        membership = _class_membership(in_completeness_class, locals_list)
+        if membership == "in-class":
             return Certificate(str(claim), Verdict.VERIFIED, _ORACLE,
                                (("agree", "all locals verified"),
-                                ("in_completeness_class", "true")) + loci_ev)
-        # class False or unknown -> the caught local–global fallacy. NEVER VERIFIED.
+                                ("in_completeness_class", "true"),
+                                ("class_witness", "certificate")) + loci_ev)
+        if membership == "asserted":
+            # membership claimed by a bare bool — asserted, not witnessed. NEVER VERIFIED.
+            return Certificate(str(claim), Verdict.UNVERIFIABLE, _ORACLE,
+                               (("reason", _ASSERTED_REASON),
+                                ("in_completeness_class", "asserted"),
+                                ("agree", "all locals verified")) + loci_ev)
+        # out-of-class or unknown -> the caught local–global fallacy. NEVER VERIFIED.
         return Certificate(str(claim), Verdict.UNVERIFIABLE, _ORACLE,
                            (("reason", _HASSE_REASON),
-                            ("in_completeness_class", "false" if holds is False else "unknown"),
+                            ("in_completeness_class", "false" if membership == "out-of-class" else "unknown"),
                             ("agree", "all locals verified")) + loci_ev)
     except Exception as exc:   # TOTAL: nothing escapes as an exception.
         return Certificate(str(claim), Verdict.UNVERIFIABLE, _ORACLE,
