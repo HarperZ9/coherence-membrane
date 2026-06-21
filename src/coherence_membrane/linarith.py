@@ -163,3 +163,86 @@ def fourier_motzkin(constraints, *, max_rows: int = _ROW_CAP) -> FMResult:
         if (strict and rhs <= 0) or ((not strict) and rhs < 0):
             return FMResult("unsat", multipliers={k: v for k, v in combo.items() if v != 0})
     return FMResult("sat", model=_extract_model(eliminated))
+
+
+def _show(c: LinearConstraint) -> str:
+    lhs = " + ".join(f"{coeff}*{v}" for v, coeff in c.terms) or "0"
+    return f"{lhs} {c.op} {c.rhs}"
+
+
+def check_model(constraints, model) -> bool:
+    """Trusted check: does the model satisfy every constraint? (Pure substitution.)"""
+    try:
+        return all(c.evaluate(model) for c in constraints)
+    except (KeyError, TypeError, ZeroDivisionError, ValueError):
+        return False
+
+
+def check_farkas(constraints, multipliers) -> bool:
+    """Trusted check: nonneg multipliers on <=/< (free on =), coefficients cancel to 0,
+    and the constant is a contradiction with correct strictness."""
+    combo_coeffs: dict = {}
+    combo_rhs = Fraction(0)
+    strict = False
+    try:
+        for i, c in enumerate(constraints):
+            m = Fraction(multipliers.get(i, 0))
+            if m == 0:
+                continue
+            if c.op in ("<=", "<") and m < 0:
+                return False
+            for v, coeff in c.terms:
+                combo_coeffs[v] = combo_coeffs.get(v, Fraction(0)) + m * coeff
+            combo_rhs += m * c.rhs
+            if c.op == "<" and m > 0:
+                strict = True
+    except (TypeError, ValueError, ZeroDivisionError):
+        return False
+    if any(v != 0 for v in combo_coeffs.values()):
+        return False
+    return combo_rhs <= 0 if strict else combo_rhs < 0
+
+
+def _claim(prefix, cons):
+    body = " ∧ ".join(_show(c) for c in cons) if cons else "(empty)"
+    return f"{prefix}: {body}"
+
+
+def check_feasible(constraints) -> Certificate:
+    """Feasible? VERIFIED + checked model; REFUTED + checked Farkas; else UNVERIFIABLE.
+    Proof-carrying: the verdict is only as good as the independently-checked witness."""
+    cons = list(constraints)
+    claim = _claim("feasible", cons)
+    try:
+        res = fourier_motzkin(cons)
+    except Exception as exc:
+        return Certificate(claim, Verdict.UNVERIFIABLE, _ORACLE, (("error", repr(exc)),))
+    if res.status == "sat" and res.model is not None and check_model(cons, res.model):
+        ev = tuple((f"model:{v}", str(res.model[v])) for v in sorted(res.model))
+        return Certificate(claim, Verdict.VERIFIED, _ORACLE, ev or (("model", "trivial"),))
+    if res.status == "unsat" and res.multipliers is not None and check_farkas(cons, res.multipliers):
+        ev = tuple((f"farkas:{i}", str(m)) for i, m in sorted(res.multipliers.items()))
+        return Certificate(claim, Verdict.REFUTED, _ORACLE, ev or (("farkas", "trivial"),))
+    return Certificate(claim, Verdict.UNVERIFIABLE, _ORACLE,
+                       (("reason", f"no checkable witness ({res.status})"),))
+
+
+def _entail_from_feasible(claim, sub) -> Certificate:
+    # premises ∧ ¬concl INFEASIBLE (sub REFUTED) => entailed; FEASIBLE (VERIFIED) => counterexample.
+    flip = {Verdict.REFUTED: Verdict.VERIFIED, Verdict.VERIFIED: Verdict.REFUTED}
+    return Certificate(claim, flip.get(sub.verdict, Verdict.UNVERIFIABLE), _ORACLE, sub.evidence)
+
+
+def check_entails(premises, conclusion) -> Certificate:
+    """premises ⊨ conclusion  iff  premises ∧ ¬conclusion is infeasible. Inequality
+    conclusion -> one check; '=' conclusion -> both directions composed (lattice meet)."""
+    prem = list(premises)
+    claim = _claim("entails " + _show(conclusion) + " from", prem)
+    neg = negate(conclusion)
+    if neg is not None:
+        return _entail_from_feasible(claim, check_feasible(prem + [neg]))
+    coeffs = {v: c for v, c in conclusion.terms}
+    le = _entail_from_feasible(claim, check_feasible(prem + [constraint(coeffs, ">", conclusion.rhs)]))
+    ge = _entail_from_feasible(claim, check_feasible(prem + [constraint(coeffs, "<", conclusion.rhs)]))
+    meet = compose([le, ge], claim=claim)
+    return Certificate(claim, meet.verdict, _ORACLE, meet.evidence)
