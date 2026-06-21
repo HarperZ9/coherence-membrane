@@ -8,8 +8,9 @@ target AND cohesive AND any hard guard holds), REFLECT on the weakest axis and r
 until correct, or until an honest budget is spent (then it says which axis fell short, never a
 false "correct"). A binary action (one grader, max_iter=1, target<=0, bar<=0, no guard)
 degenerates to exactly the reconcile. The whole reflect->grade trajectory is carried as a
-re-checkable witness. Stdlib only; depends only on the Grade/cohesion contracts, never on a
-specific oracle.
+re-checkable witness. Fail-closed throughout: a deviation, generate, or adjust that raises (or
+a non-numeric deviation) degrades to an honest outcome, never a crash and never a false
+"correct". Stdlib only; depends only on the Grade/cohesion contracts, never on a specific oracle.
 """
 from __future__ import annotations
 
@@ -30,8 +31,8 @@ class GradedCriterion:
     def __post_init__(self) -> None:
         if self.kind not in ("objective", "subjective"):
             raise ValueError(f"kind must be objective|subjective, got {self.kind!r}")
-        if (not isinstance(self.tolerance, (int, float)) or not math.isfinite(self.tolerance)
-                or self.tolerance <= 0):
+        if (not isinstance(self.tolerance, (int, float)) or isinstance(self.tolerance, bool)
+                or not math.isfinite(self.tolerance) or self.tolerance <= 0):
             raise ValueError(f"tolerance must be a finite positive number, got {self.tolerance!r}")
 
 
@@ -46,10 +47,14 @@ class Grade:
 
 
 def grade(criterion: GradedCriterion, form) -> Grade:
-    """Measure one criterion. A deviation that raises, is non-finite, or is negative ->
-    margin -inf, ok False (fail-closed: 'cannot measure' is never 'within tolerance')."""
+    """Measure one criterion. A deviation that raises, is non-numeric (incl. bool), non-finite,
+    or negative -> margin -inf, ok False (fail-closed: 'cannot trust the measure' is never
+    'within tolerance'; a buggy grader returning a falsy value must NOT read as perfect)."""
     try:
-        d = float(criterion.deviation(form))
+        raw = criterion.deviation(form)
+        if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+            raise TypeError(f"deviation must be a real number, got {type(raw).__name__}")
+        d = float(raw)
     except Exception:
         d = float("inf")
     if not math.isfinite(d) or d < 0:
@@ -63,7 +68,7 @@ def cohesion(margins) -> float:
     """The coordination measure: 0.0 if there are no margins or ANY margin <= 0 / non-finite
     (a failing or unmeasurable axis); else the HARMONIC MEAN of the margins. High only when
     every axis is healthy AND balanced -- one weak axis tanks it (so a lopsided candidate that
-    bare-passes each axis is still not cohesive)."""
+    bare-passes each axis is still not cohesive). Bounded in (0, 1] when defined (margins <= 1)."""
     ms = list(margins)
     if not ms or any((not math.isfinite(m)) or m <= 0.0 for m in ms):
         return 0.0
@@ -110,7 +115,7 @@ class RefineOutcome:
     candidate: Any
     status: str               # "correct" | "short"
     trajectory: tuple
-    short_axis: str | None    # the axis it fell short on, when status == "short"
+    short_axis: str | None    # the weakest axis, or a "<callback>-failed: ..." reason, when "short"
 
 
 def refine(generate, graders, adjust, *, guard=None, target_margin: float, cohesion_bar: float,
@@ -120,7 +125,8 @@ def refine(generate, graders, adjust, *, guard=None, target_margin: float, cohes
     generate(state) -> candidate; perceive(candidate) -> form; each grader is graded; cohesion +
     correctness computed; reflect on the weakest axis; adjust(reflection, state) steers the next
     iteration. NEVER returns "correct" unless is_correct holds. On budget exhaustion returns the
-    best guard-passing candidate seen (highest cohesion) with status "short" + the weakest axis.
+    best guard-passing candidate (highest cohesion) with status "short" + the weakest axis. A
+    generate/adjust callback that RAISES degrades to an honest "short" (never a crash).
     """
     if not graders:
         raise ValueError("refine requires at least one grader")
@@ -132,7 +138,11 @@ def refine(generate, graders, adjust, *, guard=None, target_margin: float, cohes
     last_candidate = None
     last_refl = None
     for i in range(max_iter):
-        candidate = generate(state)
+        try:
+            candidate = generate(state)
+        except Exception as exc:                          # fail-closed: a broken generator -> honest short
+            return RefineOutcome(best[1] if best is not None else last_candidate, "short",
+                                 tuple(trajectory), f"generate-failed: {exc!r}")
         last_candidate = candidate
         form = perceive(candidate)
         grades = tuple(grade(g, form) for g in graders)
@@ -147,7 +157,11 @@ def refine(generate, graders, adjust, *, guard=None, target_margin: float, cohes
             best = (step, candidate)
         if correct:
             return RefineOutcome(candidate, "correct", tuple(trajectory), None)
-        state = adjust(refl, state)
+        try:
+            state = adjust(refl, state)
+        except Exception as exc:                          # fail-closed: a broken steer -> honest short
+            return RefineOutcome(best[1] if best is not None else candidate, "short",
+                                 tuple(trajectory), f"adjust-failed: {exc!r}")
     out_candidate = best[1] if best is not None else last_candidate
     short_axis = (best[0].reflection.weakest if best is not None
                   else (last_refl.weakest if last_refl is not None else None))

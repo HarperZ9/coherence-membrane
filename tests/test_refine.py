@@ -131,3 +131,33 @@ def test_trajectory_and_reflection_recorded():
 def test_refine_requires_a_grader():
     with pytest.raises(ValueError):
         refine(lambda s: 0, [], lambda refl, s: s, target_margin=0.1, cohesion_bar=0.1, max_iter=1)
+
+
+# --- hardening from the adversarial review ---
+
+def test_grade_rejects_bool_and_nonnumeric_deviation():
+    # a buggy grader returning a falsy/non-numeric value must NOT read as a perfect 0.0 deviation
+    falsy = GradedCriterion("f", "objective", lambda f: False, 1.0)
+    string = GradedCriterion("s", "objective", lambda f: "0.0", 1.0)
+    for c in (falsy, string):
+        g = grade(c, None)
+        assert g.margin == float("-inf") and g.ok is False
+
+
+def test_refine_fail_closed_on_raising_generate():
+    def boom(state):
+        raise RuntimeError("generator exploded")
+    out = refine(boom, [_grader(lambda c: 0.0, "a")], lambda refl, s: s,
+                 target_margin=0.1, cohesion_bar=0.1, max_iter=3)
+    assert out.status == "short"                              # honest, not a crash, not "correct"
+    assert "generate-failed" in (out.short_axis or "")
+
+
+def test_refine_fail_closed_on_raising_adjust():
+    def boom(refl, state):
+        raise RuntimeError("steer exploded")
+    # margins fail (target 0.99) so it must adjust -> adjust raises -> honest short
+    out = refine(lambda s: 0, [_grader(lambda c: 5.0, "a")], boom,
+                 target_margin=0.99, cohesion_bar=0.5, max_iter=3)
+    assert out.status == "short"
+    assert "adjust-failed" in (out.short_axis or "")
