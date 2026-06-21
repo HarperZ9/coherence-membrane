@@ -128,6 +128,7 @@ from .provenance import (
 )
 from .region import RegionDriftReport, compare_region_drift, tile_hashes
 from .perception import PerceptionSnapshot, all_organs, default_organs, perceive
+from .local_global import cross_check_local
 from .novelty import novelty_criterion
 from .origin import origin_criterion
 from .phyllotaxis import GOLDEN_ANGLE, golden_angle_deviation
@@ -302,6 +303,7 @@ __all__ = [
     "reconcile",
     "novelty_criterion",
     "origin_criterion",
+    "cross_check_local",
     # the L0 graph plane (substrate + the three graph reconcile criteria)
     "Graph",
     "ReachabilityClaim",
