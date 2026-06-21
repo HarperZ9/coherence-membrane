@@ -16,56 +16,24 @@ order, so the same claim yields the same Certificate.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Optional
 
 from .certificate import Certificate, Verdict
 from .composition import compose
-from .graph import Edge, Graph, Node, _norm_node
-from .graph_ops import cut_sides, find_cycle_through, spans, tree_jump_edges
+from .graph import Edge, Graph, _norm_node
+from .graph_claims import BottleneckClaim, ClosureClaim, ReachabilityClaim
+from .graph_search import connects_all, cut_sides, find_cycle_through, spans, tree_jump_edges
 from .reconcile import Criterion
+
+# Claims re-exported from graph_claims so coherence_membrane.graph_oracle.<Claim> and
+# the package __init__ keep working unchanged after the pure split.
+__all__ = ["ReachabilityClaim", "BottleneckClaim", "ClosureClaim",
+           "reachability_criterion", "bottleneck_criterion", "closure_certificate"]
 
 # Default hard caps. Conservative on purpose: a re-check that cannot be cheaply
 # re-run by a third party is UNVERIFIABLE-in-practice, not VERIFIED.
 DEFAULT_MAX_NODES = 4096
 DEFAULT_MAX_EDGES = 16384
-
-
-# --- claim shapes (the perceived forms the judges consume) --------------------
-
-
-@dataclass(frozen=True)
-class ReachabilityClaim:
-    """`expect_cycle` = does a simple cycle through `label_node` exist in `graph`?
-    The de Bruijn reachability property as a checkable claim."""
-
-    graph: Graph
-    label_node: Node
-    expect_cycle: bool = True
-    claim: str = ""
-
-
-@dataclass(frozen=True)
-class BottleneckClaim:
-    """A claimed minimax (bottleneck) spanning structure: `spanning` edges span the
-    graph and `bottleneck` is the largest weight among them, asserted minimal."""
-
-    graph: Graph
-    spanning: tuple[Edge, ...]
-    bottleneck: float
-    claim: str = ""
-
-
-@dataclass(frozen=True)
-class ClosureClaim:
-    """A reachability fact (`src` reaches `dst`) on a tree rooted at `root`, to be
-    certified by composing the precomputed ancestor jump-edges."""
-
-    graph: Graph
-    root: Node
-    src: Node
-    dst: Node
-    claim: str = ""
 
 
 def _over_cap(g: Graph, max_nodes: int, max_edges: int) -> Optional[str]:
@@ -159,7 +127,16 @@ def bottleneck_criterion(*, max_nodes: int = DEFAULT_MAX_NODES,
 
     The judge is TOTAL. The witness carries the spanning edges, the bottleneck value,
     and the cut (the two sides the sub-bottleneck edges fail to connect), so a third
-    party re-derives minimality independently."""
+    party re-derives minimality independently.
+
+    SOUNDNESS — checker disjoint from its own primitive (cf. crosscheck.py, spec
+    §16.1): the two load-bearing connectivity questions (is the claimed set spanning?
+    do edges below `b` disconnect?) are decided TWICE, by two genuinely independent
+    kernels — union-find `spans()` AND BFS-reachability `connects_all()`, which share
+    no helper. Both must AGREE; a disagreement is a CAUGHT BUG in one kernel ->
+    UNVERIFIABLE with a `discrepancy` reason, NEVER a guess and never a false VERIFIED.
+    A single connectivity kernel would hide its own bug from the re-checker; two do
+    not (the trusted base shrinks to 'they are not both wrong the same way')."""
     def judge(form) -> Certificate:
         oracle = "graph-bottleneck-mst-v1"
         try:
@@ -186,9 +163,19 @@ def bottleneck_criterion(*, max_nodes: int = DEFAULT_MAX_NODES,
             def wt(e: Edge) -> float:
                 w = g.weight(*e)
                 return 1.0 if w is None else w
-            # (1) spanning: the claimed edges connect all nodes (union-find, O(E a)).
-            comp = spans(g.nodes, spanning)
-            if comp is None:
+            # (1) spanning: the claimed edges connect all nodes. Decided by TWO
+            # disjoint kernels (union-find AND BFS); they must agree, else a kernel
+            # bug is caught as UNVERIFIABLE — never a guess, never a false VERIFIED.
+            uf_spans = spans(g.nodes, spanning) is not None
+            bfs_spans = connects_all(g.nodes, spanning)
+            if uf_spans != bfs_spans:
+                return Certificate("bottleneck (connectivity discrepancy)",
+                                   Verdict.UNVERIFIABLE, oracle,
+                                   (("discrepancy",
+                                     "spanning check disagrees: "
+                                     f"union-find={uf_spans} bfs={bfs_spans}"),
+                                    ("question", "is the claimed set spanning?")))
+            if not uf_spans:  # both kernels agree the claim does not span
                 return Certificate("bottleneck: not spanning", Verdict.REFUTED, oracle,
                                    (("reason", "claimed edges do not connect all nodes"),))
             # (2) bottleneck value: max spanning weight must equal the claim.
@@ -202,10 +189,20 @@ def bottleneck_criterion(*, max_nodes: int = DEFAULT_MAX_NODES,
                 return Certificate("bottleneck: no edges but >1 node", Verdict.REFUTED, oracle,
                                    (("reason", "cannot span >1 node with no edges"),))
             # (3) minimality cut witness: edges strictly below b must NOT connect the
-            # graph (else a smaller bottleneck would exist). O(E).
+            # graph (else a smaller bottleneck would exist). Decided by the SAME two
+            # disjoint kernels and cross-checked — a disagreement here is likewise a
+            # caught kernel bug (UNVERIFIABLE), not a guessed minimality verdict.
             below = tuple(e for e in g.edges if wt(e) < b)
-            below_comp = spans(g.nodes, below)
-            if below_comp is not None and g.node_count() > 1:
+            uf_below_spans = spans(g.nodes, below) is not None
+            bfs_below_spans = connects_all(g.nodes, below)
+            if uf_below_spans != bfs_below_spans:
+                return Certificate("bottleneck (minimality discrepancy)",
+                                   Verdict.UNVERIFIABLE, oracle,
+                                   (("discrepancy",
+                                     "below-b spanning check disagrees: "
+                                     f"union-find={uf_below_spans} bfs={bfs_below_spans}"),
+                                    ("question", "do edges below b disconnect the graph?")))
+            if uf_below_spans and g.node_count() > 1:
                 # sub-bottleneck edges already span -> b is NOT minimal -> claim false.
                 return Certificate("bottleneck: not minimal", Verdict.REFUTED, oracle,
                                    (("reason", "edges below b already span — smaller bottleneck exists"),
