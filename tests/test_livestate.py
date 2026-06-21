@@ -140,3 +140,35 @@ def test_reconstruct_every_tick_bit_identical():
 def test_reconstruct_out_of_range_unverifiable():
     c = DiffChain.from_base(_f([0.0] * 4, [False] * 4), subject="s")
     assert c.reconstruct(5).verdict == "UNVERIFIABLE"
+
+
+import dataclasses
+from coherence_membrane.livestate import ChainVerdict
+
+
+def _chain():
+    states = [_f([float(t) / 10, 0.0, 0.0, 0.0], [False] * 4) for t in range(5)]
+    c = DiffChain.from_base(states[0], subject="s", checkpoint_interval=10)
+    for s in states[1:]:
+        c.append(s)
+    return c
+
+
+def test_verify_clean_is_match():
+    v = _chain().verify()
+    assert v.verdict == "MATCH" and v.broken_entry is None
+
+
+def test_verify_detects_corrupted_diff():
+    c = _chain()
+    bad = dataclasses.replace(c.entries[2], result_sha="0" * 64)  # tamper a diff's result link
+    c.entries[2] = bad
+    v = c.verify()
+    assert v.verdict == "UNVERIFIABLE" and v.broken_entry == 2
+
+
+def test_verify_detects_corrupted_change_payload():
+    c = _chain()
+    bad = dataclasses.replace(c.entries[1], changes=((0, 99.0, False),))  # wrong change
+    c.entries[1] = bad
+    assert c.verify().verdict == "UNVERIFIABLE"
