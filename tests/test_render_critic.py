@@ -29,3 +29,44 @@ def test_fidelity_identity_is_near_zero():
     src = _gradient_png()
     r = render_vintage(src, target_width=32, palette_k=16, scanlines=False)
     assert render_fidelity_deviation((r.output_png, r.output_png)) < 1e-9
+
+
+from coherence_membrane.render_critic import render_signature, critique_render
+
+
+def test_signature_is_stable_int():
+    src = _gradient_png()
+    r = render_vintage(src, target_width=16, palette_k=8, scanlines=False)
+    s1 = render_signature(r.output_png)
+    s2 = render_signature(r.output_png)
+    assert isinstance(s1, int) and s1 == s2
+
+
+def test_empty_corpus_is_unverifiable():
+    src = _gradient_png()
+    r = render_vintage(src, target_width=16, palette_k=8, scanlines=False)
+    obs = critique_render(r, src, corpus=[], min_distance=5, tolerance=0.2)
+    assert obs.data["verdict"] == "unverifiable"   # novelty UNVERIFIABLE -> composite UNVERIFIABLE
+
+
+def test_derivative_render_is_refuted():
+    src = _gradient_png()
+    r = render_vintage(src, target_width=16, palette_k=8, scanlines=False)
+    corpus = [render_signature(r.output_png)]          # the render is already in the corpus
+    obs = critique_render(r, src, corpus=corpus, min_distance=5, tolerance=1.0)
+    assert obs.data["verdict"] == "refuted"            # distance 0 < min_distance -> REFUTED, absorbing
+
+
+def test_novel_and_fit_is_verified():
+    src = _gradient_png()
+    r = render_vintage(src, target_width=32, palette_k=16, scanlines=False)
+    far_corpus = [0]                                   # a hash far from the render's signature
+    obs = critique_render(r, src, corpus=far_corpus, min_distance=1, tolerance=10.0)
+    assert obs.data["verdict"] == "verified"           # novel AND within a lax fidelity tolerance
+
+
+def test_unfit_render_is_refuted():
+    src = _gradient_png()
+    r = render_vintage(src, target_width=4, palette_k=2, dither=False, scanlines=True)
+    obs = critique_render(r, src, corpus=[0], min_distance=1, tolerance=0.001)
+    assert obs.data["verdict"] == "refuted"            # novel but deviation > tiny tolerance
