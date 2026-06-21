@@ -172,3 +172,32 @@ def test_verify_detects_corrupted_change_payload():
     bad = dataclasses.replace(c.entries[1], changes=((0, 99.0, False),))  # wrong change
     c.entries[1] = bad
     assert c.verify().verdict == "UNVERIFIABLE"
+
+
+def test_throttled_tick_is_unverifiable_with_reason():
+    c = DiffChain.from_base(_f([0.1, 0.2, 0.3, 0.4], [False] * 4), subject="s")
+    d = c.append(throttle_reason="budget spent; identity changed but pixels not perceived")
+    assert d.verdict == "UNVERIFIABLE" and d.throttle_reason
+    assert c.current().verdict == "UNVERIFIABLE"
+    # reconstructing the throttled tick yields an all-unknown field, never a guess
+    r = c.reconstruct(c.tick)
+    assert all(r.field.unknown)
+
+
+def test_throttle_then_recovery_reconstructs():
+    c = DiffChain.from_base(_f([0.1, 0.2, 0.3, 0.4], [False] * 4), subject="s")
+    c.append(throttle_reason="throttled")                       # tick 1: all-unknown
+    recovered = _f([0.5, 0.6, 0.7, 0.8], [False] * 4)
+    c.append(recovered)                                         # tick 2: re-perceived
+    assert c.reconstruct(2).state_sha == field_state_sha(recovered)
+    assert c.verify().verdict == "MATCH"
+
+
+def test_shape_change_reanchors_keyframe():
+    c = DiffChain.from_base(_f([0.1, 0.2, 0.3, 0.4], [False] * 4, w=2, h=2), subject="s")
+    bigger = _f([0.0] * 6, [False] * 6, w=3, h=2)
+    d = c.append(bigger)
+    from coherence_membrane.livestate import FieldSnapshot
+    assert d.verdict == "DRIFT" and isinstance(c.entries[c.tick], FieldSnapshot)
+    assert c.reconstruct(c.tick).state_sha == field_state_sha(bigger)
+    assert c.verify().verdict == "MATCH"
