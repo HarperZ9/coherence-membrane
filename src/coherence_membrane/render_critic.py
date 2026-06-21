@@ -6,6 +6,8 @@ step events. Composes shipped parts; retro.py untouched. Stdlib only; inert.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from .certificate import Verdict
 from .color import delta_e_ok
 from .color_field import color_field_from_png, downscale_color_field
@@ -15,6 +17,7 @@ from .novelty import novelty_criterion
 from .observation import Observation, Provenance, Status
 from .phash import hamming, perceptual_hash
 from .pngview import decode_png
+from .retro import render_vintage
 from .structural_fitness import structural_fitness_criterion
 
 FIDELITY_CW = 64
@@ -93,3 +96,46 @@ _RENDER_SIGS: dict[int, dict[str, tuple]] = {}
 def render_corpus(store: MemoryStore) -> list[int]:
     """Perceptual signatures of all remembered renders in this store = the novelty corpus."""
     return [sig for (sig, _v, _p) in _RENDER_SIGS.get(id(store), {}).values()]
+
+
+@dataclass(frozen=True)
+class RenderStep:
+    name: str            # render | perceive | critique | remember
+    observation: Observation
+    payload: dict
+
+
+def render_and_critique(source_png, render_params, store, *, min_distance, tolerance):
+    """Generator: render -> perceive -> critique -> remember, yielding a witnessed step each.
+    The same witnessed stream a test, a log, or the future Perception TV view consumes."""
+    result = render_vintage(source_png, **render_params)
+    yield RenderStep("render", _obs("render", result.output_sha256, result.output_png,
+                                    {"params": result.params, "palette_hex": list(result.palette_hex)}),
+                     {"output_png": result.output_png})
+
+    signature = render_signature(result.output_png)
+    deviation = render_fidelity_deviation((source_png, result.output_png))
+    yield RenderStep("perceive", _obs("perceive", result.output_sha256, result.output_png,
+                                      {"signature": signature, "deviation": deviation}),
+                     {"signature": signature, "deviation": deviation})
+
+    obs = critique_render(result, source_png, corpus=render_corpus(store),
+                          min_distance=min_distance, tolerance=tolerance)
+    yield RenderStep("critique", obs, {"verdict": obs.data["verdict"], "evidence": obs.data["evidence"]})
+
+    remember_render(store, result, obs)
+    yield RenderStep("remember", obs, {"corpus_size": len(render_corpus(store))})
+
+
+def _obs(stage: str, subject: str, payload: bytes, data: dict) -> Observation:
+    return Observation(f"render-critic:{stage}", subject, f"render-critic {stage}", Status.PASS,
+                       Provenance.witness_bytes(subject, payload, "high"), data)
+
+
+def run_render_critique(source_png, render_params, store, *, min_distance, tolerance):
+    """Drain the watchable stream; return (RenderResult, critique Observation)."""
+    result = render_vintage(source_png, **render_params)
+    obs = critique_render(result, source_png, corpus=render_corpus(store),
+                          min_distance=min_distance, tolerance=tolerance)
+    remember_render(store, result, obs)
+    return result, obs
