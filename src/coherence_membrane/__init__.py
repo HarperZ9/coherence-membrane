@@ -107,6 +107,7 @@ from .provenance import (
 )
 from .region import RegionDriftReport, compare_region_drift, tile_hashes
 from .perception import PerceptionSnapshot, all_organs, default_organs, perceive
+from .reconcile import Criterion, identity_perceive, reconcile
 from .phash import (
     DRIFT,
     DRIFT_VERDICTS,
@@ -244,6 +245,10 @@ __all__ = [
     "ADJUST",
     "INDETERMINATE",
     "DISPOSITIONS",
+    # the reconcile spine
+    "Criterion",
+    "identity_perceive",
+    "reconcile",
     # png + perceptual hashing
     "DecodedImage",
     "PngDecodeError",
