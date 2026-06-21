@@ -69,3 +69,30 @@ def test_remember_with_supersedes_edge():
     s.remember(_rec(id="new", claim="v2"), parents=("old",), edge_type="supersedes")
     assert s.graph.nodes["new"].parents == ("old",)
     assert s.graph.nodes["new"].edge_type == "supersedes"
+
+
+from coherence_membrane.provenance import VALID, BROKEN
+
+
+def test_verify_clean_store_is_valid():
+    s = MemoryStore()
+    s.remember(_rec(id="a"))
+    assert s.verify().verdict == VALID
+
+
+def test_verify_detects_record_content_tamper():
+    s = MemoryStore()
+    s.remember(_rec(id="a", claim="original"))
+    # tamper: swap the stored record for a different-content one under the same id
+    s.records["a"] = _rec(id="a", claim="TAMPERED")
+    v = s.verify()
+    assert v.verdict == BROKEN
+    assert any("a" in r for r in v.reasons)
+
+
+def test_verify_pinned_manifest_catches_insertion():
+    s = MemoryStore()
+    s.remember(_rec(id="a"))
+    pin = s.graph.manifest()
+    s.remember(_rec(id="b"))  # inserted after pin
+    assert s.verify(pinned_manifest=pin).verdict == BROKEN
