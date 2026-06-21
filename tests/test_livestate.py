@@ -201,3 +201,38 @@ def test_shape_change_reanchors_keyframe():
     assert d.verdict == "DRIFT" and isinstance(c.entries[c.tick], FieldSnapshot)
     assert c.reconstruct(c.tick).state_sha == field_state_sha(bigger)
     assert c.verify().verdict == "MATCH"
+
+
+import json
+from pathlib import Path
+
+
+def test_save_load_roundtrip_and_verify(tmp_path):
+    states = [_f([float(t) / 10, 0.0, 0.0, 0.0], [False] * 4) for t in range(4)]
+    c = DiffChain.from_base(states[0], subject="s", checkpoint_interval=2)
+    for s in states[1:]:
+        c.append(s)
+    p = tmp_path / "chain.json"
+    c.save(p)
+    back = DiffChain.load(p)
+    assert back.subject == "s" and back.tick == 3
+    assert back.current().state_sha == field_state_sha(states[3])
+    assert back.verify().verdict == "MATCH"
+    assert back.reconstruct(3).state_sha == field_state_sha(states[3])
+
+
+def test_load_handedited_chain_is_unverifiable(tmp_path):
+    states = [_f([float(t) / 10, 0.0, 0.0, 0.0], [False] * 4) for t in range(4)]
+    c = DiffChain.from_base(states[0], subject="s", checkpoint_interval=10)
+    for s in states[1:]:
+        c.append(s)
+    p = tmp_path / "chain.json"
+    c.save(p)
+    data = json.loads(Path(p).read_text(encoding="utf-8"))
+    # tamper a diff's change payload without fixing its result_sha
+    for e in data["entries"]:
+        if e["kind"] == "diff":
+            e["changes"] = [[0, 42.0, False]]
+            break
+    Path(p).write_text(json.dumps(data), encoding="utf-8")
+    assert DiffChain.load(p).verify().verdict == "UNVERIFIABLE"
