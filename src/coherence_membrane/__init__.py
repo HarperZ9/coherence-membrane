@@ -131,6 +131,22 @@ from .perception import PerceptionSnapshot, all_organs, default_organs, perceive
 from .local_global import cross_check_local
 from .novelty import novelty_criterion
 from .origin import origin_criterion
+from .confidence import (
+    CERTAIN,
+    Graded,
+    annotate,
+    combine,
+    combine_all,
+    compose_confident,
+    confidence_of,
+    grade,
+)
+from .checkability import (
+    RECHECK_COST_KEY,
+    bounded_checkability,
+    recheck_cost_of,
+    with_recheck_cost,
+)
 from .phyllotaxis import GOLDEN_ANGLE, golden_angle_deviation
 from .structural_fitness import structural_fitness_criterion
 from .memory import MemoryRecord, MemoryStore, CriterionRef, PerceiveRef
@@ -304,6 +320,20 @@ __all__ = [
     "novelty_criterion",
     "origin_criterion",
     "cross_check_local",
+    # derived confidence (Knuth-Skilling; a [0,1] degree BESIDE the verdict lattice)
+    "Graded",
+    "grade",
+    "annotate",
+    "combine",
+    "combine_all",
+    "compose_confident",
+    "confidence_of",
+    "CERTAIN",
+    # bounded checkability (re-check cost guard; downgrade-only, UNVERIFIABLE-in-practice)
+    "bounded_checkability",
+    "recheck_cost_of",
+    "with_recheck_cost",
+    "RECHECK_COST_KEY",
     # the L0 graph plane (substrate + the three graph reconcile criteria)
     "Graph",
     "ReachabilityClaim",

@@ -13,8 +13,11 @@ from __future__ import annotations
 
 from itertools import product
 
+import pytest
+
 from coherence_membrane.composite import CompositeObservation, compare_composite
 from coherence_membrane.lattice import (
+    ALL_LATTICES,
     DRIFT_LATTICE,
     GRAPH_LATTICE,
     RECEIPT_LATTICE,
@@ -195,3 +198,92 @@ def test_one_drift_dominates_any_number_of_matches():
         CompositeObservation(components=cur_comps),
     )
     assert overall == DRIFT
+
+
+# --- layer 0: the order-theoretic FOUNDATION, each law NAMED in code -------
+#
+# The verdict combinator is a BOUNDED MEET-SEMILATTICE (a frame, in the
+# pointless-topology sense): a partial order with all finite meets and a top.
+# `prove_meet_laws` already verifies every law by exhaustive enumeration (a
+# complete decision procedure over the finite carrier), and
+# `test_all_abstract_lattice_proofs_pass` checks them as one bundle. The tests
+# below NAME each frame/lattice law as its own assertion -- so the foundation is
+# not merely enumerated but cited and individually pinned in the test suite:
+# commutativity, associativity, idempotency, monotonicity, absorption (top
+# identity + bottom absorbing), and the boundedness that makes UNVERIFIABLE the
+# fail-closed "no evidence" element strictly below the affirmative top.
+#
+# Foundation + attribution (study + cite, never strip): a frame / locale is a
+# bounded lattice with the requisite (here finite) meets; see Johnstone, *Stone
+# Spaces* (frames/locales), framed accessibly by 3cycle, '"Pointless"
+# Topologies' (id `bhcNGkZmiVk`). The verdict structure being a frame makes
+# "meet, never a false VERIFIED" a lattice-theoretic FACT with a reference,
+# not an assertion. No runtime / verdict-semantics change -- naming only.
+#
+# NOTE on the bottom: in the SHIPPED lattices the bottom (absorbing) element is
+# the positive-detection verdict (REFUTED/DRIFT/BROKEN) -- "a positive
+# detection dominates" -- and UNVERIFIABLE sits strictly in the MIDDLE as the
+# fail-closed absence-of-evidence element (never the affirmative top). This is
+# the structure the enumeration proves; the named tests below assert exactly it.
+
+
+@pytest.mark.parametrize("L", ALL_LATTICES, ids=lambda L: L.name)
+def test_law_commutativity(L):
+    # meet is commutative: a /\ b == b /\ a (order of evidence is irrelevant).
+    for a, b in product(L.elements, repeat=2):
+        assert L.meet(a, b) == L.meet(b, a)
+
+
+@pytest.mark.parametrize("L", ALL_LATTICES, ids=lambda L: L.name)
+def test_law_associativity(L):
+    # meet is associative: (a /\ b) /\ c == a /\ (b /\ c) -- aggregation is grouping-free.
+    for a, b, c in product(L.elements, repeat=3):
+        assert L.meet(L.meet(a, b), c) == L.meet(a, L.meet(b, c))
+
+
+@pytest.mark.parametrize("L", ALL_LATTICES, ids=lambda L: L.name)
+def test_law_idempotency(L):
+    # meet is idempotent: a /\ a == a (re-observing the same verdict adds nothing).
+    for a in L.elements:
+        assert L.meet(a, a) == a
+
+
+@pytest.mark.parametrize("L", ALL_LATTICES, ids=lambda L: L.name)
+def test_law_monotonicity(L):
+    # meet is MONOTONE: degrading either input never improves the meet -- the
+    # frame-morphism property that forbids laundering a worse observation into a
+    # better verdict. a<=a' and b<=b'  =>  (a /\ b) <= (a' /\ b').
+    for a, ap, b, bp in product(L.elements, repeat=4):
+        if L.leq(a, ap) and L.leq(b, bp):
+            assert L.leq(L.meet(a, b), L.meet(ap, bp))
+
+
+@pytest.mark.parametrize("L", ALL_LATTICES, ids=lambda L: L.name)
+def test_law_absorption_top_identity_and_bottom_absorbing(L):
+    # ABSORPTION (the bounded-semilattice boundary laws):
+    #   * the TOP (affirmative VERIFIED) is the meet identity -- it composes away;
+    #   * the BOTTOM (a positive detection) is ABSORBING -- it dominates the meet.
+    for a in L.elements:
+        assert L.meet(L.top, a) == a              # top identity
+        assert L.meet(L.bottom, a) == L.bottom    # bottom absorbing
+    # the classic absorption identity a /\ (a \/ b) == a (uses join + meet).
+    for a, b in product(L.elements, repeat=2):
+        assert L.meet(a, L.join(a, b)) == a
+
+
+@pytest.mark.parametrize("L", ALL_LATTICES, ids=lambda L: L.name)
+def test_law_bounded_unverifiable_failclosed_below_top(L):
+    # BOUNDEDNESS with the fail-closed discipline: there is a top and a bottom, and
+    # UNVERIFIABLE is strictly BELOW the affirmative top (it can never BE the verdict a
+    # gate may allow on) -- the order-theoretic statement of "UNVERIFIABLE first".
+    assert all(L.leq(L.bottom, a) and L.leq(a, L.top) for a in L.elements)
+    assert UNVERIFIABLE in L.elements
+    assert L.leq(UNVERIFIABLE, L.top) and UNVERIFIABLE != L.top      # strictly below top
+    assert L.meet(UNVERIFIABLE, L.top) == UNVERIFIABLE              # never lifts to the top
+
+
+def test_named_laws_match_the_enumerated_proof():
+    # the named per-law tests above and the exhaustive enumeration agree: this is the
+    # SAME foundation, named here and machine-checked there (R2 -- not a second algebra).
+    for L in ALL_LATTICES:
+        assert prove_lattice(L).ok
