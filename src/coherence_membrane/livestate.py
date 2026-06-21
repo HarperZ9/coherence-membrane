@@ -69,3 +69,55 @@ def field_apply(parent: Field, changes) -> Field:
         values[i] = 0.0 if nu else float(nv)
         unknown[i] = bool(nu)
     return Field(parent.width, parent.height, parent.kind, tuple(values), tuple(unknown))
+
+
+@dataclass(frozen=True)
+class FieldDiff:
+    parent_sha: str
+    result_sha: str
+    changes: tuple          # tuple of (index, new_value, new_unknown)
+    verdict: str
+    tick: int
+    throttle_reason: str | None = None
+
+
+class DiffChain:
+    """A witnessed, replayable record of a Field stream over time."""
+
+    def __init__(self, base: FieldSnapshot, *, subject: str, checkpoint_interval: int = 64):
+        self.subject = subject
+        self.checkpoint_interval = checkpoint_interval
+        self.kind = base.field.kind
+        self.entries: list = [base]   # entries[0] = base keyframe
+        self._current: FieldSnapshot = base
+
+    @classmethod
+    def from_base(cls, field: Field, *, subject: str, checkpoint_interval: int = 64) -> "DiffChain":
+        snap = FieldSnapshot(field, field_state_sha(field), 0)
+        return cls(snap, subject=subject, checkpoint_interval=checkpoint_interval)
+
+    @property
+    def tick(self) -> int:
+        return len(self.entries) - 1
+
+    def current(self) -> FieldSnapshot:
+        return self._current
+
+    def append(self, field: Field) -> FieldDiff:
+        """Perceive the next same-shape state. (Throttle + shape-change: Task 6.)"""
+        new_tick = self.tick + 1
+        parent = self._current
+        changes, verdict = field_diff(parent.field, field)
+        snap = FieldSnapshot(field, field_state_sha(field), new_tick)
+        diff = FieldDiff(parent.state_sha, snap.state_sha, tuple(changes), verdict, new_tick)
+        if self.checkpoint_interval and new_tick % self.checkpoint_interval == 0:
+            self.entries.append(snap)     # re-anchor keyframe
+        else:
+            self.entries.append(diff)
+        self._current = snap
+        return diff
+
+    def checkpoint(self) -> FieldSnapshot:
+        """Force the current tick's entry to be a full keyframe."""
+        self.entries[self.tick] = self._current
+        return self._current

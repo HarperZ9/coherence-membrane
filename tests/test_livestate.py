@@ -83,3 +83,44 @@ def test_apply_roundtrips_to_new_state():
     changes, _ = field_diff(a, b)
     rebuilt = field_apply(a, changes)
     assert field_state_sha(rebuilt) == field_state_sha(b)
+
+
+from coherence_membrane.livestate import DiffChain, FieldDiff
+
+
+def test_from_base_and_current():
+    f = _f([0.1, 0.2, 0.3, 0.4], [False] * 4)
+    c = DiffChain.from_base(f, subject="s")
+    assert c.tick == 0
+    assert c.current().state_sha == field_state_sha(f)
+
+
+def test_append_returns_witnessed_diff():
+    a = _f([0.1, 0.2, 0.3, 0.4], [False] * 4)
+    b = _f([0.1, 0.9, 0.3, 0.4], [False] * 4)
+    c = DiffChain.from_base(a, subject="s")
+    d = c.append(b)
+    assert isinstance(d, FieldDiff)
+    assert d.parent_sha == field_state_sha(a)
+    assert d.result_sha == field_state_sha(b)
+    assert d.verdict == "DRIFT" and d.tick == 1
+    assert c.current().state_sha == field_state_sha(b) and c.tick == 1
+
+
+def test_auto_keyframe_on_interval():
+    a = _f([0.0, 0.0, 0.0, 0.0], [False] * 4)
+    c = DiffChain.from_base(a, subject="s", checkpoint_interval=2)
+    c.append(_f([0.1, 0.0, 0.0, 0.0], [False] * 4))  # tick 1 -> diff
+    c.append(_f([0.2, 0.0, 0.0, 0.0], [False] * 4))  # tick 2 -> keyframe (interval)
+    from coherence_membrane.livestate import FieldSnapshot
+    assert isinstance(c.entries[1], FieldDiff)
+    assert isinstance(c.entries[2], FieldSnapshot)
+
+
+def test_explicit_checkpoint():
+    a = _f([0.0, 0.0, 0.0, 0.0], [False] * 4)
+    c = DiffChain.from_base(a, subject="s", checkpoint_interval=1000)
+    c.append(_f([0.1, 0.0, 0.0, 0.0], [False] * 4))
+    snap = c.checkpoint()
+    from coherence_membrane.livestate import FieldSnapshot
+    assert isinstance(c.entries[c.tick], FieldSnapshot) and snap.tick == c.tick
