@@ -6,10 +6,12 @@ advisory: it records and re-derives; it grants no authority, mutates no subject.
 """
 from __future__ import annotations
 
+import json
 import struct
 from dataclasses import dataclass
+from pathlib import Path
 
-from .field import Field
+from .field import Field, FieldKind
 from .observation import sha256_hex
 from .phash import MATCH, DRIFT, UNVERIFIABLE
 from .lattice import DRIFT_LATTICE
@@ -86,6 +88,16 @@ class ChainVerdict:
     verdict: str
     reason: str
     broken_entry: int | None = None
+
+
+def _field_to_dict(f: Field) -> dict:
+    return {"w": f.width, "h": f.height, "kind": f.kind.value,
+            "values": list(f.values), "unknown": [bool(u) for u in f.unknown]}
+
+
+def _field_from_dict(d: dict) -> Field:
+    return Field(int(d["w"]), int(d["h"]), FieldKind(d["kind"]),
+                 tuple(float(v) for v in d["values"]), tuple(bool(u) for u in d["unknown"]))
 
 
 class DiffChain:
@@ -192,3 +204,39 @@ class DiffChain:
                     return ChainVerdict(UNVERIFIABLE, f"diff {i} result_sha != re-derived state", i)
                 prev_sha = e.result_sha
         return ChainVerdict(MATCH, "chain intact", None)
+
+    def _entry_to_dict(self, e) -> dict:
+        if isinstance(e, FieldSnapshot):
+            return {"kind": "keyframe", "field": _field_to_dict(e.field),
+                    "state_sha": e.state_sha, "tick": e.tick,
+                    "verdict": e.verdict, "reason": e.reason}
+        return {"kind": "diff", "parent_sha": e.parent_sha, "result_sha": e.result_sha,
+                "changes": [list(c) for c in e.changes], "verdict": e.verdict,
+                "tick": e.tick, "throttle_reason": e.throttle_reason}
+
+    def save(self, path) -> None:
+        data = {"subject": self.subject, "checkpoint_interval": self.checkpoint_interval,
+                "entries": [self._entry_to_dict(e) for e in self.entries]}
+        Path(path).write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    @classmethod
+    def load(cls, path) -> "DiffChain":
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        entries: list = []
+        for d in data["entries"]:
+            if d["kind"] == "keyframe":
+                f = _field_from_dict(d["field"])
+                entries.append(FieldSnapshot(f, str(d["state_sha"]), int(d["tick"]),
+                                             str(d.get("verdict", MATCH)), str(d.get("reason", ""))))
+            else:
+                entries.append(FieldDiff(str(d["parent_sha"]), str(d["result_sha"]),
+                                         tuple(tuple(c) for c in d["changes"]),
+                                         str(d["verdict"]), int(d["tick"]), d.get("throttle_reason")))
+        base = entries[0]
+        chain = cls(base, subject=str(data["subject"]),
+                    checkpoint_interval=int(data["checkpoint_interval"]))
+        chain.entries = entries
+        # set cached current to the last entry's state (reconstruct gives the field)
+        last = entries[-1]
+        chain._current = last if isinstance(last, FieldSnapshot) else chain.reconstruct(len(entries) - 1)
+        return chain
