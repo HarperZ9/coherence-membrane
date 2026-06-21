@@ -36,19 +36,20 @@ class LinearArithmeticVerifierOrgan:
             run = lambda: check_entails(list(subject.premises), subject.conclusion)
         else:
             return []
+        claim = str(subject.claim)   # coerce once: the organ never raises, even on a malformed claim
         try:
             cert = run()
         except Exception as exc:   # fail-closed
-            return [self._obs(subject.claim, "unverifiable", Status.UNVERIFIED, "low",
+            return [self._obs(claim, "unverifiable", Status.UNVERIFIED, "low",
                               {"reason": f"malformed: {exc}"})]
         decided = cert.verdict in (Verdict.VERIFIED, Verdict.REFUTED)
         return [self._obs(
-            subject.claim, cert.verdict.value,
+            claim, cert.verdict.value,
             Status.PASS if decided else Status.UNVERIFIED,
             "high" if decided else "low",
-            {"oracle": cert.oracle, "verdict": cert.verdict.value, "claim": subject.claim,
+            {"oracle": cert.oracle, "verdict": cert.verdict.value, "claim": claim,
              "evidence": [list(p) for p in cert.evidence],
-             "identity_sha256": sha256_hex(subject.claim.encode())},
+             "identity_sha256": sha256_hex(claim.encode())},
         )]
 
     def _obs(self, claim, verdict, status, conf, data):
