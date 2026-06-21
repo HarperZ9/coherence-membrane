@@ -30,6 +30,7 @@ from .organs.quantity_verifier import QuantityVerifierOrgan
 from .organs.distribution_verifier import DistributionVerifierOrgan
 from .organs.cross_verifier import CrossCheckVerifierOrgan
 from .organs.linarith_verifier import LinearArithmeticVerifierOrgan
+from .organs.graph_verifier import GraphVerifierOrgan
 from .organs.visual import VisualArtifactOrgan
 
 
@@ -61,6 +62,7 @@ def all_organs() -> list[Organ]:
         DistributionVerifierOrgan(),
         CrossCheckVerifierOrgan(),
         LinearArithmeticVerifierOrgan(),
+        GraphVerifierOrgan(),
         CaptionOrgan(),
     ]
 
