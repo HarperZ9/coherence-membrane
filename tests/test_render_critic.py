@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import types as _types
+
 from coherence_membrane.pngencode import encode_png
 from coherence_membrane.retro import render_vintage
 from coherence_membrane.render_critic import render_fidelity_deviation
+from coherence_membrane.phash import hamming as _hamming
 
 
 def _gradient_png(w=32, h=32) -> bytes:
@@ -121,3 +124,59 @@ def test_run_returns_result_and_observation():
     result, obs = run_render_critique(src, {"target_width": 16, "palette_k": 8, "scanlines": False},
                                       store, min_distance=5, tolerance=1.0)
     assert result.output_png and obs.organ == "render-critic"
+
+
+# M7 — fail-closed + determinism
+
+def test_undecodable_output_is_unverifiable_not_raised():
+    src = _gradient_png()
+    bad = _types.SimpleNamespace(output_png=b"not a png", output_sha256="deadbeef", palette_hex=())
+    obs = critique_render(bad, src, corpus=[1, 2, 3], min_distance=5, tolerance=1.0)
+    assert obs.data["verdict"] == "unverifiable"   # fail-closed; no PngDecodeError escapes
+
+
+def test_deviation_is_deterministic():
+    src = _gradient_png()
+    r = render_vintage(src, target_width=16, palette_k=8, scanlines=False)
+    assert render_fidelity_deviation((src, r.output_png)) == render_fidelity_deviation((src, r.output_png))
+
+
+# M6 — meaningful novelty bar + evidence names the dominating step
+
+def test_novelty_bar_verified_just_below_real_distance():
+    src = _gradient_png()
+    r = render_vintage(src, target_width=32, palette_k=16, scanlines=False)
+    sig = render_signature(r.output_png)
+    far = sig ^ ((1 << 40) - 1)               # ~40 bits away
+    d = _hamming(sig, far)
+    # novelty_criterion uses >= so distance == min_distance IS novel (verified)
+    obs = critique_render(r, src, corpus=[far], min_distance=d, tolerance=10.0)
+    assert obs.data["verdict"] == "verified"  # distance d >= min_distance d -> novel, and fits
+
+
+def test_novelty_bar_refuted_just_above_real_distance():
+    src = _gradient_png()
+    r = render_vintage(src, target_width=32, palette_k=16, scanlines=False)
+    sig = render_signature(r.output_png)
+    near = sig ^ 0b111                        # 3 bits away
+    obs = critique_render(r, src, corpus=[near], min_distance=_hamming(sig, near) + 1, tolerance=10.0)
+    assert obs.data["verdict"] == "refuted"   # distance < min_distance -> not novel
+
+
+def test_evidence_identifies_dominating_step():
+    # compose() produces evidence entries of the form [step_label, verdict_string]
+    # e.g. ["step0:novelty-vs-corpus-v1", "verified"] and ["step1:structural-fitness-v1", "refuted"]
+    # For a fitness-refuted case: step0 (novelty) is verified (novel), step1 (fitness) is refuted.
+    # The evidence list must let us identify which step refuted the composition.
+    src = _gradient_png()
+    r = render_vintage(src, target_width=4, palette_k=2, dither=False, scanlines=True)
+    # corpus=[0] + min_distance=1: sig far from 0, so novel (verified)
+    # tolerance=0.001: tiny tolerance -> fitness refuted (aggressive render deviates a lot)
+    obs = critique_render(r, src, corpus=[0], min_distance=1, tolerance=0.001)
+    assert obs.data["verdict"] == "refuted"
+    evidence = obs.data["evidence"]
+    # evidence is list of 2-element lists: [step_label, verdict_string]
+    # The fitness step label contains "structural-fitness" in its oracle name
+    fitness_entries = [e for e in evidence if "structural-fitness" in e[0]]
+    assert fitness_entries, "evidence must contain a structural-fitness entry"
+    assert fitness_entries[0][1] == "refuted", "the structural-fitness step must be refuted"
