@@ -16,7 +16,8 @@ from .memory import MemoryRecord, MemoryStore
 from .novelty import novelty_criterion
 from .observation import Observation, Provenance, Status
 from .phash import hamming, perceptual_hash
-from .pngview import decode_png
+from .pngview import PngDecodeError, decode_png
+from .recall import recall
 from .retro import render_vintage
 from .structural_fitness import structural_fitness_criterion
 
@@ -47,11 +48,22 @@ def render_signature(output_png: bytes) -> int:
 
 
 def critique_render(render_result, source_png, *, corpus, min_distance, tolerance) -> Observation:
-    """Judge a render novel-vs-corpus AND structurally faithful; one witnessed Observation."""
-    signature = render_signature(render_result.output_png)
-    deviation = render_fidelity_deviation((source_png, render_result.output_png))
+    """Judge a render novel-vs-corpus AND structurally faithful; one witnessed Observation.
+    Fail-closed: an undecodable render/source yields a reasoned UNVERIFIABLE, never raises."""
+    try:
+        signature = render_signature(render_result.output_png)
+        deviation = render_fidelity_deviation((source_png, render_result.output_png))
+    except PngDecodeError as exc:
+        return Observation(
+            "render-critic", render_result.output_sha256, "render critique: unverifiable",
+            Status.UNVERIFIED,
+            Provenance.witness_bytes(render_result.output_sha256, render_result.output_png, "low"),
+            {"verdict": "unverifiable",
+             "evidence": [["decode", "unverifiable", f"undecodable PNG: {exc}"]],
+             "signature": None, "deviation": None,
+             "palette_hex": list(render_result.palette_hex)},
+        )
     nov = novelty_criterion(corpus, distance=hamming, min_distance=min_distance).judge(signature)
-    # judge the precomputed deviation (constant measure -> no double compute)
     fit = structural_fitness_criterion(lambda _f: deviation, tolerance=tolerance).judge(None)
     cert = compose([nov, fit], claim="render is novel AND structurally faithful")
     decided = cert.verdict in (Verdict.VERIFIED, Verdict.REFUTED)
@@ -67,35 +79,36 @@ def critique_render(render_result, source_png, *, corpus, min_distance, toleranc
     )
 
 
-def remember_render(store: MemoryStore, render_result, observation, *, source_id=None) -> str:
-    """Store a render-look as a witnessed memory; its signature joins the corpus."""
+def remember_render(store: MemoryStore, render_result, observation) -> str:
+    """Store a render-look as a witnessed memory; its perceptual signature joins the
+    corpus *inside* the witnessed MemoryRecord (a phash: tag) — covered by verify() and
+    round-tripped by save/load. Idempotent and signature-aware: re-remembering the same
+    render, or an undecodable one (no signature), is a no-op return, never a crash."""
+    rid = render_result.output_sha256
+    signature = observation.data.get("signature")
+    if signature is None or rid in store.records:
+        return rid
     record = MemoryRecord(
-        id=render_result.output_sha256,
-        type="pref",
-        claim=render_result.output_sha256,
-        tags=("render",),
+        id=rid, type="pref", claim=rid,
+        tags=("render", f"{_PHASH_TAG}{signature}"),
     )
-    edges = ()
-    if source_id is not None and source_id in store.records:
-        edges = (source_id,)
-    store.remember(record, parents=edges, edge_type="derived-from")
-    # stash the recall-relevant signature/verdict on the store-side record map
-    store.records[record.id] = record
-    _RENDER_SIGS.setdefault(id(store), {})[record.id] = (
-        observation.data["signature"], observation.data["verdict"],
-        tuple(observation.data["palette_hex"]),
-    )
-    return record.id
+    store.remember(record)
+    return rid
 
 
-# render signatures are perceptual hashes, not part of the canonical MemoryRecord
-# identity (which is stdlib-serialisable); keep them in a side index keyed by store.
-_RENDER_SIGS: dict[int, dict[str, tuple]] = {}
+_PHASH_TAG = "phash:"
 
 
 def render_corpus(store: MemoryStore) -> list[int]:
-    """Perceptual signatures of all remembered renders in this store = the novelty corpus."""
-    return [sig for (sig, _v, _p) in _RENDER_SIGS.get(id(store), {}).values()]
+    """Perceptual signatures of all remembered renders = the novelty corpus, recalled
+    from witnessed memory (no side-channel state)."""
+    out: list[int] = []
+    for r in recall(store, tags=("render",)):
+        for t in r.record.tags:
+            if t.startswith(_PHASH_TAG):
+                out.append(int(t[len(_PHASH_TAG):]))
+                break
+    return out
 
 
 @dataclass(frozen=True)
@@ -113,11 +126,23 @@ def render_and_critique(source_png, render_params, store, *, min_distance, toler
                                     {"params": result.params, "palette_hex": list(result.palette_hex)}),
                      {"output_png": result.output_png})
 
-    signature = render_signature(result.output_png)
-    deviation = render_fidelity_deviation((source_png, result.output_png))
-    yield RenderStep("perceive", _obs("perceive", result.output_sha256, result.output_png,
-                                      {"signature": signature, "deviation": deviation}),
-                     {"signature": signature, "deviation": deviation})
+    try:
+        signature = render_signature(result.output_png)
+        deviation = render_fidelity_deviation((source_png, result.output_png))
+        perceive_data = {"signature": signature, "deviation": deviation}
+        perceive_status = Status.PASS
+    except PngDecodeError as exc:
+        perceive_data = {"signature": None, "deviation": None, "error": str(exc)}
+        perceive_status = Status.UNVERIFIED
+    yield RenderStep(
+        "perceive",
+        Observation("render-critic:perceive", result.output_sha256, "render-critic perceive",
+                    perceive_status,
+                    Provenance.witness_bytes(result.output_sha256, result.output_png,
+                                             "high" if perceive_status == Status.PASS else "low"),
+                    perceive_data),
+        perceive_data,
+    )
 
     obs = critique_render(result, source_png, corpus=render_corpus(store),
                           min_distance=min_distance, tolerance=tolerance)
