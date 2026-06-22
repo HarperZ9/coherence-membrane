@@ -38,3 +38,16 @@ class Certificate:
             "oracle": self.oracle,
             "evidence": [list(p) for p in self.evidence],
         }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Certificate":
+        """Inverse of to_dict — round-trips the proof token from its wire form.
+
+        Symmetric: from_dict(c.to_dict()) == c. Raises ValueError on an unknown
+        verdict string (fail-closed: an off-lattice value is rejected, not coerced)."""
+        return cls(
+            claim=d["claim"],
+            verdict=Verdict(d["verdict"]),
+            oracle=d["oracle"],
+            evidence=tuple(tuple(p) for p in d.get("evidence", ())),
+        )
