@@ -25,3 +25,20 @@ def test_certificate_is_frozen_and_default_evidence():
     assert c.evidence == ()
     with pytest.raises(AttributeError):
         c.verdict = Verdict.VERIFIED
+
+
+def test_certificate_from_dict_round_trips():
+    c = Certificate("(A -> A)", Verdict.VERIFIED, "propositional-dpll-v1",
+                    (("valid", "negation unsatisfiable"),))
+    assert Certificate.from_dict(c.to_dict()) == c           # to_dict / from_dict are symmetric
+    e = Certificate("x", Verdict.UNVERIFIABLE, "o")          # default (empty) evidence
+    assert Certificate.from_dict(e.to_dict()) == e
+    assert Certificate.from_dict(e.to_dict()).evidence == ()
+    got = Certificate.from_dict({"claim": "c", "verdict": "refuted", "oracle": "o", "evidence": []})
+    assert got.verdict is Verdict.REFUTED                    # verdict string -> enum
+
+
+def test_certificate_from_dict_rejects_unknown_verdict():
+    import pytest
+    with pytest.raises(ValueError):
+        Certificate.from_dict({"claim": "c", "verdict": "trusted", "oracle": "o", "evidence": []})
