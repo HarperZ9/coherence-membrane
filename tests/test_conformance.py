@@ -149,3 +149,30 @@ def test_schema_rejects_authority_status():
     }
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(payload, _schema("observation.schema.json"))
+
+
+# --- certificate wire-spec schema ------------------------------------------
+
+
+def test_certificate_schema_required_and_enum_match_dataclass():
+    from coherence_membrane.certificate import Verdict
+    schema = _schema("certificate.schema.json")
+    assert set(schema["required"]) == {"claim", "verdict", "oracle", "evidence"}
+    assert set(schema["properties"]["verdict"]["enum"]) == {v.value for v in Verdict}
+
+
+def test_real_certificate_validates_against_schema():
+    jsonschema = pytest.importorskip("jsonschema")
+    from coherence_membrane.certificate import Certificate, Verdict
+    c = Certificate("(A -> A)", Verdict.VERIFIED, "propositional-dpll-v1",
+                    (("valid", "negation unsatisfiable"),))
+    jsonschema.validate(c.to_dict(), _schema("certificate.schema.json"))
+    jsonschema.validate(Certificate("x", Verdict.UNVERIFIABLE, "o").to_dict(),
+                        _schema("certificate.schema.json"))
+
+
+def test_certificate_schema_rejects_authority_verdict():
+    jsonschema = pytest.importorskip("jsonschema")
+    bad = {"claim": "c", "verdict": "trusted", "oracle": "o", "evidence": []}
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(bad, _schema("certificate.schema.json"))
