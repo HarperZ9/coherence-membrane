@@ -8,8 +8,13 @@ quality. The center then selects the best under the human's named criterion (whi
 and perceptual dimensions together) and emits the spine Certificate. This is the render->critique creative
 loop, both senses real and meeting in one verdict.
 
-v1 rasterizes the `spiral` point-recipe (phyllotaxis); other recipe modes fall back to a faithful generic
-scatter so the eye still perceives a real, distinct raster. studio_engine is optional (lazy import).
+A World is rendered faithfully whichever substrate the generator uses:
+  * point-recipe (phyllotaxis / attractor / harmonograph) — the recipe's OWN points, reproduced via
+    studio_engine's `eval_recipe` and fit to the canvas (every mode, not just spiral);
+  * glsl-fragment (gyroid / quasicrystal / flowfield / metaballs / turbulence / rings / moire) — the
+    verified strand field expr, parsed back out of the shipped fragment and evaluated per pixel, colored
+    over the engine-witnessed value range. The pixels ARE the math the engine verified — not a proxy.
+studio_engine is optional (lazy import); the strand backends are imported inside the rasterizer.
 """
 from __future__ import annotations
 import json
@@ -25,10 +30,53 @@ from .loop import witness_candidates
 
 COMPOSITE_DIMS = ("fitness", "structure", "perceived", "decoded", "confidence")
 
+_FIELD_MARKER = "float field(float u, float v, float t){ return "
+_RAMP = ((45, 212, 191), (122, 92, 255), (251, 191, 36))   # teal -> violet -> amber (engine palette feel)
 
-def rasterize_world(world, size: int = 128) -> bytes:
-    """Draw the atelier's generated point-recipe to a PNG (zero-dep). Faithful to the actual geometry
-    the generator specifies (the points), so the eye perceives the real artifact — not a proxy."""
+
+def _ramp(n: float):
+    """Map a normalized field value in [0,1] onto the 3-stop ramp."""
+    n = 0.0 if n < 0.0 else 1.0 if n > 1.0 else n
+    if n <= 0.5:
+        a, b, f = _RAMP[0], _RAMP[1], n / 0.5
+    else:
+        a, b, f = _RAMP[1], _RAMP[2], (n - 0.5) / 0.5
+    return tuple(int(a[k] + (b[k] - a[k]) * f) for k in range(3))
+
+
+def _field_expr_src(source: str) -> str | None:
+    """Extract the strand field expression from a shipped GLSL fragment (between `return ` and `;`)."""
+    i = source.find(_FIELD_MARKER)
+    if i < 0:
+        return None
+    start = i + len(_FIELD_MARKER)
+    end = source.find(";", start)
+    return source[start:end] if end > start else None
+
+
+def _rasterize_field(rp, size: int) -> bytes:
+    """Evaluate the verified strand field expr per pixel, colored over the witnessed value range."""
+    from studio_engine.strand import glsl as _glsl, expr as _ex
+    e = _glsl.parse_glsl(_field_expr_src(rp.source))
+    t0 = float((rp.uniforms.get("u_time") or {}).get("default", 0.0))
+    vr = rp.value_range or []
+    lo, hi = (float(vr[0]), float(vr[1])) if len(vr) == 2 and vr[1] > vr[0] else (-1.0, 1.0)
+    span = hi - lo
+    grid = bytearray(size * size * 3)
+    for py in range(size):
+        v = 2.0 * ((py + 0.5) / size) - 1.0
+        for px in range(size):
+            u = 2.0 * ((px + 0.5) / size) - 1.0
+            val = _ex.eval_expr(e, {"u": u, "v": v, "t": t0})
+            r, g, b = _ramp((val - lo) / span)
+            j = (py * size + px) * 3
+            grid[j], grid[j + 1], grid[j + 2] = r, g, b
+    return encode_png(size, size, bytes(grid), 3)
+
+
+def _rasterize_points(rp, size: int) -> bytes:
+    """Reproduce the recipe's OWN points (any mode) and fit them to the canvas, preserving aspect."""
+    from studio_engine.strand import recipe as _recipe
     grid = bytearray(b"\xf7" * (size * size * 3))   # light background
 
     def plot(x: int, y: int, rgb):
@@ -36,26 +84,35 @@ def rasterize_world(world, size: int = 128) -> bytes:
             i = (y * size + x) * 3
             grid[i], grid[i + 1], grid[i + 2] = rgb
 
-    rp = world.layers[0].render_program
-    recipe = rp.recipe
-    count = int(recipe.get("count", 400))
-    angle = math.radians(float(recipe.get("angle_deg", 137.5)))
-    scale = float(recipe.get("scale", 5.0))
-    cx = cy = size / 2.0
-    maxr = scale * math.sqrt(max(1, count))
-    fit = (size * 0.46) / maxr if maxr else 1.0
-    for i in range(count):
-        if recipe.get("mode") == "spiral":
-            r = scale * math.sqrt(i) * fit
-            th = i * angle
-        else:                                        # generic faithful scatter from the recipe values
-            r = (size * 0.46) * ((i * 2654435761) % 1000) / 1000.0
-            th = i * angle
-        x = int(cx + r * math.cos(th))
-        y = int(cy + r * math.sin(th))
-        c = int(255 * i / max(1, count))
-        plot(x, y, (20, c, 255 - c))
+    try:
+        pts = _recipe.eval_recipe(rp.recipe or {})
+    except Exception:
+        pts = []
+    if pts:
+        xs = [p[0] for p in pts]
+        ys = [p[1] for p in pts]
+        minx, maxx, miny, maxy = min(xs), max(xs), min(ys), max(ys)
+        cx, cy = (minx + maxx) / 2.0, (miny + maxy) / 2.0
+        span = max(maxx - minx, maxy - miny) or 1.0
+        s = (size * 0.86) / span                     # uniform scale -> preserve the real aspect ratio
+        n = len(pts)
+        for x, y, idx in pts:
+            px = int(size / 2.0 + (x - cx) * s)
+            py = int(size / 2.0 + (y - cy) * s)
+            c = int(255 * idx / max(1, n))
+            plot(px, py, (20, c, 255 - c))
     return encode_png(size, size, bytes(grid), 3)
+
+
+def rasterize_world(world, size: int = 128) -> bytes:
+    """Draw the atelier's generated artifact to a PNG (zero-dep), faithful to its substrate.
+
+    Fields (glsl-fragment) render the verified expr per pixel; point recipes render their own points.
+    So the eye perceives the REAL artifact for every generator — gyroid and quasicrystal included."""
+    rp = world.layers[0].render_program
+    if getattr(rp, "target", None) == "glsl-fragment" and _field_expr_src(rp.source or ""):
+        return _rasterize_field(rp, size)
+    return _rasterize_points(rp, size)
 
 
 class CompositeJudge:
