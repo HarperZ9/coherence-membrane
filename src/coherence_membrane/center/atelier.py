@@ -46,24 +46,62 @@ def summarize_world(world) -> str:
 
 
 class AtelierMind:
-    """A center Mind whose proposals are real studio-engine generations."""
+    """A center Mind whose proposals are real studio-engine generations.
 
-    def __init__(self, name: str = "atelier", generator: str = "phyllotaxis", max_steps: int = 8):
+    `store` (a dict proposal_text -> World) lets the matching AtelierJudge retrieve the ACTUAL
+    generated artifact and score it on studio-engine's own criteria (rather than scoring text)."""
+
+    def __init__(self, name: str = "atelier", generator: str = "phyllotaxis", max_steps: int = 8,
+                 store: dict | None = None):
         self.name = name
         self.channel = "generate"
         self.generator = generator
         self.max_steps = max_steps
+        self.store = store if store is not None else {}
 
-    def _generate(self, seed: int, generator: str | None = None) -> str:
+    def _propose(self, prefix: str, seed: int) -> str:
         se = _require_studio()
-        world = se.simulate(seed=seed, generator=generator or self.generator, max_steps=self.max_steps)
-        return summarize_world(world)
+        world = se.simulate(seed=seed, generator=self.generator, max_steps=self.max_steps)
+        text = f"{prefix} {summarize_world(world)}"
+        self.store[text] = world      # register the real artifact for the judge to retrieve
+        return text
 
     def perceive_and_propose(self, view: str) -> str:
-        return f"[generate] atelier proposes a generated artifact: {self._generate(_seed(view))}"
+        return self._propose("[generate] atelier proposes a generated artifact:", _seed(view))
 
     def reconcile(self, own_view: str, others_deposits: list[str]) -> str:
-        # let the others' deposits perturb the seed (the meeting genuinely changes what is generated)
-        seed = _seed(own_view + " || " + " | ".join(others_deposits))
-        return (f"[generate|reconciled] atelier regenerates, informed by the other minds: "
-                f"{self._generate(seed)}")
+        seed = _seed(own_view + " || " + " | ".join(others_deposits))   # the meeting changes the seed
+        return self._propose("[generate|reconciled] atelier regenerates, informed by the other minds:", seed)
+
+
+# Generative dimensions the AtelierJudge can report — read from studio-engine's OWN witness of the
+# artifact (the multi-axis+novelty final_score and the structural-fitness certificate it ships with).
+GEN_DIMS = ("fitness", "structure", "passes_fitness")
+
+
+class AtelierJudge:
+    """The matching EXTERNAL judge for generated artifacts: scores each candidate on studio-engine's
+    OWN evaluation of the real artifact (not on its text). Retrieves the World from the shared store;
+    a candidate that is not a generated artifact (not in the store) scores 0 on every generative
+    dimension — a text proposal has no generative fitness, and the judge says so rather than guessing."""
+
+    def __init__(self, store: dict):
+        self.store = store
+
+    def score(self, candidate: str, subject_views, dims=GEN_DIMS) -> dict:
+        world = self.store.get(candidate)
+        if world is None:
+            return {d: 0.0 for d in dims}
+        final_score = float(getattr(getattr(world, "receipt", None), "final_score", 0.0) or 0.0)
+        cert = getattr(world, "certificate", None) or {}
+        evidence = dict(cert.get("evidence", []) or [])
+        try:
+            deviation = float(evidence.get("deviation", 1.0))
+        except (TypeError, ValueError):
+            deviation = 1.0
+        full = {
+            "fitness": max(0.0, min(1.0, final_score)),                 # studio-engine's overall score
+            "structure": max(0.0, min(1.0, 1.0 - deviation)),           # 1 - structural-fitness deviation
+            "passes_fitness": 1.0 if cert.get("verdict") == "verified" else 0.0,
+        }
+        return {d: full.get(d, 0.0) for d in dims}
