@@ -12,8 +12,10 @@ v1 rasterizes the `spiral` point-recipe (phyllotaxis); other recipe modes fall b
 scatter so the eye still perceives a real, distinct raster. studio_engine is optional (lazy import).
 """
 from __future__ import annotations
+import json
 import math
 
+from ..certificate import Certificate, Verdict
 from ..pngencode import encode_png
 from ..organs.visual import VisualArtifactOrgan
 from .atelier import AtelierJudge, summarize_world, _require_studio, _seed
@@ -92,3 +94,81 @@ def composite_reconcile(brief: str, criterion: CriterionSpec, *, generator: str 
             obs_store[text] = obs
         candidates[f"{generator}#{s}"] = text
     return witness_candidates(candidates, {"brief": brief}, criterion, CompositeJudge(world_store, obs_store), dims)
+
+
+def _variant_seed(base: int, r: int, i: int) -> int:
+    return (base ^ (r * 1000003) ^ (i * 97)) & 0x7FFFFFFF
+
+
+def iterative_refine(brief: str, criterion: CriterionSpec, *, generator: str = "phyllotaxis",
+                     rounds: int = 5, variants: int = 4, patience: int = 2, max_steps: int = 8,
+                     size: int = 128, eye_organ=None, dims=COMPOSITE_DIMS) -> Certificate:
+    """The true loop: generate -> render -> perceive -> (the composite score, which INCLUDES the eye's
+    perception, drives the next generation) -> regenerate around the current best -> repeat. Hill-climbs
+    the named criterion until no round improves it (patience). The eye's perception genuinely feeds back
+    — a variant the eye perceives poorly scores lower and is not adopted. Returns a Certificate carrying
+    the refined winner + the witnessed trajectory (monotone non-decreasing by construction).
+    """
+    se = _require_studio()
+    eye_organ = eye_organ or VisualArtifactOrgan()
+    world_store: dict = {}
+    obs_store: dict = {}
+    candidates: dict[str, str] = {}
+
+    def make(label: str, seed: int) -> None:
+        world = se.simulate(seed=seed, generator=generator, max_steps=max_steps)
+        png = rasterize_world(world, size)
+        observed = eye_organ.observe(png)
+        obs = observed[0] if observed else None
+        text = (f"[{label}] atelier generated {summarize_world(world)} "
+                f"|| eye perceives {summarize_observation(obs) if obs is not None else 'nothing'}")
+        world_store[text] = world
+        if obs is not None:
+            obs_store[text] = obs
+        candidates[label] = text
+
+    def weighted(label: str) -> float:
+        judge = CompositeJudge(world_store, obs_store)
+        return criterion.score(judge.score(candidates[label], {"brief": brief}, dims))
+
+    base = _seed(brief)
+    make("r0", base)
+    cur_label, cur_seed, cur_w = "r0", base, weighted("r0")
+    trajectory = [round(cur_w, 6)]
+    improvements = stale = rounds_run = 0
+    for r in range(1, rounds + 1):
+        rounds_run = r
+        improved = False
+        for i in range(variants):
+            label = f"r{r}.{i}"
+            seed = _variant_seed(cur_seed, r, i)         # explore AROUND the current best
+            make(label, seed)
+            w = weighted(label)
+            if w > cur_w + 1e-9:                          # adopt only improvements -> monotone climb
+                cur_label, cur_seed, cur_w, improved = label, seed, w, True
+        trajectory.append(round(cur_w, 6))
+        if improved:
+            improvements += 1
+            stale = 0
+        else:
+            stale += 1
+            if stale >= patience:
+                break
+
+    final = CompositeJudge(world_store, obs_store).score(candidates[cur_label], {"brief": brief}, dims)
+    evidence = (
+        ("criterion", criterion.name),
+        ("criterion_dims", json.dumps(criterion.normalized().dims)),
+        ("winner", cur_label),
+        ("winner_weighted", str(round(cur_w, 6))),
+        ("rounds_run", str(rounds_run)),
+        ("improvements", str(improvements)),
+        ("trajectory", json.dumps(trajectory)),
+        ("final_scores", json.dumps(final)),
+    )
+    return Certificate(f"refined best under '{criterion.name}' over {rounds_run} rounds (+{improvements} improvements)",
+                       Verdict.VERIFIED, "neutral-center-refine-v1", evidence)
+
+
+def trajectory_of(cert: Certificate) -> list:
+    return json.loads(dict(cert.evidence).get("trajectory", "[]"))
