@@ -13,7 +13,9 @@ from coherence_membrane.agent_loop import (
     CONVERGED,
     INDETERMINATE,
     AgentLoop,
+    BasinReport,
     Goal,
+    basin_agreement,
 )
 from coherence_membrane.observation import Observation, Provenance, Status
 from coherence_membrane.organs.raw import RawFrameOrgan
@@ -207,3 +209,51 @@ def test_commit_without_authorized_baseline_is_needs_human():
     loop.look(art)  # looked, but never authorized a baseline
     d = loop.commit("publish", "site/index.html", authorization=_receipt())
     assert d.decision == "needs-human"  # no baseline -> UNVERIFIABLE -> needs-human
+
+
+# --- A2: basin agreement — witness path-(in)dependence across independent starts ---------
+
+def test_basin_agreement_one_basin_when_identical():
+    # two converged runs with the same perceived identity -> one basin -> path-independent.
+    r = basin_agreement([_mk("art", "a" * 64), _mk("art", "a" * 64)])
+    assert isinstance(r, BasinReport)
+    assert r.runs == 2 and r.basins == 1 and r.agree is True
+
+
+def test_basin_agreement_flags_path_dependence():
+    # different identities, perceptual distance 4 > tolerance 0 -> two basins -> NOT ownerless.
+    r = basin_agreement([_mk("art", "a" * 64, "0000000000000000"),
+                         _mk("art", "b" * 64, "000000000000000f")], tolerance=0)
+    assert r.basins == 2 and r.agree is False
+    assert any("PATH-DEPENDENT" in s for s in r.reasons)
+
+
+def test_basin_agreement_within_tolerance_is_one_basin():
+    # same distance-4 pair, but tolerance 4 folds them into one basin.
+    r = basin_agreement([_mk("art", "a" * 64, "0000000000000000"),
+                         _mk("art", "b" * 64, "000000000000000f")], tolerance=4)
+    assert r.basins == 1 and r.agree is True
+
+
+def test_basin_agreement_empty_is_not_vacuous_agreement():
+    r = basin_agreement([])
+    assert r.runs == 0 and r.agree is False  # nothing witnessed != agreement
+
+
+def test_converge_multistart_witnesses_agreement():
+    goal = Goal.from_observation(_mk("art", "a" * 64))
+    loop = AgentLoop(goal)
+    makes = [lambda: _mk("art", "a" * 64), lambda: _mk("art", "a" * 64)]
+    results, report = loop.converge_multistart(makes, max_iterations=3)
+    assert all(o is not None for o in results)
+    assert report.runs == 2 and report.agree is True
+
+
+def test_converge_multistart_marks_non_converging_start():
+    goal = Goal("art", "a" * 64, 0)  # tolerance 0; a far, wrong-identity result never converges
+    loop = AgentLoop(goal)
+    makes = [lambda: _mk("art", "a" * 64),                       # converges (MATCH)
+             lambda: _mk("art", "z" * 64, "00ffffffffffffff")]   # never matches -> None
+    results, report = loop.converge_multistart(makes, max_iterations=3)
+    assert results[0] is not None and results[1] is None
+    assert report.runs == 1 and report.agree is True             # only the converged run is basin-counted
