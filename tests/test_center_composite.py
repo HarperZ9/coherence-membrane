@@ -31,3 +31,14 @@ def test_composite_loop_judges_both_halves():
     # each candidate carries a generative score (fitness) AND a perceptual score (decoded) — both halves real
     assert all("fitness" in c and "decoded" in c for c in sc.values())
     assert any(c["decoded"] > 0 for c in sc.values())           # the eye really perceived the rendered artifacts
+
+
+def test_iterative_refine_climbs_monotonically():
+    from coherence_membrane.center.composite import iterative_refine, trajectory_of
+    cert = iterative_refine(BRIEF, CURATOR, rounds=4, variants=3, patience=2)
+    assert cert.verdict is Verdict.VERIFIED and cert.oracle == "neutral-center-refine-v1"
+    traj = trajectory_of(cert)
+    assert len(traj) >= 2
+    # the eye's perception is in the score; adopt only improvements -> the trajectory is monotone
+    assert all(traj[i + 1] >= traj[i] - 1e-9 for i in range(len(traj) - 1))
+    assert traj[-1] >= traj[0]   # refinement never regresses below the start
