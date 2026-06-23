@@ -27,6 +27,48 @@ def meet_verdicts(verdicts: Iterable[Verdict]) -> Verdict:
     return _L2V[DRIFT_LATTICE.fold_meet(_V2L[v] for v in verdicts)]
 
 
+def quorum(certs: Iterable[Certificate], *, claim: str | None = None,
+           threshold: float = 0.5) -> Certificate:
+    """Robust CONSENSUS over N INDEPENDENT judges of the SAME claim — the readout-gate.
+
+    Distinct from compose(): compose is the conjunctive meet over the STEPS of one argument
+    (a single REFUTED absorbs). quorum is a VOTE among independent judges of one claim, and
+    it caps any single voice's influence (aperture-sim A1 — a robust aggregator must govern
+    the OUTPUT, so no lone loud/unbounded source can flip the verdict). A decided verdict is
+    returned ONLY if it wins a strict supermajority of the WHOLE panel; the denominator is
+    the total judge count, so abstentions (UNVERIFIABLE) and dissent both count against
+    quorum. Consequences (threshold >= 0.5):
+      * one false VERIFIED among many cannot reach the supermajority -> UNVERIFIABLE, not VERIFIED;
+      * one loud REFUTED cannot veto a true claim (it neither reaches a REFUTED supermajority
+        nor blocks a VERIFIED one beyond its single vote) -> the panel still decides;
+      * no quorum either way -> UNVERIFIABLE (fail-closed); empty -> UNVERIFIABLE.
+    threshold is the fraction of the FULL panel a verdict must exceed (default 0.5 = strict
+    majority; pass 2/3 for Byzantine-style robustness tolerating up to ~1/3 bad judges).
+    Oracle 'quorum-v1'; the full tally + threshold are carried in evidence (auditable)."""
+    certs = list(certs)
+    summary = claim if claim is not None else (
+        " ; ".join(c.claim for c in certs) if certs else "(empty)")
+    n = len(certs)
+    if n == 0:
+        return Certificate(summary, Verdict.UNVERIFIABLE, "quorum-v1",
+                           (("reason", "no judges"), ("threshold", repr(threshold))))
+    tally = {Verdict.VERIFIED: 0, Verdict.REFUTED: 0, Verdict.UNVERIFIABLE: 0}
+    for c in certs:
+        tally[c.verdict] = tally.get(c.verdict, 0) + 1
+    need = int(threshold * n) + 1   # strict supermajority of the FULL panel
+    if tally[Verdict.VERIFIED] >= need:
+        verdict = Verdict.VERIFIED
+    elif tally[Verdict.REFUTED] >= need:
+        verdict = Verdict.REFUTED
+    else:
+        verdict = Verdict.UNVERIFIABLE
+    evidence = (("verified", str(tally[Verdict.VERIFIED])),
+                ("refuted", str(tally[Verdict.REFUTED])),
+                ("unverifiable", str(tally[Verdict.UNVERIFIABLE])),
+                ("judges", str(n)), ("need", str(need)), ("threshold", repr(threshold)))
+    return Certificate(summary, verdict, "quorum-v1", evidence)
+
+
 def compose(certs: Iterable[Certificate], *, claim: str | None = None) -> Certificate:
     """Compose a multi-step argument into one Certificate: the whole holds only if
     every step does. Verdict = the proven meet over the steps. Empty -> UNVERIFIABLE

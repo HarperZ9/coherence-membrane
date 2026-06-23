@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from coherence_membrane.certificate import Certificate, Verdict
-from coherence_membrane.composition import compose, meet_verdicts
+from coherence_membrane.composition import compose, meet_verdicts, quorum
 
 
 def _c(verdict, oracle="o"):
@@ -57,3 +57,36 @@ def test_compose_matches_lattice_meet_exhaustively():
         for b in Verdict:
             got = compose([_c(a), _c(b)]).verdict
             assert v2l[got] == DRIFT_LATTICE.meet(v2l[a], v2l[b])
+
+
+# --- A1: quorum — robust consensus over independent judges (the readout-gate) ----------
+
+def test_quorum_supermajority_decides():
+    V, R, U = Verdict.VERIFIED, Verdict.REFUTED, Verdict.UNVERIFIABLE
+    assert quorum([_c(V), _c(V), _c(V)]).verdict is V
+    assert quorum([_c(V), _c(V), _c(R)]).verdict is V       # 2/3 majority, one dissent can't flip
+    assert quorum([_c(V), _c(R), _c(U)]).verdict is U       # no majority -> UNVERIFIABLE
+
+
+def test_quorum_single_voice_cannot_flip_or_veto():
+    V, R, U = Verdict.VERIFIED, Verdict.REFUTED, Verdict.UNVERIFIABLE
+    assert quorum([_c(V)] * 4 + [_c(R)]).verdict is V        # one loud REFUTED can't veto truth
+    assert quorum([_c(V)] + [_c(U)] * 4).verdict is U        # lone VERIFIED can't reach quorum
+    assert quorum([_c(R)] + [_c(U)] * 4).verdict is U        # lone REFUTED can't impose REFUTED
+
+
+def test_quorum_empty_is_unverifiable():
+    assert quorum([]).verdict is Verdict.UNVERIFIABLE
+
+
+def test_quorum_high_threshold_needs_unanimity():
+    V, R, U = Verdict.VERIFIED, Verdict.REFUTED, Verdict.UNVERIFIABLE
+    assert quorum([_c(V), _c(V), _c(V)], threshold=0.9).verdict is V
+    assert quorum([_c(V), _c(V), _c(R)], threshold=0.9).verdict is U   # bare majority insufficient
+
+
+def test_quorum_tally_evidence_is_auditable():
+    cert = quorum([_c(Verdict.VERIFIED), _c(Verdict.VERIFIED), _c(Verdict.REFUTED)])
+    ev = dict(cert.evidence)
+    assert ev["verified"] == "2" and ev["refuted"] == "1" and ev["judges"] == "3"
+    assert cert.oracle == "quorum-v1"
