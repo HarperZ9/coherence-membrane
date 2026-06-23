@@ -121,6 +121,62 @@ class AdjustmentProposal:
         }
 
 
+@dataclass(frozen=True)
+class BasinReport:
+    """A2 (aperture-sim) — witness whether independent starts reconcile to ONE basin.
+
+    The agent loop converges a single trajectory from wherever make() begins; the sims
+    proved convergence is START-governed (a near-midpoint basin separatrix), so a single
+    'converged' is NOT evidence the result is path-independent. This reports how many
+    distinct basins the converged runs fell into: agree (one basin) => path-independent
+    FOR THIS GOAL, witnessed not assumed; otherwise the result rode on the start."""
+
+    runs: int           # converged runs compared
+    basins: int         # distinct basins they fell into
+    agree: bool         # True iff exactly one basin (path-independent, witnessed)
+    reasons: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"runs": self.runs, "basins": self.basins, "agree": self.agree,
+                "reasons": list(self.reasons)}
+
+
+def basin_agreement(observations, *, tolerance: int = 0) -> BasinReport:
+    """Cluster the converged Observations of independent-start runs into basins.
+
+    Two runs share a basin iff their perceived results MATCH (identity equal) or sit within
+    `tolerance` perceptual distance of each other (the same comparison the loop uses against
+    the goal). One basin => path-independent (witnessed); >1 => PATH-DEPENDENT, surfaced as a
+    reason so a caller never launders a start-dependent result as ownerless. Pure + fail-safe:
+    an empty set is agree=False (nothing was witnessed), never a vacuous agreement."""
+    obs = [o for o in observations if o is not None]
+    n = len(obs)
+    if n == 0:
+        return BasinReport(0, 0, False, ["no converged runs to compare (nothing witnessed)"])
+    parent = list(range(n))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            d = compare_drift(obs[i].data.get("identity_sha256"), obs[j].data.get("identity_sha256"),
+                              _fingerprint_int(obs[i]), _fingerprint_int(obs[j]))
+            same = d.verdict == MATCH or (
+                d.verdict == DRIFT and d.distance is not None and d.distance <= tolerance)
+            if same:
+                parent[find(i)] = find(j)
+    basins = len({find(i) for i in range(n)})
+    reasons = [f"{n} converged run(s) reconcile to {basins} basin(s)"]
+    if basins != 1:
+        reasons.append("PATH-DEPENDENT: independent starts reached different basins — the result "
+                       "rode on the start, not the criterion (aperture-sim A2); not ownerless")
+    return BasinReport(n, basins, basins == 1, reasons)
+
+
 class AgentLoop:
     """make -> look -> compare -> adjust around an agent's own production, with the
     one consequential step routed through the write-gate."""
@@ -182,6 +238,29 @@ class AgentLoop:
             yield proposal
             if proposal.converged:
                 return
+
+    def converge_multistart(
+        self, makes, *, max_iterations: int = 10
+    ) -> tuple[list[Observation | None], BasinReport]:
+        """A2 — drive iterate() from several INDEPENDENT starts and witness basin agreement.
+
+        `makes` is an iterable of independent producers (diversified starts). Each is run
+        through iterate(); the converged Observation per start is collected (None if a start
+        never converged within budget). Returns (results, BasinReport). The report says
+        whether the starts reconciled to ONE basin (path-independent, witnessed) or DIVERGED
+        (path-dependent — the convergence rode on the start, surfaced not hidden). This
+        replaces the implicit single-trajectory assumption with an explicit witness; it adds
+        no authority and gates nothing (looking is free)."""
+        results: list[Observation | None] = []
+        for make in makes:
+            converged_obs = None
+            for proposal in self.iterate(make, max_iterations=max_iterations):
+                if proposal.converged:
+                    converged_obs = self._last_obs
+                    break
+            results.append(converged_obs)
+        report = basin_agreement([r for r in results if r is not None], tolerance=self.goal.tolerance)
+        return results, report
 
     # --- the operator authorizes the result as the commit baseline ---------
 

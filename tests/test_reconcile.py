@@ -80,3 +80,42 @@ def test_reconcile_fail_closed_on_malformed_certificate():
     bad = Certificate("c", Verdict.VERIFIED, "x", evidence=123)   # evidence not iterable-of-pairs
     bad_obs = reconcile(_mp(), criterion=Criterion("rogue2", lambda f: bad))
     assert bad_obs.status == Status.UNVERIFIED and bad_obs.data["verdict"] == "unverifiable"
+
+
+# --- A4: require_independent — no decided verdict without a WITNESSED external criterion ----
+
+def _verdict_crit(verdict, name="c", author=None):
+    """A criterion that always returns the given decided verdict (for the A4 guard tests)."""
+    return Criterion(name, lambda form: Certificate("claim-x", verdict, "oracle-v1"), author=author)
+
+
+def test_require_independent_downgrades_unwitnessed():
+    # decided VERIFIED but neither criterion.author nor producer given -> unwitnessed.
+    obs = reconcile("art", criterion=_verdict_crit(Verdict.VERIFIED), require_independent=True)
+    assert obs.status == Status.UNVERIFIED
+    assert obs.data["verdict"] == "unverifiable"
+    assert obs.data["independence"] == "unwitnessed"
+    assert "no external criterion" in obs.data["downgrade_reason"]
+
+
+def test_require_independent_downgrades_self_authored():
+    obs = reconcile("art", criterion=_verdict_crit(Verdict.VERIFIED, author="X"),
+                    producer="X", require_independent=True)
+    assert obs.data["verdict"] == "unverifiable"
+    assert obs.data["independence"] == "self-authored"
+
+
+def test_require_independent_passes_witnessed_independent():
+    obs = reconcile("art", criterion=_verdict_crit(Verdict.VERIFIED, author="judge"),
+                    producer="maker", require_independent=True)
+    assert obs.status == Status.PASS
+    assert obs.data["verdict"] == "verified"
+    assert obs.data["independence"] == "witnessed-independent"
+
+
+def test_default_mode_unchanged_unwitnessed_passes():
+    # without the flag, an unwitnessed decided verdict passes through exactly as before.
+    obs = reconcile("art", criterion=_verdict_crit(Verdict.VERIFIED))
+    assert obs.data["verdict"] == "verified"
+    assert obs.data["independence"] == "unwitnessed"
+    assert "downgrade_reason" not in obs.data

@@ -43,6 +43,9 @@ from .observation import Observation, Provenance, Status, sha256_hex
 
 # Sentinel reason emitted when strict mode refuses a self-graded decision.
 _SELF_AUTHORED_DOWNGRADE_REASON = "verdict from a self-authored criterion (independence not witnessed)"
+# Sentinel reason emitted when require_independent refuses an un-witnessed decision (A4):
+# the criterion's independence was never witnessed, so a decision rests on no external check.
+_UNWITNESSED_DOWNGRADE_REASON = "verdict from a criterion of unwitnessed independence (no external criterion)"
 
 
 def witness_independence(author, producer) -> str:
@@ -88,7 +91,7 @@ def _safe_str(x) -> str:
 
 
 def reconcile(artifact, *, perceive=identity_perceive, criterion, producer=None,
-              strict=False) -> Observation:
+              strict=False, require_independent=False) -> Observation:
     """Perceive -> judge -> witness, as ONE witnessed Observation carrying the verdict.
 
     perceive(artifact) -> (form, payload_bytes); criterion.judge(form) -> Certificate.
@@ -107,7 +110,15 @@ def reconcile(artifact, *, perceive=identity_perceive, criterion, producer=None,
     `strict` (optional, default OFF — so existing tests are untouched): when True, a
     DECIDED verdict (VERIFIED/REFUTED) carried by a `self-authored` criterion is
     DOWNGRADED to UNVERIFIABLE (reason: independence not witnessed). Default mode leaves
-    every verdict EXACTLY as today and only annotates `independence`."""
+    every verdict EXACTLY as today and only annotates `independence`.
+
+    `require_independent` (optional, default OFF): the STRONGER guard (aperture-sim A4 —
+    internal confidence is not truth; a decision must rest on a criterion whose external
+    independence is POSITIVELY witnessed). When True, a DECIDED verdict is downgraded to
+    UNVERIFIABLE unless independence == "witnessed-independent" — i.e. BOTH self-authored
+    AND unwitnessed decisions are refused (strict only refuses self-authored). Use this at
+    a real trust boundary where the mere ABSENCE of a witnessed external criterion must not
+    be laundered into VERIFIED. Default OFF leaves every verdict exactly as today."""
     label = f"reconcile:{criterion.name}"
     independence = witness_independence(getattr(criterion, "author", None), producer)
     try:
@@ -117,14 +128,24 @@ def reconcile(artifact, *, perceive=identity_perceive, criterion, producer=None,
         # an untrusted criterion must degrade to UNVERIFIABLE, never raise (fail-closed).
         decided = cert.verdict in (Verdict.VERIFIED, Verdict.REFUTED)
         verdict_value = cert.verdict.value
-        downgraded = False
+        downgrade_reason = None
         # STRICT: refuse to launder a self-graded decision as a witnessed one. Only a
         # DECIDED verdict on a self-authored criterion is touched; default mode (strict
         # False) and every other independence value pass the criterion's verdict through.
         if strict and decided and independence == "self-authored":
             verdict_value = Verdict.UNVERIFIABLE.value
             decided = False
-            downgraded = True
+            downgrade_reason = _SELF_AUTHORED_DOWNGRADE_REASON
+        # REQUIRE_INDEPENDENT (A4): stronger than strict — a decision must rest on a
+        # POSITIVELY witnessed-independent criterion; both self-authored and unwitnessed
+        # are refused (the absence of an external witness is not truth). The elif means a
+        # self-authored case already handled by `strict` keeps its specific reason.
+        elif require_independent and decided and independence != "witnessed-independent":
+            verdict_value = Verdict.UNVERIFIABLE.value
+            decided = False
+            downgrade_reason = (_SELF_AUTHORED_DOWNGRADE_REASON if independence == "self-authored"
+                                else _UNWITNESSED_DOWNGRADE_REASON)
+        downgraded = downgrade_reason is not None
         payload = bytes(payload) if isinstance(payload, (bytes, bytearray)) else str(payload).encode()
         claim = cert.claim if isinstance(cert.claim, str) else str(cert.claim)
         data = {"oracle": cert.oracle, "verdict": verdict_value, "claim": claim,
@@ -137,7 +158,7 @@ def reconcile(artifact, *, perceive=identity_perceive, criterion, producer=None,
             data["criterion_author"] = getattr(criterion, "author", None)
             data["artifact_producer"] = producer
         if downgraded:
-            data["downgrade_reason"] = _SELF_AUTHORED_DOWNGRADE_REASON
+            data["downgrade_reason"] = downgrade_reason
         return Observation(
             label, claim, f"reconcile {verdict_value}",
             Status.PASS if decided else Status.UNVERIFIED,
