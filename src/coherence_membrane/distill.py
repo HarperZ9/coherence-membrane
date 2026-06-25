@@ -6,9 +6,10 @@ verify. No model in the checking step.
 """
 from __future__ import annotations
 
+import hashlib
 import subprocess
 
-from .refine import GradedCriterion
+from .refine import GradedCriterion, refine
 
 
 def readability_cost(text: str) -> float:
@@ -65,3 +66,38 @@ def command_guard(cmd):
         except Exception:
             return False
     return guard
+
+
+def distill_code(original: str, *, propose=None, candidate=None, behavior_guard=None, max_iter=1) -> dict:
+    if (propose is None) == (candidate is None):
+        raise ValueError("distill_code: pass exactly one of propose= or candidate=")
+    original_bytes = len(original.encode("utf-8"))
+    original_cost = readability_cost(original)
+    graders = [density_grader(original_bytes), readability_grader(original_cost)]
+    guard = behavior_guard if behavior_guard is not None else command_guard(None)
+    generate = propose if propose is not None else (lambda _state: candidate)
+    outcome = refine(
+        generate, graders, adjust=lambda _r, s: s, guard=guard,
+        target_margin=0.0, cohesion_bar=0.0, max_iter=max_iter,
+    )
+    cand = outcome.candidate if outcome.candidate is not None else ""
+    cand_bytes = len(cand.encode("utf-8"))
+    if outcome.status == "correct":
+        verdict = "ACCEPTED"
+    elif cand:
+        verdict = "REJECTED"
+    else:
+        verdict = "UNVERIFIABLE"
+    return {
+        "schema": "coherence.distill/1",
+        "verdict": verdict,
+        "original_sha256": hashlib.sha256(original.encode("utf-8")).hexdigest(),
+        "candidate_sha256": hashlib.sha256(cand.encode("utf-8")).hexdigest() if cand else None,
+        "original_bytes": original_bytes,
+        "candidate_bytes": cand_bytes,
+        "gain": round(original_bytes / cand_bytes, 3) if cand_bytes else None,
+        "readability_before": round(original_cost, 3),
+        "readability_after": round(readability_cost(cand), 3) if cand else None,
+        "short_axis": outcome.short_axis,
+        "recheck": "coherence-membrane distill --code <original> --candidate <candidate>",
+    }

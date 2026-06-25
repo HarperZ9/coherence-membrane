@@ -53,3 +53,32 @@ def test_command_guard_fails_closed_on_nonzero_and_error():
 
 def test_command_guard_none_is_unchecked_true():
     assert command_guard(None)(None) is True
+
+
+# Task 4: distill_code wiring + witness record
+import hashlib
+from coherence_membrane.distill import distill_code, readability_cost
+
+
+def test_distill_accepts_a_clean_smaller_candidate():
+    original = "def f(x):\n    temp = x + 1\n    result = temp\n    return result\n"
+    candidate = "def f(x):\n    return x + 1\n"               # smaller AND simpler
+    rec = distill_code(original, candidate=candidate, behavior_guard=None)
+    assert rec["verdict"] == "ACCEPTED"
+    assert rec["gain"] > 1.0
+    assert rec["candidate_sha256"] == hashlib.sha256(candidate.encode("utf-8")).hexdigest()
+
+
+def test_distill_rejects_code_golf_even_if_smaller():
+    original = "def f(x):\n    return x + 1\n"
+    golf = "def f(x):return(x+1)"+ "#" + "z"*300 + "\n"        # fewer bytes? force a crammed long line
+    rec = distill_code(original, candidate=golf, behavior_guard=None)
+    assert rec["verdict"] == "REJECTED"
+    assert rec["short_axis"] == "readability"
+
+
+def test_distill_rejects_when_behavior_guard_fails():
+    original = "x = 1\n" * 5
+    rec = distill_code(original, candidate="x = 1\n", behavior_guard=lambda c: False)
+    assert rec["verdict"] == "REJECTED"
+    assert rec["short_axis"] in ("behavior", "density", "readability")  # guard short-circuits correctness
