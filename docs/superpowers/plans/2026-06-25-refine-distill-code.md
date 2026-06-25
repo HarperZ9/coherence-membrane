@@ -66,13 +66,6 @@ verify. No model in the checking step.
 """
 from __future__ import annotations
 
-import hashlib
-import json
-import subprocess
-from dataclasses import dataclass
-
-from .refine import GradedCriterion, refine
-
 _COMFORT_WIDTH = 100   # columns past which a line reads as crammed
 _TAB = "    "
 
@@ -115,7 +108,7 @@ def readability_cost(text: str) -> float:
 - [ ] **Step 1: Write the failing test**
 
 ```python
-from coherence_membrane.distill import density_grader, readability_grader
+from coherence_membrane.distill import density_grader, readability_grader, readability_cost
 from coherence_membrane.refine import grade
 
 def test_density_grader_rewards_smaller_rejects_bigger():
@@ -128,14 +121,14 @@ def test_density_grader_rewards_smaller_rejects_bigger():
 
 def test_readability_grader_rejects_worse_readability():
     orig = "a = 1\nb = 2\n"
-    rg = readability_grader(__import__("coherence_membrane.distill", fromlist=["readability_cost"]).readability_cost(orig))
+    rg = readability_grader(readability_cost(orig))
     worse = grade(rg, "a=1;b=2;" + "z"*200 + "\n")   # one crammed line -> cost up -> margin < 0
     assert not worse.ok
 ```
 
 - [ ] **Step 2: Run, verify it fails.**
 
-- [ ] **Step 3: Implement** (append to `distill.py`)
+- [ ] **Step 3: Implement** (add `from .refine import GradedCriterion` at the top of `distill.py`, then append)
 
 ```python
 def _ratio_deviation(numerator_of_candidate, original_value: float):
@@ -197,7 +190,7 @@ def test_command_guard_none_is_unchecked_true():
 
 - [ ] **Step 2: Run, verify it fails.**
 
-- [ ] **Step 3: Implement** (append)
+- [ ] **Step 3: Implement** (add `import subprocess` at the top of `distill.py`, then append)
 
 ```python
 def command_guard(cmd):
@@ -262,7 +255,7 @@ Note: in the second test, ensure `golf` is actually fewer bytes than `original` 
 
 - [ ] **Step 2: Run, verify it fails.**
 
-- [ ] **Step 3: Implement** (append)
+- [ ] **Step 3: Implement** (add `import hashlib` and `from .refine import refine` at the top of `distill.py`, then append)
 
 ```python
 def distill_code(original: str, *, propose=None, candidate=None, behavior_guard=None, max_iter=1) -> dict:
