@@ -72,7 +72,8 @@ def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if not args or args[0] in {"-h", "--help"}:
         print("usage: python -m coherence_membrane "
-              "{selftest | perceive <path>... | capture <out.png> | watch [frames] [--raw]}")
+              "{selftest | perceive <path>... | capture <out.png> | watch [frames] [--raw]"
+              " | distill --code --original <file> --candidate <file>}")
         return 0
     cmd, rest = args[0], args[1:]
     if cmd == "selftest":
@@ -92,6 +93,9 @@ def main(argv: list[str] | None = None) -> int:
         positional = [a for a in rest if not a.startswith("-")]
         frames = int(positional[0]) if positional else 10
         return _watch(frames, raw=raw)
+    if cmd == "distill":
+        from .distill_cli import main as distill_main
+        return distill_main(rest)
     print(f"unknown command: {cmd}", file=sys.stderr)
     return 2
 

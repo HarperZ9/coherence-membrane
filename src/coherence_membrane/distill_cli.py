@@ -18,11 +18,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--json", action="store_true")
     args = p.parse_args(argv)
     try:
-        original = args.original.read_text(encoding="utf-8")
-        candidate = args.candidate.read_text(encoding="utf-8")
+        original = args.original.read_bytes().decode("utf-8")
+        candidate = args.candidate.read_bytes().decode("utf-8")
     except OSError as exc:
         raise SystemExit(f"distill: cannot read input: {exc}")
-    rec = distill_code(original, candidate=candidate, behavior_guard=command_guard(args.tests))
+    rec = distill_code(original, candidate=candidate, behavior_guard=command_guard(args.tests) if args.tests else None)
+    recheck = f"python -m coherence_membrane distill --code --original {args.original} --candidate {args.candidate}"
+    if args.tests:
+        recheck += f' --tests "{args.tests}"'
+    rec["recheck"] = recheck
     if args.json:
         print(json.dumps(rec, indent=2, sort_keys=True))
     else:
