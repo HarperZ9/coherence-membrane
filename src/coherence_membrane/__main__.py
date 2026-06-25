@@ -1,7 +1,7 @@
 """CLI: `python -m coherence_membrane selftest` and `... perceive <path...>`.
 
 selftest runs every default organ's self-derivation checks and exits non-zero
-on any failure — the membrane refuses to be trusted unverified.
+on any failure, so the membrane refuses to be trusted unverified.
 """
 
 from __future__ import annotations
