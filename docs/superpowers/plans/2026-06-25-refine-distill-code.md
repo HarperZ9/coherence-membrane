@@ -66,28 +66,19 @@ verify. No model in the checking step.
 """
 from __future__ import annotations
 
-_COMFORT_WIDTH = 100   # columns past which a line reads as crammed
-_TAB = "    "
-
-
-def _indent_depth(line: str) -> int:
-    stripped = line.lstrip(" \t")
-    lead = line[: len(line) - len(stripped)]
-    return lead.replace("\t", _TAB).count(" ") // 4
-
 
 def readability_cost(text: str) -> float:
     """A deterministic reconstruction-time proxy. Lower is easier to read.
-    Penalizes length AND over-density (lines past a comfortable width, deep
-    nesting), so a code-golfed candidate (few but crammed lines) does not score
-    lower than a clear one. Language-agnostic; refined per language later."""
-    lines = text.splitlines()
-    if not lines:
-        return 0.0
-    n_lines = len(lines)
-    over_width = sum(max(0, len(ln) - _COMFORT_WIDTH) for ln in lines)
-    max_depth = max((_indent_depth(ln) for ln in lines), default=0)
-    return float(n_lines) + 0.05 * over_width + 2.0 * max_depth
+
+    The cost is the sum of each line's length SQUARED. Squaring makes a long,
+    crammed line cost far more than the same characters split across clear lines:
+    splitting an 80-column line into two 40-column lines drops the cost (rewarded),
+    joining them back raises it (penalized). So a code-golfed candidate (logic
+    crammed onto few long lines) scores worse than a clear multi-line one, while a
+    short concise line is not punished. Indentation contributes mildly through line
+    length, with no perverse reward for nesting. Language-agnostic; refined later.
+    """
+    return float(sum(len(line) ** 2 for line in text.splitlines()))
 ```
 
 - [ ] **Step 4: Run, verify pass.**
