@@ -82,3 +82,25 @@ def test_distill_rejects_when_behavior_guard_fails():
     rec = distill_code(original, candidate="x = 1\n", behavior_guard=lambda c: False)
     assert rec["verdict"] == "REJECTED"
     assert rec["short_axis"] in ("behavior", "density", "readability")  # guard short-circuits correctness
+
+
+# Task 5: CLI distill --code
+import json
+from coherence_membrane.distill_cli import main
+
+
+def test_cli_accepts_and_exits_zero(tmp_path, capsys):
+    (tmp_path / "a.py").write_text("def f(x):\n    t = x + 1\n    return t\n", encoding="utf-8")
+    (tmp_path / "b.py").write_text("def f(x):\n    return x + 1\n", encoding="utf-8")
+    rc = main(["--code", "--original", str(tmp_path / "a.py"),
+               "--candidate", str(tmp_path / "b.py"), "--json"])
+    assert rc == 0
+    rec = json.loads(capsys.readouterr().out)
+    assert rec["verdict"] == "ACCEPTED" and rec["gain"] > 1.0
+
+
+def test_cli_rejected_exits_one(tmp_path, capsys):
+    (tmp_path / "a.py").write_text("def f(x):\n    return x + 1\n", encoding="utf-8")
+    (tmp_path / "b.py").write_text("def f(x):return(x+1)#" + "z"*300 + "\n", encoding="utf-8")
+    rc = main(["--code", "--original", str(tmp_path / "a.py"), "--candidate", str(tmp_path / "b.py")])
+    assert rc == 1
