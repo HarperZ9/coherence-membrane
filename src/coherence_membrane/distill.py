@@ -6,6 +6,8 @@ verify. No model in the checking step.
 """
 from __future__ import annotations
 
+import subprocess
+
 from .refine import GradedCriterion
 
 
@@ -48,3 +50,18 @@ def readability_grader(original_cost: float) -> GradedCriterion:
         _ratio_deviation(readability_cost, original_cost),
         1.0,
     )
+
+
+def command_guard(cmd):
+    """A hard guard that runs a behavior check (typically the test suite). True
+    only on exit 0. cmd=None leaves behavior unchecked (always True). Fail-closed:
+    any launch or timeout error is False, never a false pass. The caller is
+    responsible for arranging that cmd exercises the candidate."""
+    def guard(_candidate) -> bool:
+        if cmd is None:
+            return True
+        try:
+            return subprocess.run(cmd, shell=True, capture_output=True).returncode == 0
+        except Exception:
+            return False
+    return guard

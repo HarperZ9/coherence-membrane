@@ -36,3 +36,20 @@ def test_readability_grader_rejects_worse_readability():
     rg = readability_grader(readability_cost(orig))
     worse = grade(rg, "a=1;b=2;" + "z"*200 + "\n")   # one crammed line -> cost up -> margin < 0
     assert not worse.ok
+
+
+# Task 3: behavior guard (tests runner, fail-closed)
+from coherence_membrane.distill import command_guard
+
+
+def test_command_guard_passes_on_exit_zero():
+    assert command_guard("exit 0")(None) is True
+
+
+def test_command_guard_fails_closed_on_nonzero_and_error():
+    assert command_guard("exit 1")(None) is False
+    assert command_guard("this_command_does_not_exist_xyz")(None) is False
+
+
+def test_command_guard_none_is_unchecked_true():
+    assert command_guard(None)(None) is True
