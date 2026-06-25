@@ -22,6 +22,10 @@ def readability_cost(text: str) -> float:
     crammed onto few long lines) scores worse than a clear multi-line one, while a
     short concise line is not punished. Indentation contributes mildly through line
     length, with no perverse reward for nesting. Language-agnostic; refined later.
+
+    Bound: this proxy measures line geometry only; it does not detect identifier
+    crypticness, comment removal counted as a density win, or control-flow
+    complexity, which are deferred metrics.
     """
     return float(sum(len(line) ** 2 for line in text.splitlines()))
 
@@ -53,7 +57,7 @@ def readability_grader(original_cost: float) -> GradedCriterion:
     )
 
 
-def command_guard(cmd):
+def command_guard(cmd, timeout: float = 300.0):
     """A hard guard that runs a behavior check (typically the test suite). True
     only on exit 0. cmd=None leaves behavior unchecked (always True). Fail-closed:
     any launch or timeout error is False, never a false pass. The caller is
@@ -62,13 +66,25 @@ def command_guard(cmd):
         if cmd is None:
             return True
         try:
-            return subprocess.run(cmd, shell=True, capture_output=True).returncode == 0
+            return subprocess.run(cmd, shell=True, capture_output=True, timeout=timeout).returncode == 0
         except Exception:
             return False
     return guard
 
 
 def distill_code(original: str, *, propose=None, candidate=None, behavior_guard=None, max_iter=1) -> dict:
+    """Compress original while preserving its criterion.
+
+    Verdict contract:
+    - ACCEPTED: the criterion is preserved (refine status is correct). This includes
+      the zero-gain boundary where candidate_bytes >= original_bytes; see `compressed`.
+    - REJECTED: a candidate was produced but failed at least one grader or the
+      behavior guard.
+    - UNVERIFIABLE: no candidate was produced (generate raised or returned None).
+
+    `behavior_checked` is False when no behavior_guard was supplied, meaning the
+    behavior axis was not exercised; the verdict reflects only the grader axes.
+    """
     if (propose is None) == (candidate is None):
         raise ValueError("distill_code: pass exactly one of propose= or candidate=")
     original_bytes = len(original.encode("utf-8"))
@@ -88,6 +104,7 @@ def distill_code(original: str, *, propose=None, candidate=None, behavior_guard=
         verdict = "REJECTED"
     else:
         verdict = "UNVERIFIABLE"
+    gain = round(original_bytes / cand_bytes, 3) if cand_bytes else None
     return {
         "schema": "coherence.distill/1",
         "verdict": verdict,
@@ -95,9 +112,11 @@ def distill_code(original: str, *, propose=None, candidate=None, behavior_guard=
         "candidate_sha256": hashlib.sha256(cand.encode("utf-8")).hexdigest() if cand else None,
         "original_bytes": original_bytes,
         "candidate_bytes": cand_bytes,
-        "gain": round(original_bytes / cand_bytes, 3) if cand_bytes else None,
+        "gain": gain,
+        "compressed": gain is not None and gain > 1.0,
         "readability_before": round(original_cost, 3),
         "readability_after": round(readability_cost(cand), 3) if cand else None,
         "short_axis": outcome.short_axis,
-        "recheck": "coherence-membrane distill --code <original> --candidate <candidate>",
+        "behavior_checked": behavior_guard is not None,
+        "recheck": "python -m coherence_membrane distill --code --original <original> --candidate <candidate>",
     }

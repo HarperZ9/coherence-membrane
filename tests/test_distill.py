@@ -71,8 +71,35 @@ def test_distill_accepts_a_clean_smaller_candidate():
 
 def test_distill_rejects_code_golf_even_if_smaller():
     original = "def f(x):\n    return x + 1\n"
-    golf = "def f(x):return(x+1)"+ "#" + "z"*300 + "\n"        # fewer bytes? force a crammed long line
+    golf = "def f(x):return(x+1)"+ "#" + "z"*300 + "\n"        # LARGER than original (density also rejects)
     rec = distill_code(original, candidate=golf, behavior_guard=None)
+    assert rec["verdict"] == "REJECTED"
+    assert rec["short_axis"] == "readability"
+
+
+def test_distill_rejects_smaller_but_crammed_candidate():
+    """A candidate that is FEWER bytes but crammed onto one long line.
+    Density must pass (fewer bytes) and readability must reject (line too long).
+    This isolates the readability axis independently of density."""
+    original = (
+        "def scale(values, factor):\n"
+        "    out = []\n"
+        "    for v in values:\n"
+        "        out.append(v * factor)\n"
+        "    return out\n"
+    )
+    candidate = "def scale(values,factor):out=[];[out.append(v*factor) for v in values];return out\n"
+    # Verify the fixture: candidate is genuinely smaller
+    assert len(candidate.encode("utf-8")) < len(original.encode("utf-8")), (
+        "fixture broken: candidate must have fewer bytes than original"
+    )
+    # Verify density passes independently
+    from coherence_membrane.distill import density_grader
+    from coherence_membrane.refine import grade
+    assert grade(density_grader(len(original.encode("utf-8"))), candidate).ok is True, (
+        "fixture broken: density grader must accept the candidate"
+    )
+    rec = distill_code(original, candidate=candidate, behavior_guard=None)
     assert rec["verdict"] == "REJECTED"
     assert rec["short_axis"] == "readability"
 
@@ -104,3 +131,21 @@ def test_cli_rejected_exits_one(tmp_path, capsys):
     (tmp_path / "b.py").write_text("def f(x):return(x+1)#" + "z"*300 + "\n", encoding="utf-8")
     rc = main(["--code", "--original", str(tmp_path / "a.py"), "--candidate", str(tmp_path / "b.py")])
     assert rc == 1
+
+
+# Task 6: compressed and behavior_checked fields
+def test_new_record_fields_compressed_and_behavior_checked():
+    # An accepted clean-smaller candidate must have compressed=True
+    original = "def f(x):\n    temp = x + 1\n    result = temp\n    return result\n"
+    smaller = "def f(x):\n    return x + 1\n"
+    rec = distill_code(original, candidate=smaller, behavior_guard=None)
+    assert rec["verdict"] == "ACCEPTED"
+    assert rec["compressed"] is True
+
+    # behavior_checked is False when no guard is supplied
+    rec_no_guard = distill_code(original, candidate=smaller, behavior_guard=None)
+    assert rec_no_guard["behavior_checked"] is False
+
+    # behavior_checked is True when a guard is supplied
+    rec_with_guard = distill_code(original, candidate=smaller, behavior_guard=lambda c: True)
+    assert rec_with_guard["behavior_checked"] is True
