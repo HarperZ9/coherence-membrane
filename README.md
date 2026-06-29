@@ -1,5 +1,40 @@
 # Coherence Membrane
 
+![Coherence Membrane hero](docs/brand/coherence-membrane-hero.png)
+
+> Give AI agents inspectable observations of files, images, screens, and context.
+
+Coherence Membrane is a Python perception layer for agent workflows. It turns
+bounded local artifacts into observations with hashes, dimensions, drift checks,
+and receipt-shaped data an agent can reason from instead of guessing.
+
+## Why it matters
+
+Agents make better decisions when they can inspect real state. This repo gives
+developers a local way to observe images, files, screen captures, and context
+records before another tool decides what action is allowed.
+
+## Try it
+
+```bash
+python -m pip install -e ".[test]"
+python -m coherence_membrane selftest
+python -m pytest
+```
+
+## What to test first
+
+- Perceive a small PNG and inspect the emitted hashes and dimensions.
+- Compare a baseline and current artifact for `MATCH`, `DRIFT`, or `UNVERIFIABLE`.
+- Run the tests before changing observation or drift behavior.
+
+## Current status
+
+Alpha Python package with stdlib-first perception paths, CLI commands, tests, and
+integration points for proof-surface style gates.
+
+## Existing technical notes
+
 > An inert, host-adjudicated perception membrane for inspectable model context.
 
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
