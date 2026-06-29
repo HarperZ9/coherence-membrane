@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "coherence-membrane"
 version = "0.1.0"
-description = "An inert, host-adjudicated perception membrane for inspectable model context."
+description = "Give AI agents inspectable observations of files, images, screens, and context with receipt-backed perception."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
