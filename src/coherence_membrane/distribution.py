@@ -1,4 +1,4 @@
-"""Distribution — a discrete probability mass function as a checkable value.
+"""Distribution -- a discrete probability mass function as a checkable value.
 
 The uncertainty arm of tier-2. Moments are re-derived from the raw mass (never a
 stored field a caller could misstate); the distribution oracle checks claimed

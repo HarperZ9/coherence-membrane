@@ -17,7 +17,7 @@ def _in_class_witness(_loci):
 
 def _out_of_class_witness(_loci):
     """A WITNESSED out-of-class criterion: returns a REFUTED Certificate (positive proof
-    the claim lies OUTSIDE a proven completeness class — e.g. Selmer's cubic)."""
+    the claim lies OUTSIDE a proven completeness class -- e.g. Selmer's cubic)."""
     return Certificate("in completeness class", Verdict.REFUTED, "class-witness-v1")
 
 
@@ -39,7 +39,7 @@ def test_genus0_in_class_lifts_to_verified():
 def test_selmer_style_out_of_class_is_unverifiable():
     # THE headline soundness test. Selmer's cubic 3x^3+4y^3+5z^3=0 is solvable in every
     # local field yet has no global rational solution: unanimous locals OUTSIDE a proven
-    # completeness class must NEVER lift to VERIFIED — it downgrades to UNVERIFIABLE.
+    # completeness class must NEVER lift to VERIFIED -- it downgrades to UNVERIFIABLE.
     # The out-of-class status is itself WITNESSED (a REFUTED class certificate).
     locals_ = [_local(Verdict.VERIFIED), _local(Verdict.VERIFIED), _local(Verdict.VERIFIED)]
     c = cross_check_local("cubic has a rational point", locals_,
@@ -97,7 +97,7 @@ def test_callable_class_predicate_in_class_verifies():
 
 
 def test_bare_bool_true_is_asserted_not_witnessed():
-    # THE Hasse-seam closure: a bare True is membership ASSERTED, not WITNESSED — it must
+    # THE Hasse-seam closure: a bare True is membership ASSERTED, not WITNESSED -- it must
     # NEVER lift unanimous-local to VERIFIED (same root seam as reconcile's independence).
     locals_ = [_local(Verdict.VERIFIED), _local(Verdict.VERIFIED)]
     c = cross_check_local("claim", locals_, in_completeness_class=True)

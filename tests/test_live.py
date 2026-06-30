@@ -1,4 +1,4 @@
-"""Tests for LiveMembrane — the living loop orchestrator."""
+"""Tests for LiveMembrane -- the living loop orchestrator."""
 
 from __future__ import annotations
 

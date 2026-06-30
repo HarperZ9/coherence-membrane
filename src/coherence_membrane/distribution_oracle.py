@@ -1,4 +1,4 @@
-"""distribution-invariant-v1 — the tier-2 oracle over Distribution.
+"""distribution-invariant-v1 -- the tier-2 oracle over Distribution.
 
 Re-derives normalization + moments from the raw mass and checks claims against the
 re-derivation. SOUNDNESS: VERIFIED only when the recomputation matches; an empty,
@@ -59,7 +59,7 @@ def check_moments(d: Distribution, *, mean=None, variance=None,
         if claimed is None:
             continue
         # abs_tol=rel_tol so a true zero mean/variance claim verifies (pure rel_tol
-        # rejects anything compared against 0); sound — inf/nan/neg rel_tol rejected above.
+        # rejects anything compared against 0); sound -- inf/nan/neg rel_tol rejected above.
         if not math.isclose(claimed, derived[label], rel_tol=rel_tol, abs_tol=rel_tol):
             return Certificate(claim, Verdict.REFUTED, _ORACLE,
                                ((f"claimed_{label}", repr(claimed)),

@@ -1,19 +1,19 @@
-"""The composite loop — generate -> render -> perceive -> reconcile, with REAL organs on both halves.
+"""The composite loop -- generate -> render -> perceive -> reconcile, with REAL organs on both halves.
 
 The atelier (generate-mind) produces a real artifact; it is rasterized (the atelier emits a point-recipe;
-we draw it with coherence-membrane's own zero-dep PNG encoder — no SVG engine, no PIL); the eye
+we draw it with coherence-membrane's own zero-dep PNG encoder -- no SVG engine, no PIL); the eye
 (perceive-mind) perceives THAT rendered artifact into a witnessed Observation; and a CompositeJudge
-scores each candidate on BOTH halves — studio-engine's generative fitness AND the eye's perception
+scores each candidate on BOTH halves -- studio-engine's generative fitness AND the eye's perception
 quality. The center then selects the best under the human's named criterion (which may weight generative
 and perceptual dimensions together) and emits the spine Certificate. This is the render->critique creative
 loop, both senses real and meeting in one verdict.
 
 A World is rendered faithfully whichever substrate the generator uses:
-  * point-recipe (phyllotaxis / attractor / harmonograph) — the recipe's OWN points, reproduced via
+  * point-recipe (phyllotaxis / attractor / harmonograph) -- the recipe's OWN points, reproduced via
     studio_engine's `eval_recipe` and fit to the canvas (every mode, not just spiral);
-  * glsl-fragment (gyroid / quasicrystal / flowfield / metaballs / turbulence / rings / moire) — the
+  * glsl-fragment (gyroid / quasicrystal / flowfield / metaballs / turbulence / rings / moire) -- the
     verified strand field expr, parsed back out of the shipped fragment and evaluated per pixel, colored
-    over the engine-witnessed value range. The pixels ARE the math the engine verified — not a proxy.
+    over the engine-witnessed value range. The pixels ARE the math the engine verified -- not a proxy.
 studio_engine is optional (lazy import); the strand backends are imported inside the rasterizer.
 """
 from __future__ import annotations
@@ -108,7 +108,7 @@ def rasterize_world(world, size: int = 128) -> bytes:
     """Draw the atelier's generated artifact to a PNG (zero-dep), faithful to its substrate.
 
     Fields (glsl-fragment) render the verified expr per pixel; point recipes render their own points.
-    So the eye perceives the REAL artifact for every generator — gyroid and quasicrystal included."""
+    So the eye perceives the REAL artifact for every generator -- gyroid and quasicrystal included."""
     rp = world.layers[0].render_program
     if getattr(rp, "target", None) == "glsl-fragment" and _field_expr_src(rp.source or ""):
         return _rasterize_field(rp, size)
@@ -163,7 +163,7 @@ def iterative_refine(brief: str, criterion: CriterionSpec, *, generator: str = "
     """The true loop: generate -> render -> perceive -> (the composite score, which INCLUDES the eye's
     perception, drives the next generation) -> regenerate around the current best -> repeat. Hill-climbs
     the named criterion until no round improves it (patience). The eye's perception genuinely feeds back
-    — a variant the eye perceives poorly scores lower and is not adopted. Returns a Certificate carrying
+    -- a variant the eye perceives poorly scores lower and is not adopted. Returns a Certificate carrying
     the refined winner + the witnessed trajectory (monotone non-decreasing by construction).
     """
     se = _require_studio()

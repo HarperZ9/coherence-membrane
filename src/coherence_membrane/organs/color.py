@@ -1,4 +1,4 @@
-"""ColorQuantizeOrgan — witnessed OKLab palette perception of a PNG."""
+"""ColorQuantizeOrgan -- witnessed OKLab palette perception of a PNG."""
 from __future__ import annotations
 
 from pathlib import Path

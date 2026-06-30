@@ -1,17 +1,17 @@
-"""ASCII perception — a compact, model-readable view of a frame.
+"""ASCII perception -- a compact, model-readable view of a frame.
 
 A perceptual hash answers "did it change" in 64 opaque bits. An ASCII view answers
 "roughly what is on screen" in a tiny grid of glyphs a text model can read in
-context with no image decode — and a human can eyeball. It is the same move as the
+context with no image decode -- and a human can eyeball. It is the same move as the
 dHash (downscale luma to a coarse projection), but the projection is legible text
 instead of bits, which is exactly what makes it cheap to store in a baseline /
 receipt and cheap to ground on.
 
-Honesty: an ASCII view is a coarse LUMINANCE projection mapped to a glyph ramp —
+Honesty: an ASCII view is a coarse LUMINANCE projection mapped to a glyph ramp --
 advisory evidence of "this region got lighter/darker", NOT a semantic
 understanding of the image and NOT OCR. The drift between two views is a literal
 per-cell glyph difference, fail-closed on the same closed lattice (MATCH / DRIFT /
-UNVERIFIABLE) — a grid-size mismatch is UNVERIFIABLE, never a silent MATCH.
+UNVERIFIABLE) -- a grid-size mismatch is UNVERIFIABLE, never a silent MATCH.
 
 Stdlib only; it reuses the phash grayscale + box-downscale so the projection is
 deterministic and re-derivable.
@@ -76,7 +76,7 @@ def compare_ascii_drift(baseline: list[str] | None, current: list[str] | None) -
     """Per-cell glyph difference between two ASCII views, fail-closed.
 
     A missing view, a differing row count, or a differing row width is
-    UNVERIFIABLE (the grids are not comparable) — never a silent MATCH.
+    UNVERIFIABLE (the grids are not comparable) -- never a silent MATCH.
     """
     if not baseline or not current or len(baseline) != len(current):
         return AsciiDriftReport(UNVERIFIABLE, None, None, "a view is missing or row counts differ")

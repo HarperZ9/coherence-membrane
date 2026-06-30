@@ -1,4 +1,4 @@
-"""Tests for the CaptionOrgan — the membrane reads what was said."""
+"""Tests for the CaptionOrgan -- the membrane reads what was said."""
 
 from __future__ import annotations
 

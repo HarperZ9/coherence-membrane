@@ -1,8 +1,8 @@
-"""coherence-membrane — an inert, host-adjudicated perception membrane.
+"""coherence-membrane -- an inert, host-adjudicated perception membrane.
 
 A model's structural disability is state-blindness: it reasons on its prior and
 on source text, not on what actually happened.  This package is the read-gate
-that fixes that — it turns real artifacts into witnessed, re-derivable
+that fixes that -- it turns real artifacts into witnessed, re-derivable
 Observations a model can ground on, and never grants authority of its own.  Its
 write-gate complement is proof-surface's pre-execution gate.
 

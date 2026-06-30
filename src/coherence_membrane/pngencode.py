@@ -1,8 +1,8 @@
-"""A minimal, dependency-free PNG encoder — stdlib only (zlib + struct).
+"""A minimal, dependency-free PNG encoder -- stdlib only (zlib + struct).
 
 The native capture path produces raw pixels; this turns them into a PNG the
 VisualArtifactOrgan can witness (identity + dimensions + perceptual hash) with no
-third-party image library in the trust path.  Filter type 0 (None) only — simple,
+third-party image library in the trust path.  Filter type 0 (None) only -- simple,
 correct, and the decoder handles all filter types regardless.
 """
 

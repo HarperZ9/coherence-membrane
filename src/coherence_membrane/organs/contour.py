@@ -1,4 +1,4 @@
-"""ContourViewOrgan — witnessed vector (marching-squares) perception of a PNG."""
+"""ContourViewOrgan -- witnessed vector (marching-squares) perception of a PNG."""
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,8 +1,8 @@
-"""Signed observation receipts — the external anchor across the read->write seam.
+"""Signed observation receipts -- the external anchor across the read->write seam.
 
 A bare Observation's SHA-256 is keyless self-consistency: re-derivable integrity,
 but not tamper-evidence against an adversary who recomputes it. The honest fix is
-an EXTERNAL anchor — and this is where it lives, at the seam between perception and
+an EXTERNAL anchor -- and this is where it lives, at the seam between perception and
 action. A WitnessReceipt wraps an Observation's witnessed facts into a stable,
 serialisable record with a content hash (its `anchor`). The operator pins that
 anchor out-of-band (and may sign it); later, verify_receipt re-derives the anchor
@@ -10,13 +10,13 @@ and checks it against the pinned value.
 
 The discipline, mirroring proof-surface's delegation chain:
   * The receipt holds NO key and signs nothing. Signing is the operator's act,
-    supplied as a verifier callback — the receipt only carries the material.
+    supplied as a verifier callback -- the receipt only carries the material.
   * verify_receipt is a closed lattice, fail-closed:
       VALID         anchor matches the pinned value (or a supplied signature
                     verifier confirms it),
-      DRIFT         the receipt's content no longer hashes to the pinned anchor —
+      DRIFT         the receipt's content no longer hashes to the pinned anchor --
                     the facts changed,
-      UNVERIFIABLE  no pinned anchor and no verifier — self-consistent only, which
+      UNVERIFIABLE  no pinned anchor and no verifier -- self-consistent only, which
                     is honestly NOT tamper-evidence.
   * A verifier that raises is treated as DRIFT (fail-closed), never VALID.
 
@@ -114,7 +114,7 @@ class WitnessReceipt:
 
 def emit_receipt(observation: Observation) -> WitnessReceipt:
     """Build a WitnessReceipt from an Observation's witnessed provenance + facts."""
-    # Deep-copy so the receipt is a stable snapshot — a nested fact value (e.g. a
+    # Deep-copy so the receipt is a stable snapshot -- a nested fact value (e.g. a
     # region_hashes list) must not alias the source and let the anchor drift.
     facts = copy.deepcopy({k: observation.data[k] for k in _FACT_KEYS if k in observation.data})
     return WitnessReceipt(
@@ -143,20 +143,20 @@ def verify_receipt(
     """Verify a receipt against an external anchor, fail-closed.
 
     With a `signature_verifier` (the operator's crypto), a True result is VALID
-    and a False/raising result is DRIFT — non-repudiable identity, the operator's
+    and a False/raising result is DRIFT -- non-repudiable identity, the operator's
     to provide. With a `pinned_anchor`, the receipt's re-derived anchor must equal
     it (VALID) or it has changed (DRIFT). With neither, the result is UNVERIFIABLE:
     the receipt is self-consistent but that is not tamper-evidence.
 
     If BOTH are supplied, the `signature_verifier` takes sole precedence and
-    `pinned_anchor` is not checked — the operator's verifier is the authority and
+    `pinned_anchor` is not checked -- the operator's verifier is the authority and
     may bind the anchor itself; they are alternatives, not a conjunction.
     """
     if signature_verifier is not None:
         try:
             ok = signature_verifier(receipt)
         except Exception:
-            return ReceiptVerdict(DRIFT, "signature verifier raised — treated as invalid (fail-closed)")
+            return ReceiptVerdict(DRIFT, "signature verifier raised -- treated as invalid (fail-closed)")
         if ok:
             return ReceiptVerdict(VALID, "signature verified by the operator's verifier")
         return ReceiptVerdict(DRIFT, "signature verifier rejected the receipt")
@@ -164,13 +164,13 @@ def verify_receipt(
     if pinned_anchor is None:
         return ReceiptVerdict(
             UNVERIFIABLE,
-            "no pinned anchor and no signature verifier — the receipt is "
+            "no pinned anchor and no signature verifier -- the receipt is "
             "self-consistent but that is not tamper-evidence against recomputation",
         )
 
     if receipt.anchor() == pinned_anchor:
         return ReceiptVerdict(VALID, "re-derived anchor matches the pinned anchor")
     return ReceiptVerdict(
-        DRIFT, "re-derived anchor does not match the pinned anchor — the receipt's "
+        DRIFT, "re-derived anchor does not match the pinned anchor -- the receipt's "
         "content changed since it was pinned",
     )

@@ -35,7 +35,7 @@ def test_emits_spine_certificate_naming_criterion():
     assert cert.verdict is Verdict.VERIFIED and cert.oracle == "neutral-center-v1"
     assert criterion_of(cert) == "researcher"
     assert winner_of(cert) in scores_of(cert)
-    # it IS a spine Certificate — round-trips via the contract's own to_dict/from_dict
+    # it IS a spine Certificate -- round-trips via the contract's own to_dict/from_dict
     from coherence_membrane.certificate import Certificate
     assert Certificate.from_dict(json.loads(json.dumps(cert.to_dict()))).oracle == cert.oracle
 

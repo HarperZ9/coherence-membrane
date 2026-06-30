@@ -55,7 +55,7 @@ def test_derived_units_have_correct_dimensions():
 
 
 def test_multi_op_derived_units_have_correct_dimensions():
-    # volt/ohm derive through several composed ops — lock their dimensions explicitly
+    # volt/ohm derive through several composed ops -- lock their dimensions explicitly
     assert pascal.dim == MASS / (LENGTH * TIME ** 2)                # Pa = kg·m^-1·s^-2
     assert coulomb.dim == CURRENT * TIME                            # C = A·s
     assert volt.dim == MASS * LENGTH ** 2 / (TIME ** 3 * CURRENT)   # V = kg·m^2·s^-3·A^-1

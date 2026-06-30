@@ -7,7 +7,7 @@ workstation. Anything that needs hardware or platforms the author cannot validat
 is flagged `[unvalidatable-here]` and will ship implemented-to-API, never claimed
 green.
 
-Status today: increments 1–10 shipped (perception + native capture + continuity +
+Status today: increments 1--10 shipped (perception + native capture + continuity +
 consequence-scope + living loop + raw fast path + audio + structured-data +
 3-rung baseline + the agent loop + region perception + signed receipts +
 conformance/wire-spec + a JS reference core + temporal EventTrace + multimodal
@@ -16,7 +16,7 @@ re-derivability is
 demonstrated (Python + JS agree on the corpus).
 
 > The README's *Roadmap* section is the authoritative shipped sequence (by ship
-> order). The per-item "shipped" markers below are thematic, grouped by track —
+> order). The per-item "shipped" markers below are thematic, grouped by track --
 > not a second numbering scheme.
 
 ---
@@ -31,7 +31,7 @@ demonstrated (Python + JS agree on the corpus).
    is a claim, not a proof. The read-gate becomes trustworthy when an independent
    implementation re-derives the same digests from the same bytes.
 3. **Accountable autonomy substrate.** Read-gate + write-gate joined by a
-   tamper-evident, externally-anchored provenance chain — so "what was perceived,
+   tamper-evident, externally-anchored provenance chain -- so "what was perceived,
    in what order, authorising what action" is auditable end to end.
 4. **Honest by construction.** Discipline stays encoded, not asserted: stdlib-only
    trust path, inert witness, fail-closed, advisory-not-authority,
@@ -44,8 +44,8 @@ demonstrated (Python + JS agree on the corpus).
 From an estate survey (the read-gate, the write-gate `proof-surface`, and the
 accountability-adjacent repos):
 
-- **The read→write seam is lossy.** Everything the membrane witnesses —
-  perceptual distances, dimensions, canonical hashes, multi-organ observations —
+- **The read→write seam is lossy.** Everything the membrane witnesses --
+  perceptual distances, dimensions, canonical hashes, multi-organ observations --
   collapses to a single `witness_verdict` enum (plus an optional digest pair) when
   it crosses into the gate. The gate can't reason over the evidence the membrane
   produces. *Widen the channel without widening authority.*
@@ -58,10 +58,10 @@ accountability-adjacent repos):
 
 ---
 
-## Track A — Perception depth (capability)
+## Track A -- Perception depth (capability)
 
 Turn "did it change?" into "*where*, *when*, and *across which senses* did it
-change?" — the grounding a real agent loop needs.
+change?" -- the grounding a real agent loop needs.
 
 - **the agent loop.** ✅ **shipped.** `AgentLoop` / `Goal` /
   `AdjustmentProposal`: the agent makes, the membrane looks and compares to the
@@ -75,7 +75,7 @@ change?" — the grounding a real agent loop needs.
   membrane reports *which part* of a frame changed, not just that it did. The
   selftest proves a one-tile change is isolated to that tile. *(capability · near)*
 - **temporal perception.** ✅ **shipped.** `EventTrace` over the
-  continuity stream: drift episodes, dwell, settle-detection — "it changed, then
+  continuity stream: drift episodes, dwell, settle-detection -- "it changed, then
   settled at T+3" instead of a flat event list (`trace_events`). *(capability · mid)*
 - **Multimodal composition.** ✅ **shipped.** `CompositeObservation` +
   `compare_composite`: frame + audio + data witnessed as one instant, drift judged
@@ -83,13 +83,13 @@ change?" — the grounding a real agent loop needs.
   UNVERIFIABLE). *(capability · mid)*
 - **semantic-equivalence rung.** A 4th baseline rung using only
   *deterministic* normalizers (numeric normal form so `1 == 1.0`, Unicode NFC,
-  RFC-3339 time) — equal normalized forms are genuinely equivalent. Hard line:
+  RFC-3339 time) -- equal normalized forms are genuinely equivalent. Hard line:
   anything needing a *learned* judgment stays an advisory organ, never an
-  in-lattice MATCH. *(capability · near–mid)*
+  in-lattice MATCH. *(capability · near--mid)*
 
 ---
 
-## Track B — The seam & accountable autonomy (safety **and** capability)
+## Track B -- The seam & accountable autonomy (safety **and** capability)
 
 Make the read→write boundary carry evidence and history, with an external anchor.
 
@@ -116,7 +116,7 @@ Make the read→write boundary carry evidence and history, with an external anch
 
 ---
 
-## Track C — Trust & verifiability (safety)
+## Track C -- Trust & verifiability (safety)
 
 Harden the witness against malformed input, single-point error, and silent
 regression.
@@ -125,7 +125,7 @@ regression.
   re-derivable chain-binding, so the history of "what the operator authorised" is
   itself auditable and truncation/extension is caught. *(safety · near)*
 - **Multi-witness corroboration.** An organ that requires ≥2 independent read
-  paths to agree before a digest is load-bearing — defends against a single faulty
+  paths to agree before a digest is load-bearing -- defends against a single faulty
   decode/capture path. *(both · mid)*
 - **hardened ingestion.** Bounded, fail-closed perception of
   *untrusted* artifacts across all organs (size/decode/recursion caps + a fuzz
@@ -138,8 +138,8 @@ regression.
   the binding tests prove every adjudicator is **closed** under its set, reaches
   its affirmative top only on positive evidence (**fail-closed reachability**), and
   that drift composition is exactly the lattice **meet** (**monotonic attenuation**
-  — composition never amplifies trust). The carriers are finite, so the
-  enumeration is a *complete* decision procedure — for these finite, non-temporal
+  -- composition never amplifies trust). The carriers are finite, so the
+  enumeration is a *complete* decision procedure -- for these finite, non-temporal
   laws, exactly what the explicit-state TLA+/TLC check originally scoped here would
   compute, but run on every `pytest` rather than build-time only, so there is no
   separate spec to rot. A Lean development and proof-extracted conformance vectors
@@ -147,21 +147,21 @@ regression.
 
 ---
 
-## Track D — Re-derivability & adoption
+## Track D -- Re-derivability & adoption
 
-Make the trust claim demonstrable and the tool credible — without touching the
+Make the trust claim demonstrable and the tool credible -- without touching the
 trust path.
 
 - **conformance + wire spec.** ✅ **shipped.** A frozen,
   hash-pinned vector corpus (`conformance/vectors.json`) + a `conformance/run.py`
   harness that re-derives every case through this implementation, plus
   `Observation`/`DriftVerdict` JSON Schemas (`schemas/`). The single normative
-  artifact a second implementer conforms to — re-derivability demonstrated, not
+  artifact a second implementer conforms to -- re-derivability demonstrated, not
   asserted. *(adoption · near)*
 - **A second-language (JS) reference core.** ✅ **shipped.** `impl/js/membrane.js`
-  + `impl/js/run.js` port the inert compute — SHA-256, PNG-decode + dHash, the
+  + `impl/js/run.js` port the inert compute -- SHA-256, PNG-decode + dHash, the
   drift lattice, canonical-JSON, region drift, receipt anchor (Node built-ins
-  only, 64-bit hashes as BigInt) — and re-derive the same `conformance/vectors.json`
+  only, 64-bit hashes as BigInt) -- and re-derive the same `conformance/vectors.json`
   value-for-value. Re-derivability **demonstrated**, not asserted; the Python
   suite runs the JS harness and checks agreement. Native capture deliberately not
   ported (OS-specific, unvalidatable off-Windows). *(both · mid)*
@@ -170,7 +170,7 @@ trust path.
   Windows-only validation caveat once. Most of the hard thinking is done. *(adoption ·
   near)*
 - **Out-of-trust-path adapters.** A CI gate (`selftest` exit code as a build gate)
-  and an observation→receipt bridge, modelled on the estate's adapter pattern —
+  and an observation→receipt bridge, modelled on the estate's adapter pattern --
   thin shells over `python -m`, never on the import path, refusing any authority
   token they might see. *(adoption · mid)*
 - **Tool self-provenance.** Version the perceptual-hash algorithm
@@ -181,7 +181,7 @@ trust path.
 
 ---
 
-## Track E — Estate cohesion (cross-repo)
+## Track E -- Estate cohesion (cross-repo)
 
 The vision's breadth outruns its wiring; this track closes that.
 
@@ -193,7 +193,7 @@ The vision's breadth outruns its wiring; this track closes that.
   actually flows into one ledger.
 - **Bridge the latent math.** `signal-kernels` / `anomaly-kernels` (mature C++
   change-point, divergence, baseline engines) are purpose-built for the drift
-  problem and sit unused. A bounded bridge would make drift verdicts far smarter —
+  problem and sit unused. A bounded bridge would make drift verdicts far smarter --
   as *advisory* evidence, never replacing the keyless witness.
 
 ---
@@ -222,7 +222,7 @@ The vision's breadth outruns its wiring; this track closes that.
 - **Cross-implementation parity:** ≥2 independent implementations pass the same
   conformance vectors, including the float/canonical edge cases.
 - **A seam that carries evidence:** the gate can reason over structured perceived
-  evidence, not a single enum — without gaining authority.
+  evidence, not a single enum -- without gaining authority.
 - **An auditable loop:** any consequential action can be traced back through a
   hash-chained DAG to the look that justified it.
 - **Estate cohesion:** the accountability-adjacent repos emit one shared packet
@@ -234,7 +234,7 @@ The vision's breadth outruns its wiring; this track closes that.
 
 ## Considered and rejected
 
-- *Adversarial perceptual-collision detection in the read-gate* — rejected: the
+- *Adversarial perceptual-collision detection in the read-gate* -- rejected: the
   premise was false. The perceptual rung never returns MATCH (only DRIFT with a
   distance), so there is no "forged near-match passes as MATCH" hole to close.
   Anti-forgery belongs at the write-gate / signed anchor, preserving the two-gate

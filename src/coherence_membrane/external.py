@@ -1,13 +1,13 @@
-"""External oracles as NON-TRUSTED voices — the seam for reach without trust.
+"""External oracles as NON-TRUSTED voices -- the seam for reach without trust.
 
 The cross-check never trusts a single method, so an external solver (Z3, Lean) only
 COUNTS when a native method corroborates it (`with_z3` adds it as one such voice).
 For claims beyond the native panel's reach, `reach_validity` surfaces the external
-oracle's opinion — but ADVISORY ONLY: the system verdict stays UNVERIFIABLE and the
+oracle's opinion -- but ADVISORY ONLY: the system verdict stays UNVERIFIABLE and the
 opinion is labeled 'uncorroborated-external'. An uncorroborated external verdict is
 never elevated to a decisive VERIFIED/REFUTED. Trust-minimization, not elimination:
 the trust basis is named, the verdict withheld. Nothing here imports z3 at module
-load — the adapter imports it lazily, so the core stays zero-dependency."""
+load -- the adapter imports it lazily, so the core stays zero-dependency."""
 from __future__ import annotations
 
 from .certificate import Certificate, Verdict
@@ -45,7 +45,7 @@ def _to_z3(f, z3):
 
 
 def z3_check_validity(formula, *, max_atoms: int = 16) -> Certificate:
-    """Validity via Z3 (¬formula unsat). Oracle 'z3-v1' (honest provenance — trust
+    """Validity via Z3 (¬formula unsat). Oracle 'z3-v1' (honest provenance -- trust
     basis is z3 alone). Lazy import: absent/unknown/error/non-formula -> UNVERIFIABLE.
     max_atoms is accepted for Method-signature compatibility; z3 needs no native cap."""
     claim = show(formula) if is_formula(formula) else str(formula)
@@ -84,7 +84,7 @@ def with_z3(methods=DEFAULT_METHODS) -> tuple:
 def reach_validity(formula, oracle: Method, *, max_atoms: int = 16) -> Certificate:
     """ADVISORY-ONLY reach for claims beyond the native panel: run the external oracle
     but return UNVERIFIABLE, carrying its opinion as labeled evidence. An uncorroborated
-    external verdict is NEVER elevated to decisive — the trust basis is named
+    external verdict is NEVER elevated to decisive -- the trust basis is named
     (advisory_oracle), the verdict withheld. max_atoms is forwarded to match the
     Method.decide(formula, *, max_atoms) contract the cross-check harness uses."""
     claim = show(formula) if is_formula(formula) else str(formula)

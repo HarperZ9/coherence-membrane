@@ -1,11 +1,11 @@
 """Tier-3 cross-check: a verdict only when independent methods AGREE.
 
-Trust-minimization made executable. One solver is one trusted base — a bug in it is
+Trust-minimization made executable. One solver is one trusted base -- a bug in it is
 a false VERIFIED with authority. Requiring independent methods to agree shrinks the
 trusted base to "they are not all wrong the same way"; any DISAGREEMENT is a caught
 bug (UNVERIFIABLE + discrepancy), never a guess. This is why a native cross-check is
 more trustworthy than depending on one external solver: we use methods, we never
-trust one. The harness is method-agnostic — an external oracle (Z3/Lean/BDD) may be
+trust one. The harness is method-agnostic -- an external oracle (Z3/Lean/BDD) may be
 supplied as ONE non-trusted voice, corroborated or it does not count; nothing here
 imports it."""
 from __future__ import annotations
@@ -55,7 +55,7 @@ def cross_check_validity(formula, *, methods=DEFAULT_METHODS, max_atoms: int = 1
     """Cross-check a validity claim across independent methods. VERIFIED/REFUTED only
     on >=min_agree agreement with zero dissent; a split or a shortfall -> UNVERIFIABLE.
     A method that raises is captured as its own UNVERIFIABLE (fail-closed). Requires
-    min_agree >= 2 — single-source trust is the tier's forbidden state."""
+    min_agree >= 2 -- single-source trust is the tier's forbidden state."""
     if min_agree < 2:
         raise ValueError("min_agree must be >= 2 (cross-check requires corroboration)")
     if not is_formula(formula):

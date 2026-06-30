@@ -1,8 +1,8 @@
-"""CrossCheckVerifierOrgan — witnessed tier-3 cross-checked verification.
+"""CrossCheckVerifierOrgan -- witnessed tier-3 cross-checked verification.
 
 The model emits a Formula; the organ runs independent native deciders (DPLL +
 brute-force truth-table) and returns a Certificate only when they AGREE. A
-disagreement is surfaced as UNVERIFIABLE with the discrepancy — a caught bug, not a
+disagreement is surfaced as UNVERIFIABLE with the discrepancy -- a caught bug, not a
 trusted single-solver verdict. Trust-minimization: better than depending on one
 external oracle."""
 from __future__ import annotations

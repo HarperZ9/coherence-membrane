@@ -1,12 +1,12 @@
-"""Certificate composition — multi-step arguments via the PROVEN verdict meet.
+"""Certificate composition -- multi-step arguments via the PROVEN verdict meet.
 
 A multi-step argument holds only if every step does. Rather than hand-roll three-
 valued conjunction logic (a place soundness bugs hide), this reuses the machine-
 checked DRIFT_LATTICE meet (lattice.py): VERIFIED<->MATCH (top, composes away),
-REFUTED<->DRIFT (bottom, absorbing — a false step makes the whole false),
+REFUTED<->DRIFT (bottom, absorbing -- a false step makes the whole false),
 UNVERIFIABLE in the middle (attenuates). The meet is proven commutative / associative
 / idempotent / monotone and attenuating, so composition can never launder worse steps
-into a better verdict — a theorem, not a comment."""
+into a better verdict -- a theorem, not a comment."""
 from __future__ import annotations
 
 from typing import Iterable
@@ -29,11 +29,11 @@ def meet_verdicts(verdicts: Iterable[Verdict]) -> Verdict:
 
 def quorum(certs: Iterable[Certificate], *, claim: str | None = None,
            threshold: float = 0.5) -> Certificate:
-    """Robust CONSENSUS over N INDEPENDENT judges of the SAME claim — the readout-gate.
+    """Robust CONSENSUS over N INDEPENDENT judges of the SAME claim -- the readout-gate.
 
     Distinct from compose(): compose is the conjunctive meet over the STEPS of one argument
     (a single REFUTED absorbs). quorum is a VOTE among independent judges of one claim, and
-    it caps any single voice's influence (aperture-sim A1 — a robust aggregator must govern
+    it caps any single voice's influence (aperture-sim A1 -- a robust aggregator must govern
     the OUTPUT, so no lone loud/unbounded source can flip the verdict). A decided verdict is
     returned ONLY if it wins a strict supermajority of the WHOLE panel; the denominator is
     the total judge count, so abstentions (UNVERIFIABLE) and dissent both count against

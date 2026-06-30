@@ -1,4 +1,4 @@
-"""graph_search — search, connectivity, and the bottleneck-certificate kernels.
+"""graph_search -- search, connectivity, and the bottleneck-certificate kernels.
 
 Split out of graph_ops (pure refactor; no behaviour change) so the search and
 connectivity re-derivation kernels live beside one another and a third party can
@@ -47,7 +47,7 @@ def find_cycle_through(g: Graph, label_node, *, max_nodes: Optional[int] = None)
 def tree_jump_edges(g: Graph, root, *, max_nodes: Optional[int] = None) -> Optional[dict[Node, tuple[Node, ...]]]:
     """For a tree rooted at `root` (directed away from root, or undirected acyclic),
     the ancestor chain of every node: node -> (root..parent) in root-first order. The
-    'serial transitive closure on a tree' precompute — a node's reachability-from is
+    'serial transitive closure on a tree' precompute -- a node's reachability-from is
     EXACTLY its ancestor set, so any reachability certificate is one composition of
     these jump-edges. Returns None over the cap, or None if the structure is not a
     tree reachable from root (a cycle / unreached node makes the ancestor chain
@@ -117,7 +117,7 @@ def spans(nodes: tuple[Node, ...], edges) -> Optional[dict]:
 
 def connects_all(nodes: tuple[Node, ...], edges) -> bool:
     """A SECOND, independent connectivity decider: True iff `edges` connect ALL `nodes`
-    into one component, by BFS-reachability over the edge set — DISJOINT from the
+    into one component, by BFS-reachability over the edge set -- DISJOINT from the
     union-find `spans()` (no shared helper, no shared kernel). Edges naming a node
     outside `nodes` are skipped (they cannot connect declared nodes); empty `nodes` is
     False (no single component to span).
@@ -132,7 +132,7 @@ def connects_all(nodes: tuple[Node, ...], edges) -> bool:
     union-find. Deterministic; never mutates input."""
     if not nodes:
         return False
-    # own adjacency over real edges only — built here, NOT via adjacency()/cut_sides,
+    # own adjacency over real edges only -- built here, NOT via adjacency()/cut_sides,
     # so this decider is genuinely disjoint from every other connectivity helper.
     adj: dict[Node, set[Node]] = {n: set() for n in nodes}
     node_set = set(nodes)
@@ -154,7 +154,7 @@ def connects_all(nodes: tuple[Node, ...], edges) -> bool:
 
 def cut_sides(nodes: tuple[Node, ...], edges) -> tuple[set, set]:
     """Partition `nodes` into the component containing the smallest node (under
-    `edges`) and the rest — the cut a sub-bottleneck edge set fails to bridge, carried
+    `edges`) and the rest -- the cut a sub-bottleneck edge set fails to bridge, carried
     as a bottleneck-minimality witness. Deterministic (nodes are sorted)."""
     adj: dict[Node, set] = {n: set() for n in nodes}
     for u, v in edges:

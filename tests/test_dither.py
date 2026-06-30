@@ -1,4 +1,4 @@
-"""Tests for coherence_membrane.dither — Bayer ordered dithering."""
+"""Tests for coherence_membrane.dither -- Bayer ordered dithering."""
 from __future__ import annotations
 
 import pytest
@@ -156,7 +156,7 @@ def test_ordered_dither_unknown_returns_sentinel():
     """Unknown cells must return the -1 sentinel (not a palette index).
 
     The -1 sentinel propagates to _palette_indices_to_lab which maps it to
-    black (OKLab (0,0,0)) — honest disclosure of UNVERIFIABLE data rather
+    black (OKLab (0,0,0)) -- honest disclosure of UNVERIFIABLE data rather
     than silently snapping to a palette colour.
     For the known cell at position 1: the result is a valid palette index.
     """

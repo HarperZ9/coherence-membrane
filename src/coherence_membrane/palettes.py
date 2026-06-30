@@ -19,7 +19,7 @@ from __future__ import annotations
 
 
 # ---------------------------------------------------------------------------
-# CGA — Mode 4 Palette 1 High-Intensity (4 colors)
+# CGA -- Mode 4 Palette 1 High-Intensity (4 colors)
 # Black, Cyan, Magenta, White
 # ---------------------------------------------------------------------------
 _CGA: list[tuple[int, int, int]] = [
@@ -30,7 +30,7 @@ _CGA: list[tuple[int, int, int]] = [
 ]
 
 # ---------------------------------------------------------------------------
-# EGA — Standard 16-color palette
+# EGA -- Standard 16-color palette
 # ---------------------------------------------------------------------------
 _EGA: list[tuple[int, int, int]] = [
     (0, 0, 0),       # 0:  Black
@@ -52,7 +52,7 @@ _EGA: list[tuple[int, int, int]] = [
 ]
 
 # ---------------------------------------------------------------------------
-# Game Boy — Original DMG 4-shade green palette (dark to light)
+# Game Boy -- Original DMG 4-shade green palette (dark to light)
 # Gambatte emulator canonical values; ordered darkest -> lightest
 # #0f380f  #306230  #8bac0f  #9bbc0f
 # ---------------------------------------------------------------------------
@@ -64,7 +64,7 @@ _GAMEBOY: list[tuple[int, int, int]] = [
 ]
 
 # ---------------------------------------------------------------------------
-# C64 — VIC-II standard 16-color palette (VICE emulator values)
+# C64 -- VIC-II standard 16-color palette (VICE emulator values)
 # ---------------------------------------------------------------------------
 _C64: list[tuple[int, int, int]] = [
     (0, 0, 0),       # 0:  Black

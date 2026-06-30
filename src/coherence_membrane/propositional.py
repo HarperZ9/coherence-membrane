@@ -112,8 +112,8 @@ class OverCap(Exception):
 
 def _peval(f, a: dict):
     """Three-valued partial evaluation: True/False if determined by the partial
-    assignment `a` alone, else None. A True/False result is monotone — it holds
-    under every completion — which is what makes pruning sound."""
+    assignment `a` alone, else None. A True/False result is monotone -- it holds
+    under every completion -- which is what makes pruning sound."""
     if isinstance(f, Const):
         return f.value
     if isinstance(f, Var):
@@ -202,7 +202,7 @@ def check_validity(formula, *, max_atoms: int = 20, backend=None) -> Certificate
     then UNVERIFIABLE.
 
     SOUNDNESS: the native path never returns VERIFIED unless the negation is proven
-    unsat. A supplied `backend` is part of the TRUSTED BASE — its verdict is returned
+    unsat. A supplied `backend` is part of the TRUSTED BASE -- its verdict is returned
     as-is, so supply only a sound oracle. The shipped organ passes no backend, so it
     is unconditionally sound."""
     claim = show(formula)

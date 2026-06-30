@@ -1,4 +1,4 @@
-"""Ordered (Bayer) dithering — pure functions, stdlib only, deterministic.
+"""Ordered (Bayer) dithering -- pure functions, stdlib only, deterministic.
 
 Algorithm reference:
   Bayer, B. E. (1973). "An Optimum Method for Two-Level Rendition of
@@ -14,7 +14,7 @@ ordered_dither maps each pixel of a ColorField to the nearest palette entry
 using OKLab perceptual distance, with a Bayer threshold perturbation that
 shifts the choice toward the 2nd-nearest entry when the threshold exceeds
 the distance ratio.  This achieves spatial color diffusion without any
-mutable state or error accumulation — fully deterministic.
+mutable state or error accumulation -- fully deterministic.
 """
 from __future__ import annotations
 

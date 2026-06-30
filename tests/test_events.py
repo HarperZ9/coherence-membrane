@@ -1,4 +1,4 @@
-"""Tests for temporal perception — EventTrace over a continuity stream."""
+"""Tests for temporal perception -- EventTrace over a continuity stream."""
 
 from __future__ import annotations
 

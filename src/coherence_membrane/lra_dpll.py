@@ -1,7 +1,7 @@
-"""Eager DPLL(T) over linear constraints — boolean combinations of LRA atoms.
+"""Eager DPLL(T) over linear constraints -- boolean combinations of LRA atoms.
 
 Lifts the conjunctive QF-LRA core (linarith.py) to full boolean structure. A formula
-F (atoms are LinearConstraints, combined with and/or/not/implies/iff — the
+F (atoms are LinearConstraints, combined with and/or/not/implies/iff -- the
 propositional nodes) is valid iff no real point satisfies ¬F. A real point induces a
 boolean assignment to the atoms that (a) satisfies ¬F's propositional skeleton AND
 (b) is LRA-consistent. So abstract atoms -> boolean vars, enumerate the skeleton's

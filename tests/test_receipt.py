@@ -1,4 +1,4 @@
-"""Tests for signed observation receipts — the external anchor across the seam."""
+"""Tests for signed observation receipts -- the external anchor across the seam."""
 
 from __future__ import annotations
 

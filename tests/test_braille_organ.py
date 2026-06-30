@@ -1,4 +1,4 @@
-"""Tests for BrailleViewOrgan — organ-level witness contract."""
+"""Tests for BrailleViewOrgan -- organ-level witness contract."""
 from __future__ import annotations
 
 from coherence_membrane.observation import Status, sha256_hex

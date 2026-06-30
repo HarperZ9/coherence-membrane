@@ -1,10 +1,10 @@
-"""Native brute-force truth-table decision — the independent peer to the DPLL oracle.
+"""Native brute-force truth-table decision -- the independent peer to the DPLL oracle.
 
 Tier-3 cross-check needs a SECOND method whose correctness is self-evident: this
 enumerates every total assignment and applies `evaluate` directly (the truth table
-IS the definition of validity/SAT). It shares no verdict machinery with `solve` —
+IS the definition of validity/SAT). It shares no verdict machinery with `solve` --
 DPLL uses `_peval` (3-valued partial eval) + branching; this uses `evaluate`
-(2-valued total) + enumeration — so a bug in DPLL's pruning cannot hide here.
+(2-valued total) + enumeration -- so a bug in DPLL's pruning cannot hide here.
 Exponential, hence atom-capped: the cross-check verifies a small, certain core."""
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ _ORACLE = "truth-table-v1"
 
 def tt_solve(formula, *, max_atoms: int = 16) -> dict | None:
     """A satisfying assignment by exhaustive enumeration, or None if UNSAT.
-    Raises OverCap above the atom cap (kept low — this is 2**n)."""
+    Raises OverCap above the atom cap (kept low -- this is 2**n)."""
     names = sorted(atoms(formula))
     if len(names) > max_atoms:
         raise OverCap(f"{len(names)} atoms > cap {max_atoms}")

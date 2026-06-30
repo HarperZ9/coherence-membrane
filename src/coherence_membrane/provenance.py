@@ -1,11 +1,11 @@
-"""Causal/temporal provenance — a hash-chained DAG of what was perceived and done.
+"""Causal/temporal provenance -- a hash-chained DAG of what was perceived and done.
 
 Perception and action leave a trail; this records it as a tamper-evident graph so
 "what was perceived, in what order, authorising what action" is auditable. Nodes
 are observations, actions, and gate decisions; edges are typed relationships
 (observed-after, gated-by, caused-by). Each node's BINDING is a SHA-256 over its
-content plus its parents' bindings — the same keyless hash-chain the write-gate's
-delegation chain uses — so tampering with any node's content or its edges breaks
+content plus its parents' bindings -- the same keyless hash-chain the write-gate's
+delegation chain uses -- so tampering with any node's content or its edges breaks
 that node's binding and every binding downstream of it. verify() re-derives the
 whole graph and reports VALID / BROKEN / UNVERIFIABLE.
 
@@ -16,7 +16,7 @@ What it proves, and what it does not:
     descendant's).
   * It does NOT, by itself, prove MEMBERSHIP: inserting a fabricated parentless
     node or deleting a childless one is internally self-consistent and the chain
-    alone does not catch it. manifest() is the anchor that does — a single digest
+    alone does not catch it. manifest() is the anchor that does -- a single digest
     over the whole node set the operator pins/signs out-of-band; pass it to
     verify(pinned_manifest=...) and any insertion or deletion is BROKEN.
   * It does NOT prove the CAUSALITY is real. A `caused-by` edge is an ASSERTED
@@ -25,7 +25,7 @@ What it proves, and what it does not:
   * Keyless binding is self-consistency, not non-repudiable identity: an adversary
     who rewrites a node AND recomputes every downstream binding (and the manifest,
     if unpinned) is not caught here. Real anti-forgery needs an external anchor (a
-    signed/pinned manifest) — the same honest boundary as the receipt and the
+    signed/pinned manifest) -- the same honest boundary as the receipt and the
     delegation chain.
 
 Inert and advisory: it records and re-derives; it never acts and grants no
@@ -46,7 +46,7 @@ BROKEN = "BROKEN"
 UNVERIFIABLE = "UNVERIFIABLE"
 GRAPH_VERDICTS = frozenset({VALID, BROKEN, UNVERIFIABLE})
 
-# Suggested edge vocabulary (not enforced — any string is allowed, but these are
+# Suggested edge vocabulary (not enforced -- any string is allowed, but these are
 # the relationships the membrane's loop produces).
 OBSERVED_AFTER = "observed-after"
 GATED_BY = "gated-by"
@@ -65,7 +65,7 @@ def compute_binding(node_id: str, kind: str, digest: str, edge_type: str,
 
     Parents are sorted so the binding is independent of the order parents were
     listed. Any change to id/kind/digest/edge_type or to any parent binding
-    changes this binding — and thus every descendant's binding.
+    changes this binding -- and thus every descendant's binding.
     """
     payload = json.dumps(
         {"node_id": node_id, "kind": kind, "digest": digest, "edge_type": edge_type,
@@ -181,7 +181,7 @@ class ProvenanceGraph:
         if reasons:
             return GraphVerdict(BROKEN, reasons)
         if not self.nodes:
-            return GraphVerdict(UNVERIFIABLE, ["empty graph — nothing to verify"])
+            return GraphVerdict(UNVERIFIABLE, ["empty graph -- nothing to verify"])
         return GraphVerdict(VALID, [])
 
     def ancestors(self, node_id: str) -> set[str]:
@@ -203,7 +203,7 @@ class ProvenanceGraph:
                                      confirming_digests: set[str] | None = None) -> bool:
         """Is an asserted confirming look an ANCESTOR of this action?
 
-        Pure reachability over the attested edges — NOT a temporal or causal proof:
+        Pure reachability over the attested edges -- NOT a temporal or causal proof:
         there are no timestamps, and the edge relationships are the operator's
         claims (the chain proves they were not altered, not that they are real).
         True iff `action_id` has an ancestor of kind `look_kind` (and, if
@@ -227,7 +227,7 @@ class ProvenanceGraph:
         """Reconstruct a graph from its serialised form WITHOUT recomputing
         bindings (the stored bindings are preserved verbatim so verify() can still
         detect tampering that happened before serialisation). Node order need not
-        be topological — verify() re-derives order-independently."""
+        be topological -- verify() re-derives order-independently."""
         g = cls()
         for item in d.get("nodes", []):
             node = ProvenanceNode(

@@ -1,4 +1,4 @@
-"""Tests for ASCII perception — AsciiViewOrgan + ascii_view/compare_ascii_drift."""
+"""Tests for ASCII perception -- AsciiViewOrgan + ascii_view/compare_ascii_drift."""
 
 from __future__ import annotations
 

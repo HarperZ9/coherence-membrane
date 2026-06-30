@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/HarperZ9/coherence-membrane/schemas/certificate.schema.json",
   "title": "Certificate",
-  "description": "A witnessed verdict + its evidence — the verifier layer's keystone token. Wire-compatible across implementations (matches Certificate.to_dict()).",
+  "description": "A witnessed verdict + its evidence -- the verifier layer's keystone token. Wire-compatible across implementations (matches Certificate.to_dict()).",
   "type": "object",
   "additionalProperties": false,
   "required": ["claim", "verdict", "oracle", "evidence"],
@@ -12,16 +12,16 @@
       "type": "string"
     },
     "verdict": {
-      "description": "The three-valued lattice verdict — no authority-shaped value exists.",
+      "description": "The three-valued lattice verdict -- no authority-shaped value exists.",
       "enum": ["verified", "refuted", "unverifiable"]
     },
     "oracle": {
-      "description": "Versioned oracle id — the tool's self-provenance, e.g. 'propositional-dpll-v1'.",
+      "description": "Versioned oracle id -- the tool's self-provenance, e.g. 'propositional-dpll-v1'.",
       "type": "string",
       "minLength": 1
     },
     "evidence": {
-      "description": "Ordered (key, value) string pairs — counterexample, unsat marker, or reason.",
+      "description": "Ordered (key, value) string pairs -- counterexample, unsat marker, or reason.",
       "type": "array",
       "items": {
         "type": "array",

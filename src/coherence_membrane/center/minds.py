@@ -1,7 +1,7 @@
-"""Mind — a perceiver with its own sensory access. The center reconciles two of them.
+"""Mind -- a perceiver with its own sensory access. The center reconciles two of them.
 
 A mind perceives ONE channel of the subject (its sense) and proposes; then, seeing the other's
-deposit (raw perception cannot cross — only what each expresses), it reconciles. v1 ships the
+deposit (raw perception cannot cross -- only what each expresses), it reconciles. v1 ships the
 INTERFACE + a deterministic StubMind so the loop runs and tests are hermetic. The live engine organs
 plug in here behind the same interface: the **atelier** as a generate-mind, the **eye** as a
 perceive-mind, or a model subagent (the protocol proven in DEMO-two-minds.md).
@@ -26,7 +26,7 @@ class Mind(Protocol):
 class StubMind:
     """Deterministic fake mind for hermetic tests/CLI demo. Its proposal is a function of its
     channel + the view, so two minds on different channels propose DIFFERENTLY, and the reconciled
-    proposal visibly DIFFERS from either solo (the meeting is not a no-op — SC5)."""
+    proposal visibly DIFFERS from either solo (the meeting is not a no-op -- SC5)."""
 
     def __init__(self, name: str, channel: str):
         self.name = name

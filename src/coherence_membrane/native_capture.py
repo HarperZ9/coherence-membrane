@@ -1,24 +1,24 @@
 """Universal, native, no-shim capture of the composited output.
 
-Every renderer — D3D11, D3D12, Vulkan, OpenGL, Metal, software — composites to
+Every renderer -- D3D11, D3D12, Vulkan, OpenGL, Metal, software -- composites to
 the display. Capturing THERE is agnostic to all of them by construction: the
 membrane never imports a graphics API, never tracks a D3D version, and needs no
 producer-side shim. It asks the OS for the pixels the OS already has.
 
 One dispatch, three native backends, each via the OS's own API through `ctypes`
-(standard library — no third-party package):
-  * Windows  — GDI (BitBlt + GetDIBits)
-  * macOS    — CoreGraphics (CGDisplayCreateImageForRect)
-  * Linux/X11 — Xlib (XGetImage)
+(standard library -- no third-party package):
+  * Windows  -- GDI (BitBlt + GetDIBits)
+  * macOS    -- CoreGraphics (CGDisplayCreateImageForRect)
+  * Linux/X11 -- Xlib (XGetImage)
 
 Validation honesty (the discipline EMET keeps): the Windows backend is validated
 live in the author's environment. The macOS and Linux backends are implemented to
 the documented OS APIs and are re-derivable, but are validated on their own
-platforms — not by the author here. On any platform without its backend,
+platforms -- not by the author here. On any platform without its backend,
 capture_available() is False and callers degrade; nothing crashes.
 
 Cost note: each grab captures, converts, and PNG-encodes. Keep it cheap the way
-the continuity loop expects — capture a REGION, sample at a cadence
+the continuity loop expects -- capture a REGION, sample at a cadence
 (ResourceBudget.min_interval_s), and let the change-proportional loop skip the
 expensive decode/perceptual-hash on unchanged frames.
 """
@@ -71,7 +71,7 @@ def capture_available() -> bool:
 def grab_raw(region: tuple[int, int, int, int] | None = None) -> tuple[bytes, int, int]:
     """Capture the composited output as RAW, top-down, tight-row BGRA bytes.
 
-    This is the cheap grab — capture only, no colour conversion and no PNG
+    This is the cheap grab -- capture only, no colour conversion and no PNG
     encode.  The high-rate fast path hashes these bytes directly for identity and
     perceives them straight (RawFrameOrgan); the per-frame zlib encode that
     grab_png pays is never incurred.  region = (x, y, w, h); None = full primary
@@ -109,7 +109,7 @@ def _depad(raw: bytes, width: int, height: int, bytes_per_row: int) -> bytes:
 
 
 # ---------------------------------------------------------------------------
-# Windows — GDI  (validated live)
+# Windows -- GDI  (validated live)
 # ---------------------------------------------------------------------------
 
 _SRCCOPY = 0x00CC0020
@@ -198,7 +198,7 @@ def _win_grab(region):
 
 
 # ---------------------------------------------------------------------------
-# macOS — CoreGraphics
+# macOS -- CoreGraphics
 # ---------------------------------------------------------------------------
 
 _mac_cache = None
@@ -288,7 +288,7 @@ def _mac_grab(region):
 
 
 # ---------------------------------------------------------------------------
-# Linux / X11 — Xlib
+# Linux / X11 -- Xlib
 # ---------------------------------------------------------------------------
 
 _x11_cache = None
@@ -370,7 +370,7 @@ def _x11_grab(region):
             raw = ctypes.string_at(ximg.data, bpl * h)
         finally:
             xlib.XDestroyImage(ximg_p)
-        # X11 ZPixmap 32bpp little-endian: byte order B,G,R,X — treat as BGRA.
+        # X11 ZPixmap 32bpp little-endian: byte order B,G,R,X -- treat as BGRA.
         return _depad(raw, w, h, bpl), w, h
     finally:
         xlib.XCloseDisplay(dpy)
@@ -410,12 +410,12 @@ class ScreenCaptureSource:
 
 
 class RawScreenCaptureSource:
-    """A native CaptureSource yielding RAW BGRA frames — the high-rate fast path.
+    """A native CaptureSource yielding RAW BGRA frames -- the high-rate fast path.
 
     No per-frame PNG encode: each frame carries the raw BGRA bytes plus geometry
     in its descriptor.  The continuity loop hashes those bytes for identity every
     tick (cheap) and only a real change pays the perceptual hash, computed
-    directly from the raw pixels (RawFrameOrgan) — no encode and no decode, ever.
+    directly from the raw pixels (RawFrameOrgan) -- no encode and no decode, ever.
 
     Infinite by design; bound with run_continuity(max_frames=...) and pace with
     ResourceBudget.min_interval_s.  The continuity loop selects RawFrameOrgan

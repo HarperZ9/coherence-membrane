@@ -8,7 +8,7 @@ the observation/drift contract is re-derivable rather than asserted.
 
 Stdlib only. The corpus is hash-pinned: run.py recomputes the SHA-256 of the
 cases and aborts if it does not match PINNED_CORPUS_SHA256, so the vectors cannot
-drift silently. The expected values are FROZEN in vectors.json — a regression in
+drift silently. The expected values are FROZEN in vectors.json -- a regression in
 the implementation makes a case fail (got != expected), which is the point.
 
     python conformance/run.py     # exit 0 if all pass, 1 on a mismatch, 2 on corpus drift

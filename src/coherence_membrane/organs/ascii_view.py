@@ -1,4 +1,4 @@
-"""AsciiViewOrgan — sight as compact, model-readable glyphs.
+"""AsciiViewOrgan -- sight as compact, model-readable glyphs.
 
 The same eye as VisualArtifactOrgan, but its witnessed projection is an ASCII grid
 (plus the usual identity + dHash, so it still slots into baseline memory and the

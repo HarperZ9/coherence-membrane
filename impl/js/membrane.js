@@ -1,11 +1,11 @@
 "use strict";
 // A second, INDEPENDENT implementation of the coherence-membrane read-gate's
-// inert compute — the part the conformance corpus pins. If this re-derives the
+// inert compute -- the part the conformance corpus pins. If this re-derives the
 // same frozen values as the Python reference from conformance/vectors.json, then
 // the observation/drift contract is re-derivable rather than asserted: a witness
 // two independent implementations agree on is a proof, not a claim.
 //
-// Node built-ins only (crypto, zlib) — no npm, nothing third-party in the path,
+// Node built-ins only (crypto, zlib) -- no npm, nothing third-party in the path,
 // mirroring the Python "stdlib-only trust path" discipline. 64-bit hashes are
 // carried as BigInt because a JS Number is only 53-bit-safe.
 //
@@ -173,7 +173,7 @@ function compareDrift(baselineSha, currentSha, baselinePhash, currentPhash) {
 // Number fidelity boundary (honest): JS cannot match Python's float repr, and a
 // JSON float literal like 1.0 parses to the integer 1 in JS (Python keeps 1.0).
 // Rather than silently diverge, canonical() THROWS on any non-safe-integer
-// number — floats and integers beyond 2**53 are out of the JS core's contract.
+// number -- floats and integers beyond 2**53 are out of the JS core's contract.
 // (The conformance corpus uses only safe integers, so this never fires there.)
 
 function encodeString(s) {
@@ -250,7 +250,7 @@ function compareRegionDrift(baseline, current, rows, cols, threshold = 0) {
 // --- receipt anchor (mirrors receipt.WitnessReceipt.anchor) ----------------
 
 // Python WitnessReceipt.from_dict str()-coerces the 6 scalar fields and defaults
-// facts to {} ONLY when the key is ABSENT (dict.get semantics — a present
+// facts to {} ONLY when the key is ABSENT (dict.get semantics -- a present
 // facts:null stays null). We mirror that: String() the scalars (matching Python
 // str() for the string/integer values the real Provenance path produces) and
 // default facts only on absence. Exotic scalar types (bool/null/float) do not

@@ -1,4 +1,4 @@
-"""Formal verification of the verdict lattices — proofs, not assertions.
+"""Formal verification of the verdict lattices -- proofs, not assertions.
 
 Every adjudication in the membrane returns a value from a small CLOSED set:
 drift is MATCH / DRIFT / UNVERIFIABLE, a receipt is VALID / DRIFT / UNVERIFIABLE,
@@ -8,30 +8,30 @@ docstrings ("fail-closed", "never a silent MATCH", "composition never amplifies
 trust"). This module turns the claims into machine-checked proofs.
 
 The carriers are finite (three elements each), so exhaustive enumeration is a
-COMPLETE decision procedure — every law is checked over every tuple, not sampled.
+COMPLETE decision procedure -- every law is checked over every tuple, not sampled.
 For these finite, non-temporal laws that is exactly what an explicit-state model
-checker (TLA+/TLC) would do — enumerate the whole state space — so the enumeration
+checker (TLA+/TLC) would do -- enumerate the whole state space -- so the enumeration
 here IS that check, executed directly on every `pytest`, with no separate spec or
 toolchain to rot. (Liveness/temporal checking would add nothing: the laws are
 algebraic, not temporal.)
 
 Two kinds of guarantee live here; the THIRD (binding the algebra to the real
-adjudicators — compare_drift, compare_composite, verify_receipt, verify(),
+adjudicators -- compare_drift, compare_composite, verify_receipt, verify(),
 baseline.check, _assess, trace_events) lives in tests/test_lattice*.py, which
 prove the implementations equal / refine these structures.
 
-  1. Lattice well-formedness — each verdict set, under its affirmation order
+  1. Lattice well-formedness -- each verdict set, under its affirmation order
      (most-affirmative at top), is a genuine bounded lattice: the order is a
      partial order, every pair has a unique meet and join, and there is a top and
      a bottom. Proved by enumeration; for a chain this is easy, which is the
-     point — the order is made explicit and checkable, not assumed.
-  2. Meet = fail-closed combination — the meet (greatest lower bound) is the
+     point -- the order is made explicit and checkable, not assumed.
+  2. Meet = fail-closed combination -- the meet (greatest lower bound) is the
      attenuation operator: combining verdicts can only move DOWN the order. It is
      commutative, associative, idempotent; the affirmative top is its identity
      (it composes away) and the bottom is absorbing (a positive detection
-     dominates); and it is MONOTONE — degrading any input never improves the
+     dominates); and it is MONOTONE -- degrading any input never improves the
      result. So composition cannot launder a worse observation set into a better
-     verdict — a theorem, not a comment.
+     verdict -- a theorem, not a comment.
 
 Inert and advisory like everything else: it computes and proves; it decides
 nothing and grants no authority. Stdlib only.
@@ -144,7 +144,7 @@ class Lattice:
 
         This is the pure model of fail-closed aggregation: the result is no more
         affirmative than the least-affirmative input. NOTE the empty case returns
-        the top — an aggregator that must fail closed on *no* evidence (e.g.
+        the top -- an aggregator that must fail closed on *no* evidence (e.g.
         compare_composite on an empty baseline) deliberately returns something
         STRICTLY BELOW this (UNVERIFIABLE), a safe tightening, never above it.
         """
@@ -160,10 +160,10 @@ DRIFT_LATTICE = Lattice("drift", (DRIFT, UNVERIFIABLE, MATCH))
 RECEIPT_LATTICE = Lattice("receipt", (DRIFT, UNVERIFIABLE, VALID))
 GRAPH_LATTICE = Lattice("graph", (BROKEN, UNVERIFIABLE, VALID))
 
-# The disposition set is a CLOSED CLASSIFICATION, not a combined lattice — nothing
+# The disposition set is a CLOSED CLASSIFICATION, not a combined lattice -- nothing
 # in the codebase takes a meet of dispositions. Its safety guarantee (proved in
 # tests against _assess) is reachability: INDETERMINATE only from an UNVERIFIABLE
-# look, CONVERGED only from MATCH or within-tolerance drift — never a silent
+# look, CONVERGED only from MATCH or within-tolerance drift -- never a silent
 # convergence on an uncomparable result.
 DISPOSITIONS = frozenset({CONVERGED, ADJUST, INDETERMINATE})
 
@@ -204,7 +204,7 @@ def prove_is_lattice(L: Lattice) -> list[Check]:
 
 
 def prove_meet_laws(L: Lattice) -> list[Check]:
-    """The attenuation laws — the heart of 'composition never amplifies trust'."""
+    """The attenuation laws -- the heart of 'composition never amplifies trust'."""
     e = list(L.elements)
 
     def _ctr(pred, *spaces) -> str:

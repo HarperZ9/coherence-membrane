@@ -11,7 +11,7 @@
     "subject": { "type": "string" },
     "summary": { "type": "string" },
     "status": {
-      "description": "Advisory status only — no authority-shaped value exists.",
+      "description": "Advisory status only -- no authority-shaped value exists.",
       "enum": ["pass", "warn", "block", "needs-human", "unverified"]
     },
     "provenance": { "$ref": "#/$defs/provenance" },
@@ -28,7 +28,7 @@
       "properties": {
         "source": { "type": "string" },
         "digest": {
-          "description": "Full-width SHA-256 of the witnessed bytes — the re-derivable trust anchor.",
+          "description": "Full-width SHA-256 of the witnessed bytes -- the re-derivable trust anchor.",
           "type": "string",
           "pattern": "^sha256:[0-9a-f]{64}$"
         },

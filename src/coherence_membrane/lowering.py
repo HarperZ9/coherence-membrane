@@ -8,7 +8,7 @@ from .pngview import decode_png
 def field_from_png(payload: bytes) -> Field:
     """Lower an 8-bit PNG into a LUMINANCE Field in [0, 1] (Rec.601 luma).
 
-    Raises PngDecodeError (from pngview) on anything undecodable — the caller
+    Raises PngDecodeError (from pngview) on anything undecodable -- the caller
     (an organ) is responsible for fail-closed witnessing. Rec.601 weights match
     the existing phash convention (299/587/114) for cross-module consistency.
     """

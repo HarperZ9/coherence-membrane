@@ -3,8 +3,8 @@ reachability for verify_receipt, ProvenanceGraph.verify, Baseline.check, the
 agent-loop disposition, and the temporal episode aggregator.
 
 Each test proves two things against the REAL function:
-  * closure — its verdict is always inside the declared closed set;
-  * reachability — the affirmative top is reachable ONLY with positive evidence
+  * closure -- its verdict is always inside the declared closed set;
+  * reachability -- the affirmative top is reachable ONLY with positive evidence
     (and the conservative verdicts only with their stated cause).
 """
 

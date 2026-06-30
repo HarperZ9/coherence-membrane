@@ -21,8 +21,13 @@ classifiers = [
 ]
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/HarperZ9/coherence-membrane"
+Repository = "https://github.com/HarperZ9/coherence-membrane"
+Issues = "https://github.com/HarperZ9/coherence-membrane/issues"
+
 [project.optional-dependencies]
-# Test-only — never in the trust path. jsonschema validates the wire-spec schemas
+# Test-only -- never in the trust path. jsonschema validates the wire-spec schemas
 # (the conformance tests importorskip it, so the suite still runs without it).
 test = ["pytest>=8", "jsonschema>=4"]
 

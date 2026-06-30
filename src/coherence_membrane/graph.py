@@ -1,4 +1,4 @@
-"""Graph — the L0 relational primitive (nodes + directed/undirected edges).
+"""Graph -- the L0 relational primitive (nodes + directed/undirected edges).
 
 The deferred third L0 IR primitive alongside Field and Geometry. A Graph is a
 frozen, value-stable bundle of nodes and edges in one relational space. Like
@@ -38,14 +38,14 @@ def _norm_node(n: object) -> Node:
 class Graph:
     """A frozen relational structure: nodes + edges, UNVERIFIABLE-carrying.
 
-    nodes         — the declared node ids (sorted, de-duplicated).
-    edges         — (u, v) pairs over declared nodes (sorted; for an undirected
+    nodes         -- the declared node ids (sorted, de-duplicated).
+    edges         -- (u, v) pairs over declared nodes (sorted; for an undirected
                     graph each pair is stored endpoint-sorted u <= v).
-    directed      — orientation of every edge in `edges`.
-    weights       — optional edge -> weight (float); keyed by the canonical edge.
-    labels        — optional edge -> label (str); keyed by the canonical edge.
-    unknown_nodes — node ids referenced but not resolvable (carried, never dropped).
-    unknown_edges — edges referencing an undeclared endpoint (carried, never dropped).
+    directed      -- orientation of every edge in `edges`.
+    weights       -- optional edge -> weight (float); keyed by the canonical edge.
+    labels        -- optional edge -> label (str); keyed by the canonical edge.
+    unknown_nodes -- node ids referenced but not resolvable (carried, never dropped).
+    unknown_edges -- edges referencing an undeclared endpoint (carried, never dropped).
 
     All five collections are normalised to deterministic order in __post_init__, so
     equality and serialisation are content-addressed: same content -> same Graph.
@@ -103,20 +103,20 @@ class Graph:
         return len(self.edges)
 
     def is_empty(self) -> bool:
-        """True only when there is no content at all — no nodes, edges, OR unknown
+        """True only when there is no content at all -- no nodes, edges, OR unknown
         markers. UNVERIFIABLE markers are first-class content (a graph with only
         unknown edges is not 'empty'), consistent with Geometry.is_empty."""
         return not (self.nodes or self.edges or self.unknown_nodes or self.unknown_edges)
 
     def has_unknown(self) -> bool:
-        """True if any node/edge could not be resolved — the substrate-level
+        """True if any node/edge could not be resolved -- the substrate-level
         UNVERIFIABLE signal an op or criterion must honour (never read past it)."""
         return bool(self.unknown_nodes or self.unknown_edges)
 
     def neighbors(self, node) -> tuple[Node, ...]:
         """Out-neighbours of `node` in deterministic order. For an undirected graph
         every incident edge contributes its other endpoint. Returns () for an
-        unknown/declared-but-isolated node alike — the caller distinguishes via
+        unknown/declared-but-isolated node alike -- the caller distinguishes via
         `node in self.nodes`."""
         n = _norm_node(node)
         out: set[Node] = set()

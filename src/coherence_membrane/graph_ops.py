@@ -1,9 +1,9 @@
-"""graph_ops — pure stdlib operations over the Graph substrate.
+"""graph_ops -- pure stdlib operations over the Graph substrate.
 
 No third-party imports. Every op is deterministic (fixed node/edge ordering from the
 Graph substrate's normalisation) and total over a well-formed Graph; none mutate
 their input. These are the re-derivation kernels the Graph criteria call to build
-and re-check witnesses — kept separate from the criteria so a third party can re-run
+and re-check witnesses -- kept separate from the criteria so a third party can re-run
 a single op against a witness in isolation: adjacency, connected components, BFS
 shortest-path/reachability, de Bruijn construction, and serial transitive closure.
 The search + connectivity kernels (the cycle finder, tree jump-edges, and the
@@ -28,7 +28,7 @@ def adjacency(g: Graph) -> dict[Node, tuple[Node, ...]]:
 def connected_components(g: Graph) -> tuple[tuple[Node, ...], ...]:
     """Weakly-connected components (edges traversed ignoring direction), each a
     sorted node tuple; the components themselves are returned in sorted order. A
-    deterministic partition of the declared nodes — unknown edges do NOT connect
+    deterministic partition of the declared nodes -- unknown edges do NOT connect
     anything (they are not real adjacency)."""
     # undirected reachability: build a symmetric adjacency over real edges only.
     adj: dict[Node, set[Node]] = {n: set() for n in g.nodes}

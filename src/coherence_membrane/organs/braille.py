@@ -1,4 +1,4 @@
-"""BrailleViewOrgan — witnessed 'negatives -> braille' perception of a PNG."""
+"""BrailleViewOrgan -- witnessed 'negatives -> braille' perception of a PNG."""
 from __future__ import annotations
 
 from pathlib import Path

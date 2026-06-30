@@ -1,4 +1,4 @@
-"""Geometry — the L0 vector primitive (points / polylines / polygons).
+"""Geometry -- the L0 vector primitive (points / polylines / polygons).
 
 The second L0 IR primitive alongside Field. Coordinates are floats in the source
 field's pixel space (x rightward, y downward, matching Field row-major indexing).
@@ -40,9 +40,9 @@ class Polyline:
 class Geometry:
     """A bundle of vector features in one coordinate space.
 
-    paths   — polylines / polygons (open or closed chains).
-    points  — isolated points (a point set), not part of any path.
-    unknown — coordinates where vector structure is UNVERIFIABLE (carried, never
+    paths   -- polylines / polygons (open or closed chains).
+    points  -- isolated points (a point set), not part of any path.
+    unknown -- coordinates where vector structure is UNVERIFIABLE (carried, never
               silently dropped).
     """
 
@@ -51,7 +51,7 @@ class Geometry:
     unknown: tuple[Point, ...] = ()
 
     def is_empty(self) -> bool:
-        """True only when there is no content at all — no paths, points, OR
+        """True only when there is no content at all -- no paths, points, OR
         unknown markers. UNVERIFIABLE markers are first-class content (geometry
         with only unknowns is not 'empty'), consistent with to_coords."""
         return not self.paths and not self.points and not self.unknown

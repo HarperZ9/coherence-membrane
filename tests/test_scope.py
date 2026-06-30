@@ -1,4 +1,4 @@
-"""Tests for consequence scope — mediate consequence, never activity."""
+"""Tests for consequence scope -- mediate consequence, never activity."""
 
 from __future__ import annotations
 

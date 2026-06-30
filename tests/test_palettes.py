@@ -1,4 +1,4 @@
-"""Tests for coherence_membrane.palettes — retro palette registry."""
+"""Tests for coherence_membrane.palettes -- retro palette registry."""
 from __future__ import annotations
 
 import pytest
@@ -48,7 +48,7 @@ def test_c64_16_colors():
 
 
 # ---------------------------------------------------------------------------
-# Exact values — CGA Mode 4 palette 1 high-intensity
+# Exact values -- CGA Mode 4 palette 1 high-intensity
 # ---------------------------------------------------------------------------
 
 def test_cga_first_color_is_black():

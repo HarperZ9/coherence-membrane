@@ -1,4 +1,4 @@
-"""Judge — the EXTERNAL witness. Scores a candidate's per-dimension faithfulness to the subject.
+"""Judge -- the EXTERNAL witness. Scores a candidate's per-dimension faithfulness to the subject.
 
 Per the principle, faithfulness cannot be certified from inside; the judge is external to the minds.
 v1 ships the interface + a deterministic StubJudge whose scores are a property of the candidate text

@@ -1,4 +1,4 @@
-"""Tests for multimodal composition — CompositeObservation + compare_composite."""
+"""Tests for multimodal composition -- CompositeObservation + compare_composite."""
 
 from __future__ import annotations
 

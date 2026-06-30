@@ -1,10 +1,10 @@
-"""reconcile_at_center — the neutral center, emitting the spine's own Certificate.
+"""reconcile_at_center -- the neutral center, emitting the spine's own Certificate.
 
 Two minds with different perception perceive their own channel and propose (solo, blind); then each
 reconciles having seen the other's deposit; the center crystallizes the candidate set; an external
 judge scores each per dimension; a grounding guardrail penalizes over-build; the winner is whichever
 scores highest under the HUMAN's named criterion. The verdict is carried by the project's own
-`Certificate` (the spine contract) — the criterion, per-candidate scores, and winner ride in its
+`Certificate` (the spine contract) -- the criterion, per-candidate scores, and winner ride in its
 `evidence`, so a center verdict is re-checkable exactly like any other reconcile. Fail-closed.
 """
 from __future__ import annotations
@@ -29,7 +29,7 @@ def witness_candidates(candidates: dict[str, str], subject_views: dict[str, str]
                        criterion: CriterionSpec, judge, dims=DIMENSIONS) -> Certificate:
     """Judge each candidate, ground it, score under the NAMED criterion, pick the winner, emit a
     spine Certificate. Usable on candidates from ANY minds (including a live run whose candidate
-    texts came from real models — the fn boundary the adapters abstract)."""
+    texts came from real models -- the fn boundary the adapters abstract)."""
     if not candidates:
         return _unverifiable("no candidates to witness", criterion)
     scores = {}
@@ -55,7 +55,7 @@ def witness_candidates(candidates: dict[str, str], subject_views: dict[str, str]
 def reconcile_at_center(subject_views: dict[str, str], minds, criterion: CriterionSpec | None, judge,
                         dims=DIMENSIONS) -> Certificate:
     if criterion is None:
-        return _unverifiable("no criterion named — the human's seat is empty", None)
+        return _unverifiable("no criterion named -- the human's seat is empty", None)
     if not subject_views or all(not v.strip() for v in subject_views.values()):
         return _unverifiable("subject has no perceptible form", criterion)
     if len(minds) < 2:

@@ -1,15 +1,15 @@
-"""VisualArtifactOrgan — the membrane's first eye.
+"""VisualArtifactOrgan -- the membrane's first eye.
 
 Given an image artifact (a rendered frame, a screenshot, any PNG the operator
 authorises), it emits ONE witnessed Observation:
-  * identity   — full SHA-256 of the raw bytes (exact, re-derivable),
-  * dimensions — width/height/bit-depth/colour-type from the PNG header,
-  * perception — a 64-bit perceptual hash (dHash) of the decoded pixels.
+  * identity   -- full SHA-256 of the raw bytes (exact, re-derivable),
+  * dimensions -- width/height/bit-depth/colour-type from the PNG header,
+  * perception -- a 64-bit perceptual hash (dHash) of the decoded pixels.
 
 It is INERT: it reads the artifact bytes and reports.  It does not modify the
 artifact, the process that produced it, or anything else.  Capture is the
 operator's responsibility and must be of a source the operator owns or has
-authorised — this organ never reaches into another process.
+authorised -- this organ never reaches into another process.
 
 Fail-closed: an unreadable file or an unsupported/ malformed PNG yields an
 Observation with status UNVERIFIED and perceptual hash absent.  It never raises
@@ -107,7 +107,7 @@ class VisualArtifactOrgan:
     @staticmethod
     def _read(subject) -> tuple[str, bytes | None]:
         # Frame-like (a descriptor + a callable read): the continuity loop hands
-        # organs a Frame so any source — file, callback, native grab — is uniform.
+        # organs a Frame so any source -- file, callback, native grab -- is uniform.
         descriptor = getattr(subject, "descriptor", None)
         reader = getattr(subject, "read", None)
         if descriptor is not None and callable(reader):

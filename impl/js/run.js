@@ -4,7 +4,7 @@
 // Loads the SAME frozen corpus the Python reference pins (conformance/vectors.json)
 // and re-derives every case through this independent JS implementation. If all
 // cases match the expected values, re-derivability is demonstrated for the
-// contract corpus — two implementations that share no code agree, value-for-value,
+// contract corpus -- two implementations that share no code agree, value-for-value,
 // on every case in it. (The corpus is the contract; see membrane.js for the
 // number-fidelity boundary that keeps the two impls honest beyond it.)
 //

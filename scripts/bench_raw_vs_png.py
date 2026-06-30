@@ -2,7 +2,7 @@
 
 The README cites per-grab timings for the raw fast path. Per the project's own
 re-derivability doctrine, the numbers should be reproducible from something
-shipped — this is that something. It is a single-region point measurement on
+shipped -- this is that something. It is a single-region point measurement on
 whatever machine runs it, not a benchmark suite; run it to get your own figures.
 
     python scripts/bench_raw_vs_png.py            # default 640x480, 30 iters

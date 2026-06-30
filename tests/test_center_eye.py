@@ -41,5 +41,5 @@ def test_center_loop_with_two_eyes(make_png, tmp_path):
     crit = CriterionSpec("clear-eye", {"perceived": 0.4, "decoded": 0.4, "confidence": 0.2})
     cert = reconcile_at_center({"percA": str(pa), "percB": str(pb)}, minds, crit, EyeJudge(store), dims=EYE_DIMS)
     assert cert.verdict is Verdict.VERIFIED and winner_of(cert) in scores_of(cert)
-    # every candidate — solo AND meeting — is a real witnessed perception (decoded, scored)
+    # every candidate -- solo AND meeting -- is a real witnessed perception (decoded, scored)
     assert all(c.get("decoded", 0) > 0 for c in scores_of(cert).values())

@@ -1,4 +1,4 @@
-"""DistributionVerifierOrgan — witnessed distribution-invariant verification (tier-2).
+"""DistributionVerifierOrgan -- witnessed distribution-invariant verification (tier-2).
 
 Wraps the distribution-invariant oracle as an inert, fail-closed Observation: a
 DistributionClaim is checked (normalization + claimed moments); a non-claim subject

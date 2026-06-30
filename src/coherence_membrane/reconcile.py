@@ -1,8 +1,8 @@
-"""The reconcile — the project's single universal operation (the spine).
+"""The reconcile -- the project's single universal operation (the spine).
 
 Perceive any artifact into a witnessed form, judge that form against a criterion it
 did NOT author, and carry a re-checkable Certificate; UNVERIFIABLE when you can't.
-Trust no assertion — only the witness. Every surface (correctness, accountability,
+Trust no assertion -- only the witness. Every surface (correctness, accountability,
 security, creativity, the author) is one (perceive, criterion) binding of this loop;
 the shipped verifier organs are its first instances. Naming the loop makes a new
 surface a registration, not a rebuild. Generic by design: depends only on the
@@ -28,13 +28,13 @@ from .observation import Observation, Provenance, Status, sha256_hex
 #   * reconcile() records both and computes an `independence` field on the Observation:
 #       - "witnessed-independent": both present AND differ (author != producer).
 #       - "self-authored":         both present AND equal (author == producer).
-#       - "unwitnessed":           either absent — THE DEFAULT.
+#       - "unwitnessed":           either absent -- THE DEFAULT.
 # DEFAULT-PRESERVING: when independence is "unwitnessed" the author/producer ids are NOT
 # written into `data`, so every existing call is byte-for-byte unchanged in content (it
 # only gains the honest annotation independence="unwitnessed"); two reconciles that
 # differ ONLY in an un-witnessed author/producer are byte-identical, exactly as before.
 # STRICT MODE (opt-in, default OFF): when enabled, a DECIDED verdict (VERIFIED/REFUTED)
-# carried by a `self-authored` criterion is DOWNGRADED to UNVERIFIABLE — the system now
+# carried by a `self-authored` criterion is DOWNGRADED to UNVERIFIABLE -- the system now
 # refuses to launder a self-graded decision as a witnessed one. Default mode leaves
 # every verdict EXACTLY as today and only adds the `independence` annotation.
 # Soundness over completeness: the absence of a witness is "unwitnessed" (honest),
@@ -52,7 +52,7 @@ def witness_independence(author, producer) -> str:
     """Resolve (criterion author, artifact producer) to the independence tri-state.
 
     "witnessed-independent" iff BOTH are present and DIFFER; "self-authored" iff both
-    present and equal; "unwitnessed" iff either is absent (the default — an unsupplied
+    present and equal; "unwitnessed" iff either is absent (the default -- an unsupplied
     witness is honestly unknown, never assumed independent). Pure + deterministic."""
     if author is None or producer is None:
         return "unwitnessed"
@@ -78,7 +78,7 @@ def identity_perceive(artifact):
     """The fused case: the artifact already IS its own perceived form (e.g. a logical
     claim or a structured object). Returns (form, witnessed-bytes). The witness is
     repr(artifact); for re-derivability the artifact's repr must be value-stable (it is
-    for the frozen AST nodes / dataclasses this is used on — not for objects whose repr
+    for the frozen AST nodes / dataclasses this is used on -- not for objects whose repr
     embeds a memory address)."""
     return artifact, repr(artifact).encode()
 
@@ -97,25 +97,25 @@ def reconcile(artifact, *, perceive=identity_perceive, criterion, producer=None,
     perceive(artifact) -> (form, payload_bytes); criterion.judge(form) -> Certificate.
     Fail-closed: ANY exception (perceive, judge, or constructing the witnessed result
     from a malformed Certificate) yields an UNVERIFIABLE Observation; reconcile never
-    raises and never alters a verdict — it is a faithful wrapper (the recorded verdict
+    raises and never alters a verdict -- it is a faithful wrapper (the recorded verdict
     is always the criterion's own, passed through).
 
     `producer` (optional) is the provenance id of whoever produced the artifact. Together
     with criterion.author it lets reconcile WITNESS the spine's "criterion it did not
     author" claim: the emitted Observation carries an `independence` field
-    (witnessed-independent / self-authored / unwitnessed — see witness_independence).
+    (witnessed-independent / self-authored / unwitnessed -- see witness_independence).
     When BOTH ids are absent (the default) independence is "unwitnessed" and the ids are
     NOT recorded, so existing calls are byte-for-byte unchanged in content.
 
-    `strict` (optional, default OFF — so existing tests are untouched): when True, a
+    `strict` (optional, default OFF -- so existing tests are untouched): when True, a
     DECIDED verdict (VERIFIED/REFUTED) carried by a `self-authored` criterion is
     DOWNGRADED to UNVERIFIABLE (reason: independence not witnessed). Default mode leaves
     every verdict EXACTLY as today and only annotates `independence`.
 
-    `require_independent` (optional, default OFF): the STRONGER guard (aperture-sim A4 —
+    `require_independent` (optional, default OFF): the STRONGER guard (aperture-sim A4 --
     internal confidence is not truth; a decision must rest on a criterion whose external
     independence is POSITIVELY witnessed). When True, a DECIDED verdict is downgraded to
-    UNVERIFIABLE unless independence == "witnessed-independent" — i.e. BOTH self-authored
+    UNVERIFIABLE unless independence == "witnessed-independent" -- i.e. BOTH self-authored
     AND unwitnessed decisions are refused (strict only refuses self-authored). Use this at
     a real trust boundary where the mere ABSENCE of a witnessed external criterion must not
     be laundered into VERIFIED. Default OFF leaves every verdict exactly as today."""
@@ -136,7 +136,7 @@ def reconcile(artifact, *, perceive=identity_perceive, criterion, producer=None,
             verdict_value = Verdict.UNVERIFIABLE.value
             decided = False
             downgrade_reason = _SELF_AUTHORED_DOWNGRADE_REASON
-        # REQUIRE_INDEPENDENT (A4): stronger than strict — a decision must rest on a
+        # REQUIRE_INDEPENDENT (A4): stronger than strict -- a decision must rest on a
         # POSITIVELY witnessed-independent criterion; both self-authored and unwitnessed
         # are refused (the absence of an external witness is not truth). The elif means a
         # self-authored case already handled by `strict` keeps its specific reason.
@@ -151,7 +151,7 @@ def reconcile(artifact, *, perceive=identity_perceive, criterion, producer=None,
         data = {"oracle": cert.oracle, "verdict": verdict_value, "claim": claim,
                 "criterion": criterion.name, "evidence": [list(p) for p in cert.evidence],
                 "identity_sha256": sha256_hex(claim.encode()), "independence": independence}
-        # Only record the witnessing ids when independence is actually witnessed — this
+        # Only record the witnessing ids when independence is actually witnessed -- this
         # keeps the default ("unwitnessed") Observation byte-identical to the legacy one
         # and makes two un-witnessed reconciles indistinguishable, as before.
         if independence != "unwitnessed":

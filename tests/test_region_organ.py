@@ -1,4 +1,4 @@
-"""Tests for region/element perception — RegionArtifactOrgan + compare_region_drift."""
+"""Tests for region/element perception -- RegionArtifactOrgan + compare_region_drift."""
 
 from __future__ import annotations
 

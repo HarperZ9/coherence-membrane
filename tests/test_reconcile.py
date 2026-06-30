@@ -15,7 +15,7 @@ def _mp():
 
 def test_reconcile_is_the_verifier_organ():
     # curation-as-code: the shipped propositional organ IS a reconcile
-    # (identity perceive + the dpll criterion) — same verdict, same oracle.
+    # (identity perceive + the dpll criterion) -- same verdict, same oracle.
     obs = reconcile(_mp(), criterion=Criterion("propositional-dpll", check_validity))
     organ = PropositionalVerifierOrgan().observe(_mp())[0]
     assert obs.status == Status.PASS
@@ -73,7 +73,7 @@ def test_identity_perceive():
 
 def test_reconcile_fail_closed_on_malformed_certificate():
     # CARDINAL fail-closed property: a criterion that returns a malformed / non-Certificate
-    # object must degrade to UNVERIFIABLE — reconcile must NEVER raise, even on the
+    # object must degrade to UNVERIFIABLE -- reconcile must NEVER raise, even on the
     # happy-path construction (these would raise before the post-judge block was guarded).
     none_obs = reconcile(_mp(), criterion=Criterion("rogue", lambda f: None))
     assert none_obs.status == Status.UNVERIFIED and none_obs.data["verdict"] == "unverifiable"
@@ -82,7 +82,7 @@ def test_reconcile_fail_closed_on_malformed_certificate():
     assert bad_obs.status == Status.UNVERIFIED and bad_obs.data["verdict"] == "unverifiable"
 
 
-# --- A4: require_independent — no decided verdict without a WITNESSED external criterion ----
+# --- A4: require_independent -- no decided verdict without a WITNESSED external criterion ----
 
 def _verdict_crit(verdict, name="c", author=None):
     """A criterion that always returns the given decided verdict (for the A4 guard tests)."""

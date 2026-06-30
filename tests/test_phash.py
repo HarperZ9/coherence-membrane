@@ -65,7 +65,7 @@ def test_raw_channels_known_and_unknown():
 
 
 def test_raw_hash_matches_decoded_png_hash():
-    """perceptual_hash_raw(BGRA) == perceptual_hash(decode(encode(rgb))) — the
+    """perceptual_hash_raw(BGRA) == perceptual_hash(decode(encode(rgb))) -- the
     fast path is bit-identical to the encode/decode path for the same pixels."""
     w = h = 16
     bgra = _bgra_gradient(w, h)
@@ -82,7 +82,7 @@ def test_raw_hash_deterministic():
 
 def test_raw_hash_is_byte_order_sensitive():
     """The same buffer read as bgra vs rgba (an R<->B swap) must hash
-    DIFFERENTLY — that is what makes the cross-path equality check able to catch
+    DIFFERENTLY -- that is what makes the cross-path equality check able to catch
     a wrong _RAW_LAYOUTS entry, rather than passing vacuously on a symmetric
     pattern.  Requires R and B to have different horizontal profiles."""
     w = h = 16

@@ -1,7 +1,7 @@
-"""Adapters — the bridge from the stubbed interfaces to LIVE minds and a live judge.
+"""Adapters -- the bridge from the stubbed interfaces to LIVE minds and a live judge.
 
 v1 ships deterministic stubs. The live engine supplies real perception/generation by injecting a
-**model-call function** `fn(prompt: str) -> str` (a subagent, an API call, a local model — the center
+**model-call function** `fn(prompt: str) -> str` (a subagent, an API call, a local model -- the center
 does not care which). These adapters turn that one injected callable into a `Mind` (perceive/reconcile)
 and a `Judge` (per-dimension scoring), so the live path is expressible and testable WITHOUT the center
 package itself depending on any model or network. Wiring `fn` to an actual model is the deployment step;
@@ -45,7 +45,7 @@ class CallableJudge:
     """A live external judge backed by an injected `fn(prompt)->str` that returns JSON dim->score.
 
     Fail-safe: if the model returns unparseable or out-of-range output, missing dims default to 0.0 and
-    values are clamped to [0,1] — an unreadable witness never silently inflates a score."""
+    values are clamped to [0,1] -- an unreadable witness never silently inflates a score."""
 
     def __init__(self, fn: Callable[[str], str]):
         self._fn = fn

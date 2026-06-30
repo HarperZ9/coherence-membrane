@@ -1,8 +1,8 @@
-"""AtelierMind — the atelier (studio-engine) wired as the center's GENERATE mind.
+"""AtelierMind -- the atelier (studio-engine) wired as the center's GENERATE mind.
 
 The atelier is the generative half of the reconcile (the eye is the perceptive half). Here it plugs
 into the center behind the `Mind` interface: instead of *reasoning* a text proposal, it GENERATES a
-real artifact (a studio-engine World/Scene — phyllotaxis, gyroid, quasicrystal, …) from a seed derived
+real artifact (a studio-engine World/Scene -- phyllotaxis, gyroid, quasicrystal, …) from a seed derived
 from the subject view, and contributes a faithful text representation of that generated artifact as its
 proposal. On reconcile, it regenerates informed by the other minds' deposits (perturbed seed / chosen
 generator). Its sense IS generation.
@@ -74,7 +74,7 @@ class AtelierMind:
         return self._propose("[generate|reconciled] atelier regenerates, informed by the other minds:", seed)
 
 
-# Generative dimensions the AtelierJudge can report — read from studio-engine's OWN witness of the
+# Generative dimensions the AtelierJudge can report -- read from studio-engine's OWN witness of the
 # artifact (the multi-axis+novelty final_score and the structural-fitness certificate it ships with).
 GEN_DIMS = ("fitness", "structure", "passes_fitness")
 
@@ -83,7 +83,7 @@ class AtelierJudge:
     """The matching EXTERNAL judge for generated artifacts: scores each candidate on studio-engine's
     OWN evaluation of the real artifact (not on its text). Retrieves the World from the shared store;
     a candidate that is not a generated artifact (not in the store) scores 0 on every generative
-    dimension — a text proposal has no generative fitness, and the judge says so rather than guessing."""
+    dimension -- a text proposal has no generative fitness, and the judge says so rather than guessing."""
 
     def __init__(self, store: dict):
         self.store = store

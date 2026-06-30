@@ -1,15 +1,15 @@
-"""Live-state continuity — always-on perception that costs ~nothing at rest.
+"""Live-state continuity -- always-on perception that costs ~nothing at rest.
 
 The loop pulls frames from any CaptureSource and emits a stream of witnessed
 events.  It is built to be native and continuous WITHOUT being over-consumptive:
 
   * Change-proportional work.  A cheap identity hash (sha256 of the frame bytes)
-    runs every tick.  An unchanged frame is MATCH and stops there — no decode, no
+    runs every tick.  An unchanged frame is MATCH and stops there -- no decode, no
     perceptual hash.  Only a real change escalates to the full witnessed
     observation.  Cost tracks actual change, not wall-clock.
   * Self-throttling.  A ResourceBudget caps how much expensive work the loop may
-    do; once spent, a changed frame is reported UNVERIFIABLE("throttled") — the
-    identity changed but the pixels were not perceived — never silently dropped.
+    do; once spent, a changed frame is reported UNVERIFIABLE("throttled") -- the
+    identity changed but the pixels were not perceived -- never silently dropped.
   * Inert and un-gated.  The loop only PERCEIVES.  It never gates an action and
     never grants authority; acting on what it perceives goes out through the
     write-gate separately (see membrane.py / scope.py).  Creative flow is
@@ -34,9 +34,9 @@ from .phash import DRIFT, MATCH, UNVERIFIABLE, hamming, raw_channels
 class ResourceBudget:
     """Bounds that keep continuity from being over-consumptive.
 
-    max_full_observations — cap on expensive (decode+perceptual-hash) escalations
+    max_full_observations -- cap on expensive (decode+perceptual-hash) escalations
                             over the run; None = unbounded.
-    min_interval_s        — minimum seconds between processed frames (cadence
+    min_interval_s        -- minimum seconds between processed frames (cadence
                             back-off); 0 = as fast as frames arrive.
     """
 
@@ -135,7 +135,7 @@ def run_continuity(
             perceiver = default_visual
         # Hand the organ the bytes we ALREADY read (with the descriptor, so raw
         # geometry travels too).  Re-reading would be a second disk hit for
-        # path-backed frames and could witness different bytes than cur_sha —
+        # path-backed frames and could witness different bytes than cur_sha --
         # one canonical read keeps identity and perception consistent.
         observed = Frame(descriptor=frame.descriptor, payload=payload)
         obs = perceiver.observe(observed)[0]

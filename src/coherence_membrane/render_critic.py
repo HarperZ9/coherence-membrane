@@ -1,4 +1,4 @@
-"""Render-critic — wire the vintage renderer to the grounded critic + memory.
+"""Render-critic -- wire the vintage renderer to the grounded critic + memory.
 
 render -> perceive -> critique(compose[novelty vs corpus, structural fitness =
 OKLab-dE source-vs-output fidelity]) -> remember, as a generator yielding witnessed
@@ -81,7 +81,7 @@ def critique_render(render_result, source_png, *, corpus, min_distance, toleranc
 
 def remember_render(store: MemoryStore, render_result, observation) -> str:
     """Store a render-look as a witnessed memory; its perceptual signature joins the
-    corpus *inside* the witnessed MemoryRecord (a phash: tag) — covered by verify() and
+    corpus *inside* the witnessed MemoryRecord (a phash: tag) -- covered by verify() and
     round-tripped by save/load. Idempotent and signature-aware: re-remembering the same
     render, or an undecodable one (no signature), is a no-op return, never a crash."""
     rid = render_result.output_sha256

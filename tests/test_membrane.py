@@ -130,6 +130,6 @@ def test_end_to_end_drift_denies():
         authorization=receipt,
         drift=DriftVerdict(DRIFT, 30, "changed"),
     )
-    # A DRIFT state denies even an authorized action — grounded safety.
+    # A DRIFT state denies even an authorized action -- grounded safety.
     decision = proof_surface.evaluate_gate(req)
     assert decision.decision == "deny"

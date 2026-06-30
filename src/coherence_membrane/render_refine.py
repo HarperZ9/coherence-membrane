@@ -1,4 +1,4 @@
-"""render_refine — the refine primitive's first instance: grounded creative search.
+"""render_refine -- the refine primitive's first instance: grounded creative search.
 
 Refine a vintage render until it is CORRECT (not good-enough): coordinate an OBJECTIVE axis
 (fidelity to the source) with a SUBJECTIVE composite (palette harmony to a chosen ideal +

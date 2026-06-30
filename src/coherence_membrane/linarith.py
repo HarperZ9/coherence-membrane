@@ -2,7 +2,7 @@
 with PROOF-CARRYING verdicts.
 
 Propositional logic cannot reason over `2x + 3y <= 5`. This decides conjunctions of
-linear constraints by Fourier-Motzkin elimination — but does NOT trust the solver:
+linear constraints by Fourier-Motzkin elimination -- but does NOT trust the solver:
 every verdict carries a WITNESS a tiny independent checker re-verifies. Feasible -> a
 rational model (checked by substitution); infeasible -> a Farkas certificate (a
 nonnegative/signed combination collapsing the system to `0 (op) negative`, checked by

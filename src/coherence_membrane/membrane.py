@@ -1,4 +1,4 @@
-"""The write-gate bridge — perceived ground truth -> a mediated action request.
+"""The write-gate bridge -- perceived ground truth -> a mediated action request.
 
 This is the seam between the read-gate (perception) and the write-gate
 (proof-surface's pre-execution gate).  A model that wants to ACT does not act:
@@ -9,7 +9,7 @@ on an `allow`.
 
 The membrane itself NEVER executes the action and never grants authority.  It
 translates perception into the gate's input contract and, if proof-surface is
-installed, asks the gate.  If it is not installed, it returns needs-human —
+installed, asks the gate.  If it is not installed, it returns needs-human --
 fail-closed, never a fabricated allow.
 
 The elegant tie: a DriftVerdict's MATCH / DRIFT / UNVERIFIABLE is exactly the
@@ -61,7 +61,7 @@ def build_gate_request(
         observation.data.get("identity_sha256") if observation is not None else None
     )
     if observed_digest and expected_digest:
-        # Both present together — satisfies the gate's digest co-presence rule.
+        # Both present together -- satisfies the gate's digest co-presence rule.
         state["target_digest"] = observed_digest
         state["expected_digest"] = expected_digest
     if state:
@@ -74,7 +74,7 @@ def decide(request: dict[str, Any]) -> Any:
     """Ask the write-gate (proof-surface) to adjudicate the request.
 
     Returns proof-surface's GateDecision when available.  If proof-surface is
-    not installed, returns a fail-closed needs-human advisory dict — never a
+    not installed, returns a fail-closed needs-human advisory dict -- never a
     fabricated allow.
     """
     try:
@@ -84,7 +84,7 @@ def decide(request: dict[str, Any]) -> Any:
             "decision": "needs-human",
             "reasons": [
                 "the write-gate (proof-surface) is not installed; install it to "
-                "adjudicate this request — no decision is fabricated"
+                "adjudicate this request -- no decision is fabricated"
             ],
             "checks": {},
         }
