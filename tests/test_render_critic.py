@@ -126,7 +126,7 @@ def test_run_returns_result_and_observation():
     assert result.output_png and obs.organ == "render-critic"
 
 
-# M7 — fail-closed + determinism
+# M7 -- fail-closed + determinism
 
 def test_undecodable_output_is_unverifiable_not_raised():
     src = _gradient_png()
@@ -141,7 +141,7 @@ def test_deviation_is_deterministic():
     assert render_fidelity_deviation((src, r.output_png)) == render_fidelity_deviation((src, r.output_png))
 
 
-# M6 — meaningful novelty bar + evidence names the dominating step
+# M6 -- meaningful novelty bar + evidence names the dominating step
 
 def test_novelty_bar_verified_just_below_real_distance():
     src = _gradient_png()
@@ -182,14 +182,14 @@ def test_evidence_identifies_dominating_step():
     assert fitness_entries[0][1] == "refuted", "the structural-fitness step must be refuted"
 
 
-# C1 regression — the corpus is witnessed (survives save/load) and remember is idempotent
+# C1 regression -- the corpus is witnessed (survives save/load) and remember is idempotent
 
 from coherence_membrane.provenance import VALID
 
 
 def test_corpus_survives_save_load_round_trip(tmp_path):
     # C1: the novelty corpus lives INSIDE the witnessed MemoryRecord (a phash: tag),
-    # so it must survive a save -> load cycle — no side-channel state to lose.
+    # so it must survive a save -> load cycle -- no side-channel state to lose.
     src = _gradient_png()
     r = render_vintage(src, target_width=16, palette_k=8, scanlines=False)
     store = MemoryStore()

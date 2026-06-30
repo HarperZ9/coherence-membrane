@@ -1,4 +1,4 @@
-"""graph_claims — the perceived claim shapes the Graph-plane judges consume.
+"""graph_claims -- the perceived claim shapes the Graph-plane judges consume.
 
 Split out of graph_oracle (pure refactor; no behaviour change) so the immutable
 claim forms live in one small module. graph_oracle re-exports them, so the public

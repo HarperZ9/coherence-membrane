@@ -1,6 +1,6 @@
 """Cross-implementation parity: the JS reference core re-derives the same corpus.
 
-This is what turns re-derivability from *demonstrable* into *demonstrated* — a
+This is what turns re-derivability from *demonstrable* into *demonstrated* -- a
 second, independent implementation (impl/js/, sharing no code with the Python
 reference) re-derives every frozen value in conformance/vectors.json. The Python
 suite runs the JS harness as a subprocess so the proof is checked here too.
@@ -40,7 +40,7 @@ def test_js_reference_core_re_derives_the_corpus():
 
 def test_js_and_python_harnesses_agree_case_for_case():
     """Strongest form: for every case, the JS result equals the Python result
-    (not just 'both pass') — the two implementations agree value-for-value."""
+    (not just 'both pass') -- the two implementations agree value-for-value."""
     node = shutil.which("node")
     if node is None:
         pytest.skip("node not available")

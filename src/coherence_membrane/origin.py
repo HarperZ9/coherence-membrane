@@ -1,10 +1,10 @@
-"""origin — a reconcile criterion composing provenance signals into ONE sound verdict.
+"""origin -- a reconcile criterion composing provenance signals into ONE sound verdict.
 
 The authenticated-contradictions gap (arXiv 2603.02378, 2026): a file can carry a VALID
 C2PA "human-authored" manifest AND an "AI-generated" watermark, each passing its own
 check, because the layers never consult each other. The fix is composition: map each
 provenance signal (perceptual-hash drift, provenance-DAG integrity, receipt signature)
-onto the Certificate lattice and take the PROVEN meet (composition.compose) — any
+onto the Certificate lattice and take the PROVEN meet (composition.compose) -- any
 denying/contradicting signal refutes the origin; all-affirm verifies it; absence
 attenuates to UNVERIFIABLE. Security as a reconcile criterion: perceive the artifact's
 history (an organ), judge origin here. Generic over the signal vocabulary; the shipped
@@ -36,7 +36,7 @@ def origin_criterion() -> Criterion:
     REFUTED if any signal denies or contradicts; VERIFIED iff every signal affirms;
     UNVERIFIABLE if there are no signals or none are decisive. The authenticated-
     contradictions fix: uncoordinated layers become one composition-sound verdict.
-    The judge is TOTAL — malformed input (non-iterable / non-pair) degrades to
+    The judge is TOTAL -- malformed input (non-iterable / non-pair) degrades to
     UNVERIFIABLE, never raises; the criterion is independently sound, not merely
     safe because the reconcile spine catches exceptions. The returned certificate's
     evidence records each signal as `signal:<name> -> "<raw> -> <mapped-verdict>"`, so
@@ -51,7 +51,7 @@ def origin_criterion() -> Criterion:
                                  (("signal", str(sig)),)) for name, sig in pairs]
             composed = compose(certs, claim="origin (composed provenance)")
             # Evidence carries each signal's raw value AND its mapped verdict, taken from
-            # the SAME cert that fed the meet — so the dominating step(s) (those whose
+            # the SAME cert that fed the meet -- so the dominating step(s) (those whose
             # verdict equals the composed verdict) are recoverable directly from the
             # certificate: "which signal refuted origin?" No verdict logic here; the
             # verdict remains composed.verdict (the proven meet), unchanged.

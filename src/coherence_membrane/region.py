@@ -1,9 +1,9 @@
-"""Region/element perception — WHERE did it change, not just whether.
+"""Region/element perception -- WHERE did it change, not just whether.
 
 A whole-image perceptual hash answers "did the frame change". A region grid
 answers "which part". The image is divided into a rows x cols grid; each tile gets
 its own dHash, and a per-tile Hamming distance localises a change to the tiles
-that actually moved — so a model can ground "the button in the top-right redrew"
+that actually moved -- so a model can ground "the button in the top-right redrew"
 rather than only "the screen changed".
 
 Same coarse-fingerprint honesty as the whole-image dHash: a tile distance is
@@ -53,12 +53,12 @@ def _as_int(value: Any) -> int:
 class RegionDriftReport:
     """Where an artifact changed, region by region.
 
-    verdict         — MATCH / DRIFT / UNVERIFIABLE (the closed lattice).
-    rows, cols      — the grid the report is over.
-    distances       — per-region Hamming distance (row-major), [] if UNVERIFIABLE.
-    changed_regions — indices whose distance exceeds the threshold.
-    max_distance    — the largest per-region distance, or None if UNVERIFIABLE.
-    reason          — human-readable explanation.
+    verdict         -- MATCH / DRIFT / UNVERIFIABLE (the closed lattice).
+    rows, cols      -- the grid the report is over.
+    distances       -- per-region Hamming distance (row-major), [] if UNVERIFIABLE.
+    changed_regions -- indices whose distance exceeds the threshold.
+    max_distance    -- the largest per-region distance, or None if UNVERIFIABLE.
+    reason          -- human-readable explanation.
     """
 
     verdict: str
@@ -94,7 +94,7 @@ def compare_region_drift(
     Each side is a row-major list of per-tile dHashes (ints or hex strings). A
     region counts as changed when its Hamming distance exceeds `threshold`
     (default 0 = any difference). A missing side or a grid whose length is not
-    rows*cols is UNVERIFIABLE — never a silent MATCH.
+    rows*cols is UNVERIFIABLE -- never a silent MATCH.
     """
     n = rows * cols
     if not baseline_hashes or not current_hashes:

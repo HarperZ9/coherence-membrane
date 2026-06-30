@@ -1,4 +1,4 @@
-"""refine — the reconcile, deepened into a self-improving, refine-until-correct primitive.
+"""refine -- the reconcile, deepened into a self-improving, refine-until-correct primitive.
 
 The reconcile judges an artifact once (perceive -> criterion -> certificate). refine
 GENERALIZES it: judge against GRADED criteria (each yielding a margin, labelled objective or

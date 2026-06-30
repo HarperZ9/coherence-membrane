@@ -1,4 +1,4 @@
-"""Tests for graph_ops — the stdlib re-derivation kernels (determinism + bounds)."""
+"""Tests for graph_ops -- the stdlib re-derivation kernels (determinism + bounds)."""
 from __future__ import annotations
 
 from coherence_membrane.graph import Graph

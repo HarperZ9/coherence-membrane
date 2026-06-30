@@ -1,4 +1,4 @@
-"""The observation contract — the membrane's externalized, witnessed artifact.
+"""The observation contract -- the membrane's externalized, witnessed artifact.
 
 An organ does not return a belief; it returns an Observation: a value the
 hardware/filesystem actually produced, stamped with provenance (what was read,
@@ -7,10 +7,10 @@ wire-compatible with provenance-sensorium's model so the two repos compose
 through the shared JSON shape without importing each other.
 
 Three membrane invariants are encoded here, not asserted:
-  * Externalized   — every Observation serialises to JSON (to_dict / from_dict).
-  * Witnessed      — provenance.digest is the SHA-256 of the witnessed bytes,
+  * Externalized   -- every Observation serialises to JSON (to_dict / from_dict).
+  * Witnessed      -- provenance.digest is the SHA-256 of the witnessed bytes,
                      full width, re-derivable by any host.
-  * Advisory       — Status is a report, never an authority grant; there is no
+  * Advisory       -- Status is a report, never an authority grant; there is no
                      TRUSTED/APPROVED/AUTHORIZED status.
 """
 
@@ -34,7 +34,7 @@ class Status(str, Enum):
 
 
 def sha256_hex(payload: bytes) -> str:
-    """Full-width (64 hex char) SHA-256 of bytes.  No truncation — the digest is
+    """Full-width (64 hex char) SHA-256 of bytes.  No truncation -- the digest is
     the re-derivable trust anchor, so it must be the whole hash."""
     return hashlib.sha256(payload).hexdigest()
 
@@ -97,12 +97,12 @@ class Provenance:
 class Observation:
     """A witnessed fact emitted by an organ.
 
-    organ      — the organ that produced it.
-    subject    — what was observed (a path, an artifact id).
-    summary    — short human-readable description.
-    status     — advisory Status.
-    provenance — how it was witnessed (digest, timestamp, confidence).
-    data       — structured, re-derivable measurements (dims, hashes, ...).
+    organ      -- the organ that produced it.
+    subject    -- what was observed (a path, an artifact id).
+    summary    -- short human-readable description.
+    status     -- advisory Status.
+    provenance -- how it was witnessed (digest, timestamp, confidence).
+    data       -- structured, re-derivable measurements (dims, hashes, ...).
     """
 
     organ: str

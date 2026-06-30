@@ -2,7 +2,7 @@
 
 THE SEAM (found by an adversarial audit): bottleneck_criterion re-checks a claimed
 minimax spanning structure with `graph_ops.spans()` (union-find) for BOTH load-bearing
-connectivity questions — "is the claimed set spanning?" and "do edges below b
+connectivity questions -- "is the claimed set spanning?" and "do edges below b
 disconnect the graph?". A single connectivity kernel cannot catch its own bug: the
 re-checker is not disjoint from its own primitive, so a `spans()`-class bug is a latent
 false VERIFIED.
@@ -10,12 +10,12 @@ false VERIFIED.
 THE FIX (proven here): a SECOND, genuinely independent connectivity decider
 (`graph_ops.connects_all`, BFS-reachability, shares no helper with union-find) is
 cross-checked against `spans()` on both questions. Agreement -> the existing verdict;
-DISAGREEMENT -> UNVERIFIABLE with a `discrepancy` reason — a CAUGHT bug, never a guess
+DISAGREEMENT -> UNVERIFIABLE with a `discrepancy` reason -- a CAUGHT bug, never a guess
 and never a false VERIFIED.
 
 How this test proves it: inject a one-line bug into ONE decider (monkeypatch the name
 the criterion calls) and assert a previously-VERIFIED certificate degrades to
-UNVERIFIABLE — the cross-check catches the planted `spans()`-class bug. A positive test
+UNVERIFIABLE -- the cross-check catches the planted `spans()`-class bug. A positive test
 pins that the unmutated criterion still VERIFIES correct input, so the cross-check did
 not just break the verdict for everyone."""
 from __future__ import annotations

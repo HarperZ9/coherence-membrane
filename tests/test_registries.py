@@ -42,4 +42,4 @@ def test_criterion_reregister_same_object_is_ok():
     reg = CriterionRegistry()
     c = _crit("equals")
     reg.register(c, version="v1")
-    reg.register(c, version="v1")  # idempotent — same object, should not raise
+    reg.register(c, version="v1")  # idempotent -- same object, should not raise

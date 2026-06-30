@@ -1,4 +1,4 @@
-"""Tests for the criterion-independence witness — the BEFORE/AFTER closure of the seam.
+"""Tests for the criterion-independence witness -- the BEFORE/AFTER closure of the seam.
 
 BEFORE: without witnessing, a self-authored reconcile is BYTE-IDENTICAL to an independent
 one (the seam). AFTER: with independence witnessed, the self-authored case is marked
@@ -31,12 +31,12 @@ def _decided_criterion(author=None):
 
 
 # ---------------------------------------------------------------------------------------
-# BEFORE — the seam: self-grading is byte-indistinguishable from independent grading.
+# BEFORE -- the seam: self-grading is byte-indistinguishable from independent grading.
 # ---------------------------------------------------------------------------------------
 
 def test_before_self_and_independent_are_byte_identical():
     # WITHOUT independence witnessing (no `producer`), a self-authored criterion and an
-    # independent one produce BYTE-IDENTICAL Observations — the seam the system can't see.
+    # independent one produce BYTE-IDENTICAL Observations -- the seam the system can't see.
     b_self, b_indep = before()
     assert b_self == b_indep
     # both are honestly marked "unwitnessed" and the differing author is NOT leaked.
@@ -61,7 +61,7 @@ def test_before_holds_for_arbitrary_authors_without_producer():
 
 
 # ---------------------------------------------------------------------------------------
-# AFTER — the closure: witnessing distinguishes the two and downgrades the self-graded one.
+# AFTER -- the closure: witnessing distinguishes the two and downgrades the self-graded one.
 # ---------------------------------------------------------------------------------------
 
 def test_after_self_authored_is_marked_and_downgraded():
@@ -87,7 +87,7 @@ def test_after_observations_are_distinguishable():
 
 
 # ---------------------------------------------------------------------------------------
-# witness_independence — the pure tri-state resolver.
+# witness_independence -- the pure tri-state resolver.
 # ---------------------------------------------------------------------------------------
 
 def test_witness_independence_tristate():

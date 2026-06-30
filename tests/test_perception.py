@@ -35,7 +35,7 @@ def test_empty_organ_list_does_not_pass():
 
 def test_all_organs_over_mixed_subjects_does_not_crash(make_png):
     # perceive() with every organ over image bytes, JSON bytes, and a Frame must
-    # never raise — each organ perceives its modality and degrades on the rest.
+    # never raise -- each organ perceives its modality and degrades on the rest.
     from coherence_membrane.capture import Frame, FrameDescriptor
 
     png = make_png(2, 2, bytes(12))
@@ -51,7 +51,7 @@ def test_all_organs_over_mixed_subjects_does_not_crash(make_png):
 
 def test_all_organs_over_alien_subjects_does_not_crash():
     # None/int/list are out of contract for every organ; perceive must not raise
-    # (Path(subject) would TypeError) — each non-raw organ degrades, raw skips.
+    # (Path(subject) would TypeError) -- each non-raw organ degrades, raw skips.
     snap = perceive([None, 123, ["x"]], organs=all_organs())
     assert snap.observations  # produced observations, did not crash
     assert all(o.status == Status.UNVERIFIED for o in snap.observations)
@@ -59,7 +59,7 @@ def test_all_organs_over_alien_subjects_does_not_crash():
 
 def test_all_organs_survive_pathological_subjects():
     # totality holds even for a subject whose __fspath__ raises OSError and a
-    # Frame whose read() raises a non-OSError — every organ degrades, none crash.
+    # Frame whose read() raises a non-OSError -- every organ degrades, none crash.
     from coherence_membrane.capture import FrameDescriptor
 
     class _BadFspath:
@@ -73,7 +73,7 @@ def test_all_organs_survive_pathological_subjects():
             raise ValueError("read boom")
 
     # an embedded-null path string: Path() succeeds but read_bytes() raises
-    # ValueError (not OSError) — must still degrade, not crash.
+    # ValueError (not OSError) -- must still degrade, not crash.
     snap = perceive([_BadFspath(), _BadFrame(), "foo\x00bar.png"], organs=all_organs())
     assert all(o.status == Status.UNVERIFIED for o in snap.observations)
 

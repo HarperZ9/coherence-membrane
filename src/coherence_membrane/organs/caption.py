@@ -1,15 +1,15 @@
-"""CaptionOrgan — the membrane reads what was said.
+"""CaptionOrgan -- the membrane reads what was said.
 
 A subtitle/transcript line is a cheap, time-alignable text witness of a moment:
 composed per-timestamp with a frame organ (via CompositeObservation), it lets the
 membrane ground "what was on screen AND what was said" as one instant. This organ
-perceives that text — a caption line, an .srt/.vtt cue, a transcript chunk.
+perceives that text -- a caption line, an .srt/.vtt cue, a transcript chunk.
 
 It witnesses the raw-byte identity AND a CANONICAL text identity (Unicode NFC +
 collapsed whitespace), so two captions that differ only in spacing/encoding form
 share one canonical identity and slot into baseline memory's canonical rung. Same
 honest discipline as the structured organ: canonicalisation normalises Unicode
-form and insignificant whitespace ONLY — not case, not punctuation, and certainly
+form and insignificant whitespace ONLY -- not case, not punctuation, and certainly
 not meaning. It is text identity, not comprehension.
 
 Inert and fail-closed: subject is a path or bytes (pass caption text as bytes).

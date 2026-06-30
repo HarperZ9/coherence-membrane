@@ -59,7 +59,7 @@ def test_compose_matches_lattice_meet_exhaustively():
             assert v2l[got] == DRIFT_LATTICE.meet(v2l[a], v2l[b])
 
 
-# --- A1: quorum — robust consensus over independent judges (the readout-gate) ----------
+# --- A1: quorum -- robust consensus over independent judges (the readout-gate) ----------
 
 def test_quorum_supermajority_decides():
     V, R, U = Verdict.VERIFIED, Verdict.REFUTED, Verdict.UNVERIFIABLE

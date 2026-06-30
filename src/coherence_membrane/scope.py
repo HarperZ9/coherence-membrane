@@ -1,4 +1,4 @@
-"""Consequence scope — mediate consequence, never activity.
+"""Consequence scope -- mediate consequence, never activity.
 
 Over-mediation is the failure where every creative act has to pass a gate.  The
 fix is to gate only actions that cross a hard-to-reverse, outward-facing boundary
@@ -6,7 +6,7 @@ fix is to gate only actions that cross a hard-to-reverse, outward-facing boundar
 everything reversible and local flow free.  Perception (the continuity loop) is
 never gated at all.
 
-This module gives a producer one cheap question — `requires_gate(action_kind)` —
+This module gives a producer one cheap question -- `requires_gate(action_kind)` --
 so creative tools can run frictionless and only consult the write-gate for the
 rare consequential action.  The scope is the operator's dial: the default is
 "consequential writes only", so it limits nothing the operator does not choose

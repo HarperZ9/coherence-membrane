@@ -1,4 +1,4 @@
-"""Tests for the Graph L0 substrate — normalisation, UNVERIFIABLE-carrying, helpers."""
+"""Tests for the Graph L0 substrate -- normalisation, UNVERIFIABLE-carrying, helpers."""
 from __future__ import annotations
 
 from coherence_membrane.graph import Graph
@@ -67,7 +67,7 @@ def test_weight_on_absent_edge_is_none():
 
 
 def test_node_ids_coerced_to_strings():
-    # an int node and the str of it are the SAME node — construction is total.
+    # an int node and the str of it are the SAME node -- construction is total.
     g = Graph(nodes=(1, 2), edges=((1, 2),), directed=True)
     assert g.nodes == ("1", "2")
     assert g.edges == (("1", "2"),)

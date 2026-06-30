@@ -18,7 +18,7 @@ def _mp():
 
 
 def test_no_core_z3_import():
-    # importing the package (and external) must NOT import z3 — the adapter is lazy
+    # importing the package (and external) must NOT import z3 -- the adapter is lazy
     import coherence_membrane            # noqa: F401
     import coherence_membrane.external   # noqa: F401
     assert "z3" not in sys.modules
@@ -69,7 +69,7 @@ def test_reach_failclosed_on_raise_and_foreign():
 
 
 def test_reach_forwards_max_atoms_to_oracle():
-    # an oracle with REQUIRED max_atoms (no default) must still work via reach — the
+    # an oracle with REQUIRED max_atoms (no default) must still work via reach -- the
     # reach path forwards max_atoms to match the Method.decide(formula, *, max_atoms) contract
     def strict(f, *, max_atoms):   # no default: would TypeError if reach omitted max_atoms
         return Certificate(show(f), Verdict.VERIFIED, "strict-v0")

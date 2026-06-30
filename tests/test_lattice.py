@@ -1,11 +1,11 @@
 """Formal verdict-lattice proofs, and their binding to the real adjudicators.
 
 Two layers:
-  * the abstract lattice laws (prove_all) — exhaustive over the finite carriers;
-  * the binding layer — the actual functions (compare_drift, compare_composite)
+  * the abstract lattice laws (prove_all) -- exhaustive over the finite carriers;
+  * the binding layer -- the actual functions (compare_drift, compare_composite)
     are proved to LAND IN the lattice (closure), to put their affirmative top
-    behind positive evidence only (fail-closed reachability), and — for the
-    combined drift lattice — to AGGREGATE EXACTLY as the lattice meet (monotonic
+    behind positive evidence only (fail-closed reachability), and -- for the
+    combined drift lattice -- to AGGREGATE EXACTLY as the lattice meet (monotonic
     attenuation: composition never launders a worse set into a better verdict).
 """
 
@@ -120,7 +120,7 @@ def _component_pair(organ: str, subject: str, verdict: str):
 def _assert_overall_is_meet_of_reported(baseline: CompositeObservation,
                                         current: CompositeObservation) -> str:
     """The central attenuation theorem: the overall verdict equals the lattice
-    meet of the per-component verdicts the report actually emitted — except an
+    meet of the per-component verdicts the report actually emitted -- except an
     empty comparison, which fails closed to UNVERIFIABLE (strictly below the
     empty meet's identity, a safe tightening, never above it)."""
     report = compare_composite(baseline, current)

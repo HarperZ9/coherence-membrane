@@ -242,7 +242,7 @@ def test_load_handedited_chain_is_unverifiable(tmp_path):
             break
     Path(p).write_text(json.dumps(data), encoding="utf-8")
     # With head_sha commitment the tamper is now caught at load time (fail-closed).
-    # Either raises ChainLoadError on load OR load succeeds but verify detects it —
+    # Either raises ChainLoadError on load OR load succeeds but verify detects it --
     # both count as "tampered chain detected".
     try:
         loaded = DiffChain.load(p)
@@ -256,7 +256,7 @@ def test_load_handedited_chain_is_unverifiable(tmp_path):
 def test_verify_detects_inserted_entry():
     """C1a: inserting a duplicate shifts tick positions; verify must detect this."""
     c = _chain()  # 5 entries (ticks 0-4), all diffs except base keyframe
-    # duplicate entry[1] at position 2 — now entries[2].tick == 1 but index is 2
+    # duplicate entry[1] at position 2 -- now entries[2].tick == 1 but index is 2
     c.entries.insert(2, c.entries[1])
     v = c.verify()
     assert v.verdict == "UNVERIFIABLE"

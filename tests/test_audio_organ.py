@@ -1,4 +1,4 @@
-"""Tests for the AudioArtifactOrgan — the membrane's second sense."""
+"""Tests for the AudioArtifactOrgan -- the membrane's second sense."""
 
 from __future__ import annotations
 

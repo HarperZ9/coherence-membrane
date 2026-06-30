@@ -1,4 +1,4 @@
-"""Vintage CGI render pipeline — pure functions, stdlib only, deterministic.
+"""Vintage CGI render pipeline -- pure functions, stdlib only, deterministic.
 
 render_vintage composes a 7-step pipeline:
   1. REUSE  color_field_from_png -> ColorField (OKLab)
@@ -11,7 +11,7 @@ render_vintage composes a 7-step pipeline:
 
 Palette and colour accuracy
 ----------------------------
-``palette_hex`` is the QUANTIZATION palette — the set of colours the image was
+``palette_hex`` is the QUANTIZATION palette -- the set of colours the image was
 reduced to during step 3/4.  The final PNG equals that palette exactly ONLY
 when ``palette_exact`` (a field of RenderResult) is True, i.e. both
 ``scanlines=False`` and ``sdf_shade=False``.  When either effect is active,
@@ -51,8 +51,8 @@ UPSCALE_FACTOR: int = 4
 class RenderResult:
     """Result of render_vintage: output PNG bytes and full provenance.
 
-    palette_hex   — the QUANTIZATION palette used during colour reduction.
-    palette_exact — True IFF the final PNG pixel colours are an exact subset of
+    palette_hex   -- the QUANTIZATION palette used during colour reduction.
+    palette_exact -- True IFF the final PNG pixel colours are an exact subset of
                     palette_hex.  This holds only when both scanlines and
                     sdf_shade are disabled; either effect intentionally modulates
                     tone beyond the palette, making palette_exact False.
@@ -67,7 +67,7 @@ class RenderResult:
 
 
 # ---------------------------------------------------------------------------
-# Internal helpers — pure, deterministic
+# Internal helpers -- pure, deterministic
 # ---------------------------------------------------------------------------
 
 def _palette_from_rgb(
@@ -238,7 +238,7 @@ def render_vintage(
 
     Palette accuracy
     ----------------
-    ``palette_hex`` is the QUANTIZATION palette — the colours the image was
+    ``palette_hex`` is the QUANTIZATION palette -- the colours the image was
     reduced to.  The output PNG equals that palette exactly only when
     ``result.palette_exact`` is True (i.e. both ``scanlines=False`` and
     ``sdf_shade=False``).  When either effect is active, the output contains

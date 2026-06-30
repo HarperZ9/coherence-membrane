@@ -1,4 +1,4 @@
-"""A minimal, dependency-free PNG decoder — stdlib only (zlib + struct).
+"""A minimal, dependency-free PNG decoder -- stdlib only (zlib + struct).
 
 Why this exists: the membrane's job is to turn raw artifact bytes into a
 *witnessed projection a model can ground on*.  For an image that means real
@@ -8,7 +8,7 @@ third-party image stack in the trust path.
 
 Scope (honest about coverage): bit depth 8, non-interlaced, colour types
 0 (grayscale), 2 (RGB), 4 (grayscale+alpha), 6 (RGBA).  Palette (type 3),
-16-bit, and interlaced PNGs are not decoded — `decode_png` raises
+16-bit, and interlaced PNGs are not decoded -- `decode_png` raises
 PngDecodeError and the caller degrades to identity-only, never crashes.
 """
 
@@ -114,7 +114,7 @@ def decode_png(payload: bytes) -> DecodedImage:
     """Decode an 8-bit, non-interlaced PNG to raw pixel bytes.
 
     Raises PngDecodeError for anything outside the supported scope or for
-    malformed input — never returns partial/garbage pixels.
+    malformed input -- never returns partial/garbage pixels.
     """
     if not is_png(payload):
         raise PngDecodeError("not a PNG (bad signature)")

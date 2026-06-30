@@ -1,4 +1,4 @@
-"""Accountable memory — re-verifiable, witnessed memory records over a provenance graph.
+"""Accountable memory -- re-verifiable, witnessed memory records over a provenance graph.
 
 A memory is a reconcile-shaped record: a witnessed claim carrying a *reference* to the
 criterion that re-checks it, so on recall it can re-verify itself (MATCH/DRIFT/
@@ -56,7 +56,7 @@ class MemoryRecord:
     tags: tuple[str, ...] = ()
     criterion_ref: CriterionRef | None = None
     perceive_ref: PerceiveRef | None = None
-    created: str = ""  # ISO timestamp; VOLATILE — excluded from identity
+    created: str = ""  # ISO timestamp; VOLATILE -- excluded from identity
 
     def __post_init__(self) -> None:
         if self.type not in MEMORY_TYPES:

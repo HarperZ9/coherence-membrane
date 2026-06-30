@@ -45,7 +45,7 @@ def test_resolution_deeply_nested_degrades():
 
 def test_resolution_agrees_or_abstains_vs_dpll_and_truth_table():
     # three INDEPENDENT paradigms: resolution must AGREE when decisive, or abstain
-    # (UNVERIFIABLE on CNF blow-up) — never disagree
+    # (UNVERIFIABLE on CNF blow-up) -- never disagree
     rng = random.Random(20260620)
     names = ["A", "B", "C", "D"]
     ops = {"and": And, "or": Or, "impl": Implies, "iff": Iff}
@@ -62,6 +62,6 @@ def test_resolution_agrees_or_abstains_vs_dpll_and_truth_table():
         f = rand(4)
         v = res_check_validity(f).verdict
         if v is Verdict.UNVERIFIABLE:
-            continue                      # abstained (blow-up) — the other two still decide
+            continue                      # abstained (blow-up) -- the other two still decide
         assert v is check_validity(f).verdict
         assert v is tt_check_validity(f).verdict

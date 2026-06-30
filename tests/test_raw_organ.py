@@ -1,4 +1,4 @@
-"""Tests for the RawFrameOrgan — sight on the encode-free fast path."""
+"""Tests for the RawFrameOrgan -- sight on the encode-free fast path."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def test_observe_raw_bgra_frame(raw_bgra_frame):
 
 def test_raw_hash_equals_png_path(raw_bgra_frame):
     """The headline guarantee: the raw fast path yields the SAME perceptual hash
-    as encoding to PNG and perceiving that — only the cost differs, not the answer."""
+    as encoding to PNG and perceiving that -- only the cost differs, not the answer."""
     frame, payload, w, h = raw_bgra_frame(16, 16)
     raw_ph = RawFrameOrgan().observe(frame)[0].data["perceptual_hash"]
 
@@ -38,7 +38,7 @@ def test_raw_hash_equals_png_path(raw_bgra_frame):
 
 def test_raw_identity_differs_from_png_identity(raw_bgra_frame):
     """Honesty: raw and PNG identities are of DIFFERENT byte streams, so they
-    must NOT be equal even for the same pixels — only the fingerprint matches."""
+    must NOT be equal even for the same pixels -- only the fingerprint matches."""
     frame, payload, w, h = raw_bgra_frame(8, 8)
     raw_id = RawFrameOrgan().observe(frame)[0].data["identity_sha256"]
     png = encode_png(w, h, bgra_to_rgb(payload, w, h), channels=3)

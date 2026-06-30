@@ -1,4 +1,4 @@
-"""L0 live-state — a witnessed, replayable diff-chain over a Field stream.
+"""L0 live-state -- a witnessed, replayable diff-chain over a Field stream.
 
 Reconstruct and re-verify the substrate at any past tick from a chain you did not
 author; resume it from disk without trusting the file. Stdlib only. Inert and
@@ -265,7 +265,7 @@ class DiffChain:
             chain._current = last if isinstance(last, FieldSnapshot) else chain.reconstruct(len(entries) - 1)
             head = data.get("head_sha")
             if head is not None and chain._current.state_sha != str(head):
-                raise ChainLoadError("head_sha mismatch — chain truncated or altered")
+                raise ChainLoadError("head_sha mismatch -- chain truncated or altered")
             return chain
         except ChainLoadError:
             raise

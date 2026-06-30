@@ -1,4 +1,4 @@
-"""Temporal perception — drift episodes over the continuity stream.
+"""Temporal perception -- drift episodes over the continuity stream.
 
 The continuity loop emits a flat sequence of per-tick verdicts (MATCH / DRIFT /
 UNVERIFIABLE). That tells you what happened at each instant, not the *shape* of
@@ -8,7 +8,7 @@ distance), when each settled, and the longest DWELL (run of unchanged ticks).
 
 So a model can ground "the canvas changed at t=3, peaked at distance 18, and
 settled by t=7" rather than only "tick 5 was DRIFT". This is inert analysis over
-already-witnessed verdicts — it perceives nothing new and grants no authority;
+already-witnessed verdicts -- it perceives nothing new and grants no authority;
 it only re-shapes the witnessed stream into episodes, fail-closed on the same
 closed lattice.
 
@@ -29,7 +29,7 @@ from .phash import DRIFT, MATCH, UNVERIFIABLE
 
 def _verdict_distance(item: Any) -> tuple[str, int | None]:
     """Extract (verdict, distance) from a ContinuityEvent, a dict, or a bare
-    verdict string — so the trace works over any of the stream's forms."""
+    verdict string -- so the trace works over any of the stream's forms."""
     if isinstance(item, str):
         return item, None
     verdict = getattr(item, "verdict", None)

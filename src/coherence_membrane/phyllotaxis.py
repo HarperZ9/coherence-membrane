@@ -1,4 +1,4 @@
-"""phyllotaxis — the golden-angle structural measure (the first structural_fitness ideal).
+"""phyllotaxis -- the golden-angle structural measure (the first structural_fitness ideal).
 
 A point arrangement grown by adding each element at a fixed +137.5078 deg turn (the
 golden angle, 360*(1 - 1/phi)) with steadily increasing radius is the phyllotactic

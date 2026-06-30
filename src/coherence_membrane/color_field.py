@@ -1,4 +1,4 @@
-"""ColorField — the L0 color primitive (per-cell OKLab, UNVERIFIABLE-aware)."""
+"""ColorField -- the L0 color primitive (per-cell OKLab, UNVERIFIABLE-aware)."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,8 +11,8 @@ from .pngview import decode_png
 class ColorField:
     """A 2-D field of OKLab color triples with a first-class UNVERIFIABLE mask.
 
-    lab     — row-major, length width*height; each entry an (L, a, b) triple.
-    unknown — row-major bool mask, True where the cell is UNVERIFIABLE.
+    lab     -- row-major, length width*height; each entry an (L, a, b) triple.
+    unknown -- row-major bool mask, True where the cell is UNVERIFIABLE.
     """
 
     width: int

@@ -1,24 +1,24 @@
-"""The agent loop — make -> look -> compare -> adjust, grounded and gated.
+"""The agent loop -- make -> look -> compare -> adjust, grounded and gated.
 
 A state-blind model reasons about whether its action worked; it does not check.
 This closes that loop: the agent MAKES (produces an artifact, takes an action),
 the membrane LOOKS (perceives the result) and COMPARES it to what was intended,
-and recommends ADJUST or CONVERGED. The membrane never makes and never actuates —
+and recommends ADJUST or CONVERGED. The membrane never makes and never actuates --
 it is inert; the agent iterates and the operator/runtime commits.
 
 Two comparisons, deliberately separate, so nothing is laundered:
 
   * ITERATION (look / iterate): "is the result close enough to my intended goal?"
     Compared to a `Goal` (a reference + an operator-set tolerance). This is purely
-    advisory iteration control — it is NEVER gated, and the tolerance NEVER
+    advisory iteration control -- it is NEVER gated, and the tolerance NEVER
     touches the write-gate.
   * COMMIT (commit): "may I now take the consequential action on this result?"
     Drift is measured against the operator-AUTHORIZED baseline via the baseline
     ladder (byte identity -> canonical -> perceptual), and routed through
     proof-surface's write-gate. So the gate allows publishing only an artifact
-    that matches what was authorized — identical bytes, or for structured data a
+    that matches what was authorized -- identical bytes, or for structured data a
     canonically-equivalent form; a result that drifted is denied, and committing
-    with no look or no authorized baseline is needs-human — never a silent allow.
+    with no look or no authorized baseline is needs-human -- never a silent allow.
 
   goal      = the intended target (a reference observation + a tolerance)
   look()    = perceive the current artifact, compare to the goal -> AdjustmentProposal
@@ -28,7 +28,7 @@ Two comparisons, deliberately separate, so nothing is laundered:
 
 Inert and advisory: looking is free and never gated; only commit() touches the
 write-gate, and only for consequential actions (consequence-scope). The loop adds
-no authority and removes no check — every guarantee still lives in the parts it
+no authority and removes no check -- every guarantee still lives in the parts it
 composes (inert organs, fail-closed gate, honest drift).
 """
 
@@ -43,7 +43,7 @@ from .organ import Organ
 from .organs.visual import VisualArtifactOrgan
 from .phash import DRIFT, MATCH, UNVERIFIABLE, DriftVerdict, compare_drift
 
-# Disposition lattice — the loop's judgement about progress toward the goal.
+# Disposition lattice -- the loop's judgement about progress toward the goal.
 # Distinct from the drift lattice (MATCH/DRIFT/UNVERIFIABLE): this is "should the
 # agent keep adjusting?", not "did the bytes change?".
 CONVERGED = "converged"
@@ -72,7 +72,7 @@ class Goal:
 
     tolerance is the operator's "close enough to stop adjusting" threshold (max
     perceptual Hamming distance). It governs ITERATION ONLY; it never reaches the
-    write-gate. tolerance=0 converges an exact perceptual match — a byte-identical
+    write-gate. tolerance=0 converges an exact perceptual match -- a byte-identical
     result (MATCH), or a byte-different one whose perceptual hash is identical
     (distance 0, e.g. a re-encode); larger tolerances admit proportionally more
     perceptual drift.
@@ -96,7 +96,7 @@ class Goal:
 @dataclass(frozen=True)
 class AdjustmentProposal:
     """The outcome of one look: where the result stands relative to the goal, and
-    whether the agent should keep adjusting. Advisory — the loop recommends; the
+    whether the agent should keep adjusting. Advisory -- the loop recommends; the
     agent acts."""
 
     iteration: int
@@ -123,7 +123,7 @@ class AdjustmentProposal:
 
 @dataclass(frozen=True)
 class BasinReport:
-    """A2 (aperture-sim) — witness whether independent starts reconcile to ONE basin.
+    """A2 (aperture-sim) -- witness whether independent starts reconcile to ONE basin.
 
     The agent loop converges a single trajectory from wherever make() begins; the sims
     proved convergence is START-governed (a near-midpoint basin separatrix), so a single
@@ -172,7 +172,7 @@ def basin_agreement(observations, *, tolerance: int = 0) -> BasinReport:
     basins = len({find(i) for i in range(n)})
     reasons = [f"{n} converged run(s) reconcile to {basins} basin(s)"]
     if basins != 1:
-        reasons.append("PATH-DEPENDENT: independent starts reached different basins — the result "
+        reasons.append("PATH-DEPENDENT: independent starts reached different basins -- the result "
                        "rode on the start, not the criterion (aperture-sim A2); not ownerless")
     return BasinReport(n, basins, basins == 1, reasons)
 
@@ -202,7 +202,7 @@ class AgentLoop:
 
         `subject` is a path, bytes, or an already-perceived Observation. Returns an
         AdjustmentProposal recommending converged / adjust / indeterminate. This is
-        perception only — it performs no action and touches no gate.
+        perception only -- it performs no action and touches no gate.
         """
         obs = self._observe(subject)
         if obs is None:
@@ -228,7 +228,7 @@ class AgentLoop:
     def iterate(self, make: Callable[[], Any], *, max_iterations: int = 10) -> Iterator[AdjustmentProposal]:
         """Drive make -> look -> compare -> adjust until converged or budget spent.
 
-        `make()` is the AGENT's producer (it returns the next artifact subject —
+        `make()` is the AGENT's producer (it returns the next artifact subject --
         path, bytes, or Observation). The loop only looks and compares; it never
         actuates a consequential action (use commit() for that, through the gate).
         Yields each AdjustmentProposal and stops at the first converged one.
@@ -242,13 +242,13 @@ class AgentLoop:
     def converge_multistart(
         self, makes, *, max_iterations: int = 10
     ) -> tuple[list[Observation | None], BasinReport]:
-        """A2 — drive iterate() from several INDEPENDENT starts and witness basin agreement.
+        """A2 -- drive iterate() from several INDEPENDENT starts and witness basin agreement.
 
         `makes` is an iterable of independent producers (diversified starts). Each is run
         through iterate(); the converged Observation per start is collected (None if a start
         never converged within budget). Returns (results, BasinReport). The report says
         whether the starts reconciled to ONE basin (path-independent, witnessed) or DIVERGED
-        (path-dependent — the convergence rode on the start, surfaced not hidden). This
+        (path-dependent -- the convergence rode on the start, surfaced not hidden). This
         replaces the implicit single-trajectory assumption with an explicit witness; it adds
         no authority and gates nothing (looking is free)."""
         results: list[Observation | None] = []
@@ -300,7 +300,7 @@ class AgentLoop:
         if self.membrane.scope.requires_gate(action_kind) and obs is None:
             return LiveDecision(
                 action_kind, target, gated=True, decision="needs-human",
-                reasons=["consequential commit with no witnessed look — look at the "
+                reasons=["consequential commit with no witnessed look -- look at the "
                          "result first (fail-closed)"],
             )
         # Only consequential actions consult the baseline/gate; for a reversible

@@ -1,4 +1,4 @@
-"""Tests for the StructuredDataOrgan — the membrane's third sense (reading data)."""
+"""Tests for the StructuredDataOrgan -- the membrane's third sense (reading data)."""
 
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ def test_canonical_json_bytes_is_sorted_and_compact():
 
 def test_non_json_frame_degrades_without_crashing():
     # A Frame carrying non-JSON bytes must not crash (Path(frame) would TypeError)
-    # — it perceives the bytes and degrades to identity-only.
+    # -- it perceives the bytes and degrades to identity-only.
     from coherence_membrane.capture import Frame, FrameDescriptor
 
     payload = b"\x00\x01\x02\x03"
@@ -123,7 +123,7 @@ def test_json_carried_in_a_frame_is_perceived():
 
 
 def test_alien_subject_degrades_without_crashing():
-    # None/int/list are out of contract; Path() would raise TypeError — guarded.
+    # None/int/list are out of contract; Path() would raise TypeError -- guarded.
     for alien in (None, 123, ["a", "b"]):
         obs = StructuredDataOrgan().observe(alien)[0]
         assert obs.status == Status.UNVERIFIED

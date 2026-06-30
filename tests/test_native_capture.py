@@ -2,7 +2,7 @@
 
 The pure logic (encode, convert, dispatch, graceful degradation) is tested
 everywhere. The live grab is exercised only where a native backend is actually
-available — otherwise it must raise CaptureUnavailable, never another error.
+available -- otherwise it must raise CaptureUnavailable, never another error.
 """
 
 from __future__ import annotations
@@ -98,7 +98,7 @@ def test_raw_screen_source_frames_are_raw_bgra():
     d = frame.descriptor
     assert d.pixel_format == "bgra"
     assert (d.width, d.height) == (8, 8)
-    assert len(frame.read()) == 8 * 8 * 4  # no PNG encode — raw bytes
+    assert len(frame.read()) == 8 * 8 * 4  # no PNG encode -- raw bytes
 
 
 def test_raw_screen_source_drives_continuity_when_available():

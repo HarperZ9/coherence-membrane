@@ -1,11 +1,11 @@
-"""Native propositional resolution refutation — the third independent decider.
+"""Native propositional resolution refutation -- the third independent decider.
 
 A deductive proof method, distinct in paradigm from DPLL's partial-eval SEARCH and
 the truth table's total-assignment ENUMERATION: convert ¬formula to CNF and derive
 the empty clause (refutation-complete for propositional unsat). Sound + complete on
 the const-free fragment; a Const node, an over-cap atom count, or a CNF/closure
 blow-up yields UNVERIFIABLE (fail-closed). Shares no verdict machinery with the
-other deciders — imports only the AST node types + atoms/show."""
+other deciders -- imports only the AST node types + atoms/show."""
 from __future__ import annotations
 
 from .certificate import Certificate, Verdict

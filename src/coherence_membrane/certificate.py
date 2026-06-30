@@ -1,4 +1,4 @@
-"""Certificate — a witnessed verdict + its evidence (the verifier layer's keystone).
+"""Certificate -- a witnessed verdict + its evidence (the verifier layer's keystone).
 
 A claim's truth is never a token; it is a Certificate carrying a deductive verdict
 and the evidence for it. Verdicts map onto the three-valued lattice
@@ -19,10 +19,10 @@ class Verdict(str, Enum):
 class Certificate:
     """A checkable verdict about a claim.
 
-    claim    — the statement that was checked (human-readable).
-    verdict  — VERIFIED / REFUTED / UNVERIFIABLE.
-    oracle   — versioned oracle id (tool self-provenance), e.g. "propositional-dpll-v1".
-    evidence — ordered key->value pairs (counterexample, unsat marker, or reason);
+    claim    -- the statement that was checked (human-readable).
+    verdict  -- VERIFIED / REFUTED / UNVERIFIABLE.
+    oracle   -- versioned oracle id (tool self-provenance), e.g. "propositional-dpll-v1".
+    evidence -- ordered key->value pairs (counterexample, unsat marker, or reason);
                tuple-of-pairs keeps it frozen + deterministically serialisable.
     """
 
@@ -41,7 +41,7 @@ class Certificate:
 
     @classmethod
     def from_dict(cls, d: dict) -> "Certificate":
-        """Inverse of to_dict — round-trips the proof token from its wire form.
+        """Inverse of to_dict -- round-trips the proof token from its wire form.
 
         Symmetric: from_dict(c.to_dict()) == c. Raises ValueError on an unknown
         verdict string (fail-closed: an off-lattice value is rejected, not coerced)."""

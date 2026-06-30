@@ -3,7 +3,7 @@
 verify_fresh re-checks a memory: source-backed memories re-perceive their subject and
 re-judge it via reconcile; sourceless memories are fresh unless a 'supersedes' edge
 points past them; an unresolved criterion/perceiver fails closed to UNVERIFIABLE.
-Stdlib only; no embeddings — recall is by id/type/tag/structure/graph-traversal.
+Stdlib only; no embeddings -- recall is by id/type/tag/structure/graph-traversal.
 """
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ def verify_fresh(record: MemoryRecord, store: MemoryStore, *,
         return DRIFT, "superseded by a newer memory"
     # 3. fail-closed when a source was declared but could not be resolved
     if record.criterion_ref is not None or record.perceive_ref is not None:
-        return UNVERIFIABLE, "criterion/perceiver unregistered — cannot re-check"
+        return UNVERIFIABLE, "criterion/perceiver unregistered -- cannot re-check"
     return MATCH, "no source and not superseded"
 
 

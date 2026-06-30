@@ -42,7 +42,7 @@ def test_field_from_png_grayscale_1ch():
 
 def test_field_from_png_gray_alpha_2ch():
     # channels=2 (grayscale + alpha): luma comes from first channel only
-    # pixel = [200, 128] repeated — alpha ignored, luma = 200/255
+    # pixel = [200, 128] repeated -- alpha ignored, luma = 200/255
     png = encode_png(2, 2, bytes([200, 128] * 4), channels=2)
     f = field_from_png(png)
     assert f.kind is FieldKind.LUMINANCE

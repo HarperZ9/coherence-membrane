@@ -1,4 +1,4 @@
-"""Braille encoder — 2x4 dot packing (U+2800..U+28FF). 8x the spatial density of
+"""Braille encoder -- 2x4 dot packing (U+2800..U+28FF). 8x the spatial density of
 an ASCII cell; ideal for sparse 'ink = signal' (negative-space) projections."""
 from __future__ import annotations
 

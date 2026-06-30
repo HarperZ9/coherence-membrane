@@ -1,10 +1,10 @@
-"""Multimodal composition — one witnessed instant across senses.
+"""Multimodal composition -- one witnessed instant across senses.
 
 A single perception is one modality. A CompositeObservation bundles several
 organs' observations captured at one instant (a frame + its audio + the
 structured data behind them) into one witnessed unit with a single, re-derivable
 composite identity. compare_composite then reports drift PER MODALITY and overall,
-so a model can ground "the scene changed but the audio held" — not just "something
+so a model can ground "the scene changed but the audio held" -- not just "something
 changed".
 
 This is composition, not signal fusion: each modality is judged independently
@@ -75,7 +75,7 @@ class CompositeObservation:
 
     The components are snapshotted (deep-copied) at construction so the composite
     identity is bound to the instant and cannot drift if a caller later mutates the
-    list it passed or a component's data — the same anti-aliasing discipline the
+    list it passed or a component's data -- the same anti-aliasing discipline the
     witness receipt uses.
     """
 
@@ -110,7 +110,7 @@ class CompositeObservation:
 def perceive_composite(pairs, *, timestamp: str | None = None) -> CompositeObservation:
     """Run several (organ, subject) pairs and bundle their observations as one
     instant. An organ that perceives nothing contributes nothing (it is simply
-    absent from the composite — and a later missing modality reads as UNVERIFIABLE)."""
+    absent from the composite -- and a later missing modality reads as UNVERIFIABLE)."""
     components: list[Observation] = []
     for organ, subject in pairs:
         observed = organ.observe(subject)
@@ -152,7 +152,7 @@ def compare_composite(
 
     Components are matched by (organ, subject). A baseline component with no
     matching current component is UNVERIFIABLE (a modality went missing); a
-    DUPLICATE (organ, subject) in current is UNVERIFIABLE (ambiguous — never let
+    DUPLICATE (organ, subject) in current is UNVERIFIABLE (ambiguous -- never let
     insertion order decide); a current modality ABSENT from the baseline is
     reported and folds to UNVERIFIABLE (an unexpected sense appeared). Overall:
     DRIFT if any component drifted, else UNVERIFIABLE if any is

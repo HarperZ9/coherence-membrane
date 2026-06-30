@@ -1,16 +1,16 @@
-"""StructuredDataOrgan — the membrane's third sense: reading structured data.
+"""StructuredDataOrgan -- the membrane's third sense: reading structured data.
 
-Sight perceives pixels and hearing perceives sound; this perceives DATA — a JSON
+Sight perceives pixels and hearing perceives sound; this perceives DATA -- a JSON
 document the operator owns or has authorised. It witnesses two identities:
 
-  * identity_sha256   — the raw bytes (exact, re-derivable), like every organ.
-  * canonical_sha256  — the SHA-256 of the document re-serialised in a normal
+  * identity_sha256   -- the raw bytes (exact, re-derivable), like every organ.
+  * canonical_sha256  -- the SHA-256 of the document re-serialised in a normal
                         form (sorted keys, no insignificant whitespace), so two
                         byte-different but canonically-equivalent documents share
                         one canonical identity.
 
 Why the second hash: for an image, byte drift IS the change you care about. For
-structured data byte drift is too sensitive — reformatting or reordering object
+structured data byte drift is too sensitive -- reformatting or reordering object
 keys flips the raw identity while the document is unchanged. The canonical
 identity lets baseline memory judge drift on the document's *normal form* rather
 than its exact bytes: a canonically-equivalent change is MATCH, a canonical
@@ -24,8 +24,8 @@ equivalent, but two values that mean the same thing can still differ canonically
 canonical hash is honest evidence, not comprehension.
 
 Inert and fail-closed like every organ: it reads bytes and reports; it never
-mutates, parses-and-evaluates, or executes anything; invalid JSON — or a value
-that has no canonical form, e.g. NaN/Infinity — yields identity-only + UNVERIFIED,
+mutates, parses-and-evaluates, or executes anything; invalid JSON -- or a value
+that has no canonical form, e.g. NaN/Infinity -- yields identity-only + UNVERIFIED,
 never a crash and never a fabricated canonical hash. Canonicalisation runs
 entirely in memory with no size cap, so peak RAM is a small multiple of the
 document size; bound the artifact size upstream before observing untrusted input.
@@ -33,11 +33,11 @@ document size; bound the artifact size upstream before observing untrusted input
 Honesty about canonicalisation: the canonical form normalises object-key order
 and insignificant whitespace and escapes non-ASCII consistently. It does NOT
 normalise numeric spelling (1 vs 1.0) or representation (1e3 vs 1000), and it
-inherits IEEE-754 float limits — extreme/sub-normal magnitudes can round (e.g.
+inherits IEEE-754 float limits -- extreme/sub-normal magnitudes can round (e.g.
 1e-400 -> 0.0), so the canonical form reflects the PARSED float, which may not
 equal the source literal's value. -0.0 and 0.0 differ; duplicate object keys
 collapse to the last value (RFC-8259 parse). Array order is preserved because it
-is meaningful. Stdlib `json` only — no third-party parser in the trust path.
+is meaningful. Stdlib `json` only -- no third-party parser in the trust path.
 """
 
 from __future__ import annotations
@@ -53,7 +53,7 @@ def canonical_json_bytes(obj) -> bytes:
     """Serialise a parsed JSON value to its canonical byte form.
 
     Sorted keys, compact separators, ASCII-escaped. Raises ValueError on values
-    with no canonical form (NaN/Infinity) via allow_nan=False — callers degrade
+    with no canonical form (NaN/Infinity) via allow_nan=False -- callers degrade
     to identity-only rather than emit a non-canonical hash.
     """
     return json.dumps(
@@ -130,7 +130,7 @@ class StructuredDataOrgan:
     def _read(subject) -> tuple[str, bytes | None]:
         # Frame-like (descriptor + callable read): read its bytes and perceive
         # them like any other bytes (JSON carried in a frame is still
-        # canonicalised; anything else degrades to identity-only) — never crash on
+        # canonicalised; anything else degrades to identity-only) -- never crash on
         # Path(frame). Keeps all_organs() total over any subject.
         descriptor = getattr(subject, "descriptor", None)
         reader = getattr(subject, "read", None)
@@ -214,7 +214,7 @@ class StructuredDataOrgan:
             oinv.status == Status.UNVERIFIED and oinv.data.get("canonical_sha256") is None,
         ))
         # A value that parses but has no canonical form (NaN) is a distinct path
-        # (allow_nan=False) — prove it fails closed too, so allow_nan can't regress.
+        # (allow_nan=False) -- prove it fails closed too, so allow_nan can't regress.
         onan = self.observe(b'{"x": NaN}')[0]
         checks.append(Check(
             "non-canonicalisable number (NaN) fails closed",

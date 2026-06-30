@@ -1,10 +1,10 @@
-"""AudioArtifactOrgan — the membrane's second sense: hearing.
+"""AudioArtifactOrgan -- the membrane's second sense: hearing.
 
 Given an audio artifact (a WAV the operator owns or has authorised), it emits ONE
 witnessed Observation:
-  * identity   — full SHA-256 of the raw bytes (exact, re-derivable),
-  * format     — channels, sample rate, frame count, duration, sample width,
-  * perception — a 64-bit perceptual fingerprint of the loudness envelope over
+  * identity   -- full SHA-256 of the raw bytes (exact, re-derivable),
+  * format     -- channels, sample rate, frame count, duration, sample width,
+  * perception -- a 64-bit perceptual fingerprint of the loudness envelope over
                  time (a coarse "shape of the sound", dHash-style).
 
 Inert and fail-closed, exactly like the visual organ: it reads bytes and reports;
@@ -15,7 +15,7 @@ fingerprint.
 Honesty: the fingerprint is a coarse amplitude-envelope hash (is the loudness
 shape the same?), NOT acoustic content recognition. Distance is advisory evidence
 of "the sound changed", not of "the meaning changed".  Stdlib only (`wave`,
-`array`) — no third-party audio stack in the trust path.
+`array`) -- no third-party audio stack in the trust path.
 """
 
 from __future__ import annotations
@@ -119,7 +119,7 @@ class AudioArtifactOrgan:
     def _read(subject):
         # Frame-like (descriptor + callable read): read its bytes and perceive
         # them like any other bytes (a WAV carried in a frame is still hashed;
-        # anything else degrades to identity-only) — never crash on Path(frame).
+        # anything else degrades to identity-only) -- never crash on Path(frame).
         # Keeps all_organs() total over any subject.
         descriptor = getattr(subject, "descriptor", None)
         reader = getattr(subject, "read", None)

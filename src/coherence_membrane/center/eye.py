@@ -1,11 +1,11 @@
-"""EyeMind / EyeJudge — the eye (a real perception organ) wired as the center's PERCEIVE mind.
+"""EyeMind / EyeJudge -- the eye (a real perception organ) wired as the center's PERCEIVE mind.
 
 The eye is the perceptive half of the reconcile (the atelier is the generative half). Here it plugs
 into the center behind the `Mind` interface using a real coherence-membrane perception organ
 (VisualArtifactOrgan by default): its proposal is a WITNESSED perception of the artifact in its
-channel (an Observation — identity, decoded?, perceptual hash, confidence), not a guess. The matching
+channel (an Observation -- identity, decoded?, perceptual hash, confidence), not a guess. The matching
 `EyeJudge` scores a candidate on the QUALITY of that witnessed perception (did the organ actually
-perceive it, decode it, with what confidence), read from the real Observation — the perceptive
+perceive it, decode it, with what confidence), read from the real Observation -- the perceptive
 counterpart to the AtelierJudge's read of the generated artifact's own fitness.
 """
 from __future__ import annotations
@@ -58,7 +58,7 @@ _CONF = {"high": 1.0, "medium": 0.6, "low": 0.2}
 
 class EyeJudge:
     """Scores a candidate on the QUALITY of the eye's witnessed perception (from the real Observation).
-    A candidate the eye did not perceive (not in the store) scores 0 — no perception, no credit."""
+    A candidate the eye did not perceive (not in the store) scores 0 -- no perception, no credit."""
 
     def __init__(self, store: dict):
         self.store = store

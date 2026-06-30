@@ -1,4 +1,4 @@
-"""The atelier (studio-engine) wired as the center's GENERATE mind — real generation.
+"""The atelier (studio-engine) wired as the center's GENERATE mind -- real generation.
 
 Skips cleanly if studio_engine is not on the path (it is an optional dependency of the center)."""
 from __future__ import annotations
@@ -52,7 +52,7 @@ def test_atelier_judge_reads_studio_engine_fitness():
     w = store[prop]
     assert abs(sc["fitness"] - max(0.0, min(1.0, float(w.receipt.final_score)))) < 1e-9  # the artifact's own score
     assert set(sc) == set(GEN_DIMS)
-    # a non-artifact candidate has no generative fitness — the judge says 0, not a guess
+    # a non-artifact candidate has no generative fitness -- the judge says 0, not a guess
     assert all(v == 0.0 for v in AtelierJudge(store).score("plain text", VIEWS, GEN_DIMS).values())
 
 

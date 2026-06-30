@@ -1,8 +1,8 @@
-"""LiveMembrane — the living loop as one configurable object.
+"""LiveMembrane -- the living loop as one configurable object.
 
 This ties the whole read-gate together into the shape the membrane is for: a
 thing that PERCEIVES continuously, REMEMBERS an authorized baseline, and mediates
-ONLY consequence. It owns no authority of its own — perception is free and
+ONLY consequence. It owns no authority of its own -- perception is free and
 un-gated; acting routes through proof-surface's write-gate, and only for actions
 the consequence-scope says are consequential.
 
@@ -88,7 +88,7 @@ class LiveMembrane:
     ) -> LiveDecision:
         """Decide whether an action may proceed.
 
-        Reversible/local actions are NOT gated — they return allow immediately, so
+        Reversible/local actions are NOT gated -- they return allow immediately, so
         creative flow is frictionless. Consequential actions (per the scope) are
         routed to the write-gate; with no write-gate installed that is needs-human,
         never a fabricated allow.

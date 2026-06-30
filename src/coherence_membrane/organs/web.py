@@ -1,8 +1,8 @@
-"""WebDocumentOrgan — the membrane's web sense: perceiving a live web page as
+"""WebDocumentOrgan -- the membrane's web sense: perceiving a live web page as
 witnessed *structure*, not a screenshot.
 
 Sight perceives pixels and hearing perceives sound; this perceives a WEB
-DOCUMENT — the served HTML the operator fetched — reduced to title, headings,
+DOCUMENT -- the served HTML the operator fetched -- reduced to title, headings,
 links, and whitespace-normalised visible text, each stamped with the identity
 digest of the exact bytes received. It is the construction-over-detection answer
 to the screenshot loop: a re-derivable structural reading rather than a pixel
@@ -10,13 +10,13 @@ buffer hoped-correct.
 
 Inert and fail-closed like every organ: it issues a single HTTP ``GET`` (it
 observes external state; it never POSTs, mutates, or executes), and any fetch or
-parse failure yields identity-only + ``UNVERIFIED`` — never a crash and never
+parse failure yields identity-only + ``UNVERIFIED`` -- never a crash and never
 fabricated structure. ``Status`` is advisory; there is no authority-shaped value.
 
 Boundaries, stated honestly:
   * v0 perceives the *served* HTML only. JavaScript-rendered DOM, network-trace
     capture, and rendered-region geometry are named later increments, not faked.
-  * Stdlib only — ``urllib`` + ``html.parser``. No browser and no third-party
+  * Stdlib only -- ``urllib`` + ``html.parser``. No browser and no third-party
     parser in the trust path.
   * It does NOT import the quarantined ``behavior-transform.io`` ``safe_fetch``;
     the accountable web sense keeps its own clean fetch so it never depends on

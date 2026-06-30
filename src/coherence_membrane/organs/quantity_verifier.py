@@ -1,4 +1,4 @@
-"""QuantityVerifierOrgan — witnessed dimensional/numeric verification (tier-2).
+"""QuantityVerifierOrgan -- witnessed dimensional/numeric verification (tier-2).
 
 Wraps the dimensional-invariant oracle as an inert, fail-closed Observation: a
 QuantityClaim is checked; a non-claim subject is not this organ's modality (returns

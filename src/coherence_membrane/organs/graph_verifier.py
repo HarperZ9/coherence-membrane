@@ -1,8 +1,8 @@
-"""GraphVerifierOrgan — witnessed verification of an L0 Graph-plane claim.
+"""GraphVerifierOrgan -- witnessed verification of an L0 Graph-plane claim.
 
 The Graph plane's first organ: the model emits a graph claim (reachability /
 bottleneck / closure) and the organ returns a sound Certificate carrying a
-re-checkable witness. SOUNDNESS is the contract — an over-cap / malformed / non-tree
+re-checkable witness. SOUNDNESS is the contract -- an over-cap / malformed / non-tree
 claim is UNVERIFIABLE, NEVER a false VERIFIED. Inert and fail-closed: a foreign
 subject yields [] and observe() never raises.
 

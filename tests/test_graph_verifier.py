@@ -181,7 +181,7 @@ def test_no_false_verified_reachability():
 
 def test_no_false_verified_bottleneck_under_perturbation():
     # any claimed bottleneck value other than the true minimax (2.0) must NOT VERIFY,
-    # and a non-spanning subset must NOT VERIFY — soundness over completeness.
+    # and a non-spanning subset must NOT VERIFY -- soundness over completeness.
     g = _weighted()
     spanning = (("x", "y"), ("y", "z"))
     for bad_b in (0.0, 1.0, 1.5, 3.0, 5.0, -1.0):
@@ -241,7 +241,7 @@ def test_organ_provenance_full_width_digest():
 # --- reconcile EQUIVALENCE (the proof it's a real reconcile) -------------------
 
 def test_reconcile_equivalence_reachability():
-    # mirrors test_reconcile.py::test_reconcile_is_the_verifier_organ — the organ IS a
+    # mirrors test_reconcile.py::test_reconcile_is_the_verifier_organ -- the organ IS a
     # reconcile (identity perceive + the reachability criterion): same verdict, same
     # oracle, same witnessed evidence.
     claim = ReachabilityClaim(_triangle(), "a", expect_cycle=True)

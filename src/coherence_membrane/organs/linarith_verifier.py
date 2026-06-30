@@ -1,4 +1,4 @@
-"""LinearArithmeticVerifierOrgan — witnessed proof-carrying QF-LRA verification.
+"""LinearArithmeticVerifierOrgan -- witnessed proof-carrying QF-LRA verification.
 
 Observes a feasibility or entailment claim over linear constraints and emits a
 Certificate whose verdict was confirmed by an independent witness checker (model or

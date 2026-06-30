@@ -1,4 +1,4 @@
-"""Tests for WebDocumentOrgan — the membrane's web sense (Phase 1).
+"""Tests for WebDocumentOrgan -- the membrane's web sense (Phase 1).
 
 All offline: perception runs on fixture bytes; the one real fetch test uses a
 localhost http.server, never the internet.

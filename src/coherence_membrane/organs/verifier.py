@@ -1,8 +1,8 @@
-"""PropositionalVerifierOrgan — witnessed deductive verification of a boolean claim.
+"""PropositionalVerifierOrgan -- witnessed deductive verification of a boolean claim.
 
 The verifier layer's first organ: the model emits a Formula (a proof obligation),
 the organ returns a sound Certificate it cannot talk past. SOUNDNESS is the
-contract — an undecidable/oversized/unsupported claim is UNVERIFIABLE, never a
+contract -- an undecidable/oversized/unsupported claim is UNVERIFIABLE, never a
 false verdict."""
 from __future__ import annotations
 

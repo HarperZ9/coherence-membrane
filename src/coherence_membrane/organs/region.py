@@ -1,7 +1,7 @@
-"""RegionArtifactOrgan — a finer-grained eye: perception with a region grid.
+"""RegionArtifactOrgan -- a finer-grained eye: perception with a region grid.
 
 The VisualArtifactOrgan answers "did this image change". This answers "which part
-of it changed" — it emits the same whole-image facts (identity, dimensions,
+of it changed" -- it emits the same whole-image facts (identity, dimensions,
 perceptual hash, so it still slots into baseline memory and the gate) PLUS a
 row-major grid of per-tile dHashes. compare_region_drift() then localises a
 change to the tiles that actually moved.
@@ -152,7 +152,7 @@ class RegionArtifactOrgan:
                             obs.data.get("region_hashes") == obs2.data.get("region_hashes")))
 
         # The load-bearing check: a change confined to ONE tile is localized to
-        # exactly that tile — "where it changed", not just "it changed". Alter an
+        # exactly that tile -- "where it changed", not just "it changed". Alter an
         # interior tile when the grid has one, so all four tile boundaries are
         # exercised (a corner tile can't catch a left/up under-read).
         interior = (self.rows // 2) * self.cols + (self.cols // 2)

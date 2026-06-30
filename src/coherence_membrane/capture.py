@@ -1,9 +1,9 @@
-"""The frame-handoff contract — the agnostic spine of live perception.
+"""The frame-handoff contract -- the agnostic spine of live perception.
 
 The single most important architectural decision in this package: the membrane
 does NOT reach into a graphics API to grab frames.  It would then be coupled to
 D3D11, and have to chase D3D12, Vulkan, Metal, and whatever comes next, forever.
-Instead the dependency is INVERTED — a producer (an engine, a creative tool, a
+Instead the dependency is INVERTED -- a producer (an engine, a creative tool, a
 capture shim) hands the membrane a Frame, and the membrane only ever sees bytes
 plus a descriptor.  This contract never changes when a graphics API does.
 
@@ -11,9 +11,9 @@ plus a descriptor.  This contract never changes when a graphics API does.
 
 A `CaptureSource` is anything that yields Frames.  Two portable, stdlib-only
 sources ship here:
-  * DirectoryFrameSource — frames a producer writes to a folder (zero deps; any
+  * DirectoryFrameSource -- frames a producer writes to a folder (zero deps; any
     tool that can write a PNG can integrate),
-  * CallableFrameSource — frames pulled from a producer callback (an engine shim
+  * CallableFrameSource -- frames pulled from a producer callback (an engine shim
     drives it directly).
 Heavy, platform-specific grabbers (screen capture, a D3D12 present-hook) are
 out-of-core plugins that implement the same `frames()` iterator and are never
@@ -107,7 +107,7 @@ class CallableFrameSource:
     """Yield frames pulled from a producer callable.
 
     The callable returns the next payload (bytes) or None to stop.  An engine
-    shim implements `producer()` and the membrane consumes — the grab logic
+    shim implements `producer()` and the membrane consumes -- the grab logic
     stays entirely on the producer side.
     """
 
@@ -134,7 +134,7 @@ class CallableFrameSource:
 
 
 class IterableFrameSource:
-    """Wrap an iterable of (bytes) or Frame objects as a CaptureSource — handy for
+    """Wrap an iterable of (bytes) or Frame objects as a CaptureSource -- handy for
     tests and for producers that already have a sequence in hand."""
 
     def __init__(self, items: Iterable, *, source_id: str = "iterable",

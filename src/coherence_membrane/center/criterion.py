@@ -1,4 +1,4 @@
-"""CriterionSpec — the human's named, weighted criterion (the one role §6 says cannot be delegated).
+"""CriterionSpec -- the human's named, weighted criterion (the one role §6 says cannot be delegated).
 
 A criterion is a readout the human cares to preserve, named and weighted across dimensions. It is
 EXTERNAL to the minds being reconciled; the center hosts whichever is named (criterion-relativity is
@@ -29,7 +29,7 @@ class CriterionSpec:
 
     def score(self, dim_scores: dict[str, float]) -> float:
         """Weighted sum of a candidate's per-dimension scores under this (normalized) criterion.
-        Dimensions absent from the candidate score 0 — an unmeasured dimension is not free credit."""
+        Dimensions absent from the candidate score 0 -- an unmeasured dimension is not free credit."""
         w = self.normalized().dims
         return round(sum(weight * float(dim_scores.get(dim, 0.0)) for dim, weight in w.items()), 6)
 

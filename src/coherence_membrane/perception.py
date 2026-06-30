@@ -1,9 +1,9 @@
-"""perceive() — the inert read API a model grounds on.
+"""perceive() -- the inert read API a model grounds on.
 
 A model never reaches for the world directly.  It calls perceive(), which runs
 the registered organs over the given subjects and returns a PerceptionSnapshot:
 a bundle of witnessed Observations the model may reason over.  This is the
-read-gate.  It performs NO action and grants NO authority — it only reports what
+read-gate.  It performs NO action and grants NO authority -- it only reports what
 was witnessed.  Acting on what is perceived goes back out through the write-gate
 (see membrane.py).
 """

@@ -91,7 +91,7 @@ def test_recall_traverse_ancestors():
     - recall(traverse_from=("C","supersedes")) must return exactly {B}
       (follows C's supersedes edge to B; B's edge_type is "derived-from" so stops)
     - recall(traverse_from=("C","derived-from")) must return set()
-      (C's edge to B is "supersedes", not "derived-from" — no match)
+      (C's edge to B is "supersedes", not "derived-from" -- no match)
     - recall(traverse_from=("B","derived-from")) must return {A}
       (follows B's derived-from edge to A)
     """

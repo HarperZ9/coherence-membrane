@@ -1,4 +1,4 @@
-"""Tests for the agent loop — make -> look -> compare -> adjust, grounded and gated."""
+"""Tests for the agent loop -- make -> look -> compare -> adjust, grounded and gated."""
 
 from __future__ import annotations
 
@@ -211,7 +211,7 @@ def test_commit_without_authorized_baseline_is_needs_human():
     assert d.decision == "needs-human"  # no baseline -> UNVERIFIABLE -> needs-human
 
 
-# --- A2: basin agreement — witness path-(in)dependence across independent starts ---------
+# --- A2: basin agreement -- witness path-(in)dependence across independent starts ---------
 
 def test_basin_agreement_one_basin_when_identical():
     # two converged runs with the same perceived identity -> one basin -> path-independent.

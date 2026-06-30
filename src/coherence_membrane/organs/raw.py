@@ -1,7 +1,7 @@
-"""RawFrameOrgan — sight on the high-rate fast path.
+"""RawFrameOrgan -- sight on the high-rate fast path.
 
 The VisualArtifactOrgan perceives an *encoded* image (a PNG): it decodes, then
-hashes.  At high capture rates the encode/decode round-trip is pure overhead —
+hashes.  At high capture rates the encode/decode round-trip is pure overhead --
 the OS already handed us raw pixels.  This organ perceives those raw pixels
 directly: it witnesses the identity of the raw bytes and computes the perceptual
 hash straight from them, with NO PNG encode and NO decode.
@@ -9,16 +9,16 @@ hash straight from them, with NO PNG encode and NO decode.
 It emits the SAME Observation shape as the visual organ (identity_sha256, width,
 height, format, perceptual_hash), so baseline memory, the gate bridge, and the
 continuity loop all consume it unchanged.  Its subject is a `Frame` (raw bytes
-plus a descriptor carrying width/height/pixel_format) — raw bytes with no
+plus a descriptor carrying width/height/pixel_format) -- raw bytes with no
 geometry are not perceivable, and the organ says so honestly rather than
 guessing dimensions.
 
 Two honesty notes:
   * The raw identity (sha256 of BGRA bytes) is NOT equal to the PNG identity for
-    the same pixels — different byte streams.  Only the perceptual fingerprint is
+    the same pixels -- different byte streams.  Only the perceptual fingerprint is
     cross-comparable between the raw and PNG paths.  That equality is exactly what
     the selftest proves: the fast path changes the cost, never the answer.
-  * Same modality as the eye, not a new sense — a different intake for sight.
+  * Same modality as the eye, not a new sense -- a different intake for sight.
 
 Inert and fail-closed like every organ: it reads bytes and reports; it never
 mutates anything; a missing descriptor, unknown format, or short buffer yields
@@ -41,7 +41,7 @@ class RawFrameOrgan:
     def observe(self, subject) -> list[Observation]:
         """Observe a raw-pixel Frame.  Non-Frame subjects (a path, loose bytes)
         carry no geometry, so this organ can perceive nothing about them and
-        returns [] — sight on raw pixels needs to know the shape of the buffer."""
+        returns [] -- sight on raw pixels needs to know the shape of the buffer."""
         info = self._read_frame(subject)
         if info is None:
             return []
@@ -60,7 +60,7 @@ class RawFrameOrgan:
         ch = raw_channels(fmt)
         # None checks must precede the comparisons (short-circuit) so a missing
         # dimension never reaches `<= 0` as a TypeError.  Zero/negative dims are
-        # as unperceivable as missing ones — fail closed, never crash.
+        # as unperceivable as missing ones -- fail closed, never crash.
         if width is None or height is None or ch is None or width <= 0 or height <= 0:
             data.update({"perceptual_hash": None, "decoded": False,
                          "decode_note": "raw frame lacks valid width/height or a known pixel_format"})
@@ -105,8 +105,8 @@ class RawFrameOrgan:
         """A deterministic BGRA frame whose channels have DIFFERENT horizontal
         profiles, on purpose.
 
-        R (byte 2) is a centre-peak "tent" — non-monotonic, so the dHash is
-        non-trivial (not all-zeros) — and B (byte 0) is a left-to-right ramp.
+        R (byte 2) is a centre-peak "tent" -- non-monotonic, so the dHash is
+        non-trivial (not all-zeros) -- and B (byte 0) is a left-to-right ramp.
         Because R and B differ horizontally, swapping them (the exact mistake a
         wrong _RAW_LAYOUTS entry would make) changes the luma profile and so the
         hash.  That is what makes the cross-path equality check AND the byte-order
@@ -148,7 +148,7 @@ class RawFrameOrgan:
 
         # The load-bearing check: the raw fast path produces the SAME perceptual
         # hash as the encode->decode path for the same pixels.  If this fails, the
-        # fast path is changing the answer, not just the cost — net-negative.
+        # fast path is changing the answer, not just the cost -- net-negative.
         rgb = bgra_to_rgb(payload, w, h)
         png_ph = format(perceptual_hash(decode_png(encode_png(w, h, rgb, channels=3))), "016x")
         checks.append(Check("raw fast-path hash equals PNG-path hash", ph1 == png_ph,

@@ -1,12 +1,12 @@
-"""Perceptual hashing and drift — the membrane's "has this actually changed?".
+"""Perceptual hashing and drift -- the membrane's "has this actually changed?".
 
 Identity (SHA-256) answers *exactly the same bytes?*.  A perceptual hash
-answers the softer, sometimes more useful question *visually the same?* — so a
+answers the softer, sometimes more useful question *visually the same?* -- so a
 re-encode that is byte-different but pixel-identical reads as a small distance,
 while a real visual change reads as a large one.
 
 The drift verdict is a closed lattice, mirroring EMET:
-  MATCH        identical bytes (sha256 equal) — the strongest statement.
+  MATCH        identical bytes (sha256 equal) -- the strongest statement.
   DRIFT        bytes differ; the perceptual distance quantifies how much.
   UNVERIFIABLE at least one side could not be perceptually hashed (e.g. an
                unsupported PNG), so visual similarity cannot be confirmed.
@@ -97,7 +97,7 @@ def perceptual_hash(img: DecodedImage) -> int:
 
 # Raw pixel layouts the hasher understands: format -> (channels, (r,g,b) byte
 # indices within a pixel, or None for a single grayscale channel).  This is the
-# whole coupling to byte order — BGRA (the OS capture layout) and RGBA both map
+# whole coupling to byte order -- BGRA (the OS capture layout) and RGBA both map
 # to the same luma, so a raw hash equals the decoded-PNG hash for the same pixels.
 _RAW_LAYOUTS: dict[str, tuple[int, tuple[int, int, int] | None]] = {
     "rgba": (4, (0, 1, 2)),
@@ -139,12 +139,12 @@ def _raw_to_grayscale(pixels: bytes, width: int, height: int, pixel_format: str)
 
 
 def perceptual_hash_raw(pixels: bytes, width: int, height: int, pixel_format: str) -> int:
-    """64-bit dHash of a RAW pixel buffer — no PNG encode/decode round-trip.
+    """64-bit dHash of a RAW pixel buffer -- no PNG encode/decode round-trip.
 
     This is the high-rate fast path: the OS hands over raw BGRA, and the
     perceptual hash is computed straight from those bytes.  Because it shares
     `_dhash_bits` and computes the same Rec.601 luma, the result is bit-identical
-    to perceptual_hash(decode_png(encode_png(...))) for the same pixels — proven
+    to perceptual_hash(decode_png(encode_png(...))) for the same pixels -- proven
     in RawFrameOrgan.selftest().  Raises ValueError on unsupported format or a
     short buffer (caller degrades to identity-only, never a fabricated hash).
     """
@@ -161,9 +161,9 @@ def hamming(a: int, b: int) -> int:
 class DriftVerdict:
     """Result of comparing a current artifact against a baseline.
 
-    verdict   — one of MATCH / DRIFT / UNVERIFIABLE.
-    distance  — perceptual Hamming distance (0..64), or None if UNVERIFIABLE.
-    reason    — human-readable explanation.
+    verdict   -- one of MATCH / DRIFT / UNVERIFIABLE.
+    distance  -- perceptual Hamming distance (0..64), or None if UNVERIFIABLE.
+    reason    -- human-readable explanation.
     """
 
     verdict: str
@@ -181,7 +181,7 @@ def compare_drift(
 
     Exact byte equality is MATCH.  Byte-difference with both perceptual hashes
     present is DRIFT (distance quantifies it).  A missing identity or perceptual
-    hash on either side is UNVERIFIABLE — never silently MATCH.
+    hash on either side is UNVERIFIABLE -- never silently MATCH.
     """
     if not baseline_sha256 or not current_sha256:
         return DriftVerdict(UNVERIFIABLE, None, "a SHA-256 identity is missing on one side")
@@ -191,7 +191,7 @@ def compare_drift(
         return DriftVerdict(
             UNVERIFIABLE,
             None,
-            "bytes differ but a perceptual hash is missing — visual similarity cannot be confirmed",
+            "bytes differ but a perceptual hash is missing -- visual similarity cannot be confirmed",
         )
     dist = hamming(baseline_phash, current_phash)
     return DriftVerdict(DRIFT, dist, f"bytes differ; perceptual distance {dist}/64")

@@ -127,7 +127,7 @@ class _OneShotSource:
 
 def test_loop_reads_each_source_frame_exactly_once():
     # Regression: the loop must read the source frame once (for cur_sha) and then
-    # perceive the SAME bytes — not re-read (a second disk hit / TOCTOU window for
+    # perceive the SAME bytes -- not re-read (a second disk hit / TOCTOU window for
     # path-backed frames). It hands the organ a wrapper carrying the read bytes.
     desc = FrameDescriptor(source_id="t", frame_index=0, width=4, height=4, pixel_format="bgra")
     cf = _CountingFrame(desc, bytes(4 * 4 * 4))

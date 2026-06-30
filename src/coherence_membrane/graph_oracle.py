@@ -1,13 +1,13 @@
-"""graph_oracle — the first Graph-plane reconcile criteria (worked, attributed).
+"""graph_oracle -- the first Graph-plane reconcile criteria (worked, attributed).
 
 Three Certificate-emitting Criterion factories, harvested and attributed from the
 3cycle YouTube corpus (study + cite, never strip). Each `judge` is TOTAL: malformed
-input, an over-cap graph, or any internal error degrades to UNVERIFIABLE — NEVER a
+input, an over-cap graph, or any internal error degrades to UNVERIFIABLE -- NEVER a
 crash and NEVER a false VERIFIED (the cardinal soundness invariant). Every VERIFIED
 Certificate carries a re-checkable witness (a path/cycle, or spanning edges + a cut)
 so a third party re-derives the verdict without trusting this code.
 
-Each criterion is consumed unchanged by the generic reconcile() spine — they are
+Each criterion is consumed unchanged by the generic reconcile() spine -- they are
 real reconciles, not a bespoke pipeline (proven by the reconcile-equivalence test).
 
 Bounds are explicit (node/edge/depth caps); exceeding a cap is UNVERIFIABLE WITH A
@@ -57,12 +57,12 @@ def reachability_criterion(*, max_nodes: int = DEFAULT_MAX_NODES,
     node/edge cap or on malformed input.
 
     Source (study + cite, never strip): 3cycle (@3cycle), "Prescribing the Death of a
-    Cellular Automaton", video id `nGespkZpUNo` — recasts a CA-death/recurrence
+    Cellular Automaton", video id `nGespkZpUNo` -- recasts a CA-death/recurrence
     question as a de Bruijn-graph reachability decision, a sound+complete alternative
     to a SAT encoding on the bounded fragment.
 
     The judge is TOTAL (never raises). On `expect_cycle=True`: VERIFIED iff a simple
-    cycle through `label_node` is found within budget — the cycle (node list, first ==
+    cycle through `label_node` is found within budget -- the cycle (node list, first ==
     last) is carried in evidence so a third party re-checks every edge exists; REFUTED
     iff the bounded search proves NO such cycle (closure). On `expect_cycle=False` the
     verdicts swap (VERIFIED = absence proven, witness = the closure). A budget hit ->
@@ -86,7 +86,7 @@ def reachability_criterion(*, max_nodes: int = DEFAULT_MAX_NODES,
             cycle = find_cycle_through(g, node, max_nodes=max_nodes)
             # find_cycle_through returns None for BOTH "no cycle" and "budget hit"; the
             # cap is enforced above (node_count <= max_nodes) so within-budget BFS over
-            # <= max_nodes nodes cannot hit the per-search cap before exhausting — a None
+            # <= max_nodes nodes cannot hit the per-search cap before exhausting -- a None
             # here is therefore a real closure (no cycle), not a budget abort.
             exists = cycle is not None
             verdict = Verdict.VERIFIED if exists == form.expect_cycle else Verdict.REFUTED
@@ -115,13 +115,13 @@ def bottleneck_criterion(*, max_nodes: int = DEFAULT_MAX_NODES,
                          max_edges: int = DEFAULT_MAX_EDGES) -> Criterion:
     """Re-check a claimed minimax (bottleneck) spanning structure in O(E): the claimed
     `spanning` edges must (1) connect every node, (2) have max weight == `bottleneck`,
-    and (3) `bottleneck` must be MINIMAL — proven by a cut witness: deleting every edge
+    and (3) `bottleneck` must be MINIMAL -- proven by a cut witness: deleting every edge
     with weight < `bottleneck` must DISCONNECT the graph (so no spanning structure can
     have a smaller max weight). VERIFIED iff all three checks pass with a carried
     witness; REFUTED iff a check fails; UNVERIFIABLE over cap / malformed.
 
     Source (study + cite, never strip): 3cycle (@3cycle), "Bottleneck Spanning Trees:
-    A Graph Theory Breakthrough?", video id `sUMAV8lnPcA` — the minimax spanning
+    A Graph Theory Breakthrough?", video id `sUMAV8lnPcA` -- the minimax spanning
     arborescence (Camerini; Gabow-Tarjan) and its cheap, re-checkable certificate. We
     re-check the certificate (the cheap direction); we do NOT recompute the optimum.
 
@@ -129,10 +129,10 @@ def bottleneck_criterion(*, max_nodes: int = DEFAULT_MAX_NODES,
     and the cut (the two sides the sub-bottleneck edges fail to connect), so a third
     party re-derives minimality independently.
 
-    SOUNDNESS — checker disjoint from its own primitive (cf. crosscheck.py, spec
+    SOUNDNESS -- checker disjoint from its own primitive (cf. crosscheck.py, spec
     §16.1): the two load-bearing connectivity questions (is the claimed set spanning?
     do edges below `b` disconnect?) are decided TWICE, by two genuinely independent
-    kernels — union-find `spans()` AND BFS-reachability `connects_all()`, which share
+    kernels -- union-find `spans()` AND BFS-reachability `connects_all()`, which share
     no helper. Both must AGREE; a disagreement is a CAUGHT BUG in one kernel ->
     UNVERIFIABLE with a `discrepancy` reason, NEVER a guess and never a false VERIFIED.
     A single connectivity kernel would hide its own bug from the re-checker; two do
@@ -165,7 +165,7 @@ def bottleneck_criterion(*, max_nodes: int = DEFAULT_MAX_NODES,
                 return 1.0 if w is None else w
             # (1) spanning: the claimed edges connect all nodes. Decided by TWO
             # disjoint kernels (union-find AND BFS); they must agree, else a kernel
-            # bug is caught as UNVERIFIABLE — never a guess, never a false VERIFIED.
+            # bug is caught as UNVERIFIABLE -- never a guess, never a false VERIFIED.
             uf_spans = spans(g.nodes, spanning) is not None
             bfs_spans = connects_all(g.nodes, spanning)
             if uf_spans != bfs_spans:
@@ -190,7 +190,7 @@ def bottleneck_criterion(*, max_nodes: int = DEFAULT_MAX_NODES,
                                    (("reason", "cannot span >1 node with no edges"),))
             # (3) minimality cut witness: edges strictly below b must NOT connect the
             # graph (else a smaller bottleneck would exist). Decided by the SAME two
-            # disjoint kernels and cross-checked — a disagreement here is likewise a
+            # disjoint kernels and cross-checked -- a disagreement here is likewise a
             # caught kernel bug (UNVERIFIABLE), not a guessed minimality verdict.
             below = tuple(e for e in g.edges if wt(e) < b)
             uf_below_spans = spans(g.nodes, below) is not None
@@ -205,7 +205,7 @@ def bottleneck_criterion(*, max_nodes: int = DEFAULT_MAX_NODES,
             if uf_below_spans and g.node_count() > 1:
                 # sub-bottleneck edges already span -> b is NOT minimal -> claim false.
                 return Certificate("bottleneck: not minimal", Verdict.REFUTED, oracle,
-                                   (("reason", "edges below b already span — smaller bottleneck exists"),
+                                   (("reason", "edges below b already span -- smaller bottleneck exists"),
                                     ("claimed_bottleneck", repr(b))))
             cut = cut_sides(g.nodes, below)
             witness = (
@@ -236,7 +236,7 @@ def closure_certificate(*, max_nodes: int = DEFAULT_MAX_NODES,
     on a non-tree, or malformed.
 
     Source (study + cite, never strip): 3cycle (@3cycle), "Translating proofs between
-    Nested Deduction and Hilbert Systems", video id `krU8nPF6CdY` — serial transitive
+    Nested Deduction and Hilbert Systems", video id `krU8nPF6CdY` -- serial transitive
     closure on a (proof) tree precomputes composable jump-edges so any reachability
     certificate is one composition; here that maps onto the project's composable
     Certificates via the proven meet.

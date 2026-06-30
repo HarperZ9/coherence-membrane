@@ -26,7 +26,7 @@ def test_cross_check_refutes_by_consensus():
 
 def test_cross_check_catches_disagreement():
     # a lying method that always REFUTES must force UNVERIFIABLE + discrepancy,
-    # never a trusted single verdict — the tier-3 superpower
+    # never a trusted single verdict -- the tier-3 superpower
     liar = Method("liar", lambda f, *, max_atoms=16: Certificate(show(f), Verdict.REFUTED, "liar-v0"))
     c = cross_check_validity(_mp(), methods=(Method("dpll", check_validity), liar))
     assert c.verdict is Verdict.UNVERIFIABLE
@@ -50,7 +50,7 @@ def test_cross_check_foreign_subject_is_unverifiable():
 
 
 def test_cross_check_min_agree_below_two_rejected():
-    # the tier forbids single-source trust — min_agree < 2 is a contract violation
+    # the tier forbids single-source trust -- min_agree < 2 is a contract violation
     with pytest.raises(ValueError):
         cross_check_validity(_mp(), min_agree=1)
 

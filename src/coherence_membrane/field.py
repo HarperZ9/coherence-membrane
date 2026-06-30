@@ -1,4 +1,4 @@
-"""Field — the L0 scalar-field primitive (see spec sensory-transform-algebra)."""
+"""Field -- the L0 scalar-field primitive (see spec sensory-transform-algebra)."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -15,8 +15,8 @@ class FieldKind(str, Enum):
 class Field:
     """A 2-D scalar field with a first-class UNVERIFIABLE mask.
 
-    values  — row-major, length width*height.
-    unknown — row-major bool mask, True where the cell is UNVERIFIABLE.
+    values  -- row-major, length width*height.
+    unknown -- row-major bool mask, True where the cell is UNVERIFIABLE.
     """
 
     width: int

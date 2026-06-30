@@ -25,7 +25,7 @@ def test_rasterize_is_perceivable_by_the_eye():
 
 
 def test_field_generators_rasterize_faithfully():
-    # gyroid and quasicrystal are scalar FIELDS (glsl-fragment), not point recipes — the rasterizer
+    # gyroid and quasicrystal are scalar FIELDS (glsl-fragment), not point recipes -- the rasterizer
     # must evaluate the verified strand expr per pixel, so the eye perceives the REAL field structure.
     eye = VisualArtifactOrgan()
     hashes = {}
@@ -39,12 +39,12 @@ def test_field_generators_rasterize_faithfully():
         assert obs.data["perceptual_hash"] not in ("0" * len(obs.data["perceptual_hash"]),
                                                    "f" * len(obs.data["perceptual_hash"]))
         hashes[gen] = obs.data["perceptual_hash"]
-    # two different fields produce two different perceptions — not a generator-blind scatter
+    # two different fields produce two different perceptions -- not a generator-blind scatter
     assert hashes["gyroid"] != hashes["quasicrystal"]
 
 
 def test_field_pixels_are_the_verified_expr():
-    # the rasterized field must equal evaluating the engine's OWN strand expr at the same pixel —
+    # the rasterized field must equal evaluating the engine's OWN strand expr at the same pixel --
     # proof the eye sees the verified math, not a decorative proxy.
     from coherence_membrane.center.composite import _field_expr_src, _ramp
     from studio_engine.strand import glsl as G, expr as EX
@@ -70,7 +70,7 @@ def test_composite_loop_judges_both_halves():
     cert = composite_reconcile(BRIEF, CURATOR, seeds=(1, 2, 3))
     assert cert.verdict is Verdict.VERIFIED and winner_of(cert) in scores_of(cert)
     sc = scores_of(cert)
-    # each candidate carries a generative score (fitness) AND a perceptual score (decoded) — both halves real
+    # each candidate carries a generative score (fitness) AND a perceptual score (decoded) -- both halves real
     assert all("fitness" in c and "decoded" in c for c in sc.values())
     assert any(c["decoded"] > 0 for c in sc.values())           # the eye really perceived the rendered artifacts
 

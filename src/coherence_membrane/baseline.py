@@ -1,4 +1,4 @@
-"""Baseline memory — drift against an authorized baseline, over time.
+"""Baseline memory -- drift against an authorized baseline, over time.
 
 Frame-to-frame drift answers "did it change since the last tick". Baseline drift
 answers the accountability question: "did it change since the operator last
@@ -15,7 +15,7 @@ alike.
 The check is a three-rung ladder, strongest first:
   1. byte identity equal           -> MATCH (the strongest statement).
   2. canonical identity equal      -> MATCH (canonically equivalent though the
-                                     bytes differ — e.g. reformatted/reordered
+                                     bytes differ -- e.g. reformatted/reordered
                                      JSON; a canonical difference is real DRIFT).
                                      Structural equivalence, not an understanding
                                      of meaning.
@@ -45,7 +45,7 @@ def _identity(obs: Observation) -> str | None:
 
 def _canonical(obs: Observation) -> str | None:
     """A canonical (normal-form) identity that ignores insignificant byte
-    differences — structural, not semantic (currently the structured-data
+    differences -- structural, not semantic (currently the structured-data
     organ's canonical_sha256)."""
     return obs.data.get("canonical_sha256")
 
@@ -131,7 +131,7 @@ class Baseline:
         if cur_identity == entry.identity_sha256:
             return BaselineVerdict(MATCH, 0, "matches the pinned baseline (identity equal)")
 
-        # Rung 2: canonical (normal-form) identity — bytes differ but the
+        # Rung 2: canonical (normal-form) identity -- bytes differ but the
         # canonical form is unchanged (e.g. reformatted/reordered JSON) is still a
         # MATCH; a canonical difference is a real change, not a perceptual one.
         # Structural equivalence, not an understanding of meaning.

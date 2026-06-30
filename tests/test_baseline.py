@@ -1,4 +1,4 @@
-"""Tests for baseline memory — drift against an authorized baseline."""
+"""Tests for baseline memory -- drift against an authorized baseline."""
 
 from __future__ import annotations
 

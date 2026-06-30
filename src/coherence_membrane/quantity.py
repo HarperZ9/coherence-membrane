@@ -1,12 +1,12 @@
-"""Quantity + Dimension — value-with-units as a checkable primitive.
+"""Quantity + Dimension -- value-with-units as a checkable primitive.
 
 The dimensional arm of the verifier layer's tier-2 (invariant) oracle. A Quantity
 carries an exact Dimension (7 SI base exponents as Fractions); arithmetic enforces
-dimensional homogeneity — you cannot add metres to seconds. This makes the single
+dimensional homogeneity -- you cannot add metres to seconds. This makes the single
 highest-leverage error class (units confusion) a structural impossibility, and the
 ground the dimensional oracle re-derives its verdicts from.
 
-Integer/Fraction exponents are exact; a float exponent may be imprecise — pass a
+Integer/Fraction exponents are exact; a float exponent may be imprecise -- pass a
 Fraction for exact fractional powers (e.g. dim ** Fraction(1, 2))."""
 from __future__ import annotations
 

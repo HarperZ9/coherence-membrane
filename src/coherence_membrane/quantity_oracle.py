@@ -1,8 +1,8 @@
-"""dimensional-invariant-v1 — the tier-2 oracle over Quantity.
+"""dimensional-invariant-v1 -- the tier-2 oracle over Quantity.
 
 Re-derives dimensional/numeric invariants and emits a Certificate. SOUNDNESS: a
 *dimensional* VERIFIED is exact (Fraction compare); a *magnitude* VERIFIED is
-'within rel_tol' and the tol is carried in the evidence — a float compare is not
+'within rel_tol' and the tol is carried in the evidence -- a float compare is not
 dressed as a proof. Any non-finite value or unsupported input ⇒ UNVERIFIABLE."""
 from __future__ import annotations
 

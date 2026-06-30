@@ -1,4 +1,4 @@
-"""Tests for coherence_membrane.retro — vintage CGI render pipeline."""
+"""Tests for coherence_membrane.retro -- vintage CGI render pipeline."""
 from __future__ import annotations
 
 from coherence_membrane.color import srgb_to_oklab, oklab_to_srgb
@@ -54,7 +54,7 @@ def test_render_result_has_required_fields():
 
 
 # ---------------------------------------------------------------------------
-# Determinism — the cardinal property
+# Determinism -- the cardinal property
 # ---------------------------------------------------------------------------
 
 def test_determinism_same_params_same_output():
@@ -92,7 +92,7 @@ def test_determinism_scanlines_flag_changes_output():
 
 
 # ---------------------------------------------------------------------------
-# Provenance — sha256 fields
+# Provenance -- sha256 fields
 # ---------------------------------------------------------------------------
 
 def test_source_sha256_matches_input():
@@ -283,7 +283,7 @@ def test_end_to_end_provenance_round_trip():
 
 
 # ---------------------------------------------------------------------------
-# C1/C2 — palette_exact field and scanlines/SDF disclosure (all 4 combinations)
+# C1/C2 -- palette_exact field and scanlines/SDF disclosure (all 4 combinations)
 # ---------------------------------------------------------------------------
 
 def test_palette_exact_all_four_combinations():
@@ -355,13 +355,13 @@ def test_palette_exact_false_with_scanlines_exceeds_palette_size():
 
 
 # ---------------------------------------------------------------------------
-# C3 — golden-hash test: same-platform determinism
+# C3 -- golden-hash test: same-platform determinism
 # ---------------------------------------------------------------------------
 
 def test_golden_hash_same_platform_determinism():
     """Same-platform golden: fixed input+params always yield this exact sha256.
 
-    This is a same-platform golden hash — it pins determinism and will catch
+    This is a same-platform golden hash -- it pins determinism and will catch
     any regression on this machine/Python/zlib build.  It is NOT a cross-machine
     bit-identity guarantee (libm ** and zlib are build-dependent).
 
@@ -397,7 +397,7 @@ def test_golden_hash_same_platform_determinism():
 
 
 # ---------------------------------------------------------------------------
-# I1 — unknown cells render black, not palette[0]
+# I1 -- unknown cells render black, not palette[0]
 # ---------------------------------------------------------------------------
 
 def test_unknown_cell_renders_black_not_palette_zero():
@@ -432,14 +432,14 @@ def test_unknown_cell_renders_black_not_palette_zero():
         f"Unknown cell must render as black OKLab (0,0,0), got {lab_pixels[0]}"
     )
 
-    # Confirm black in sRGB — not palette[0] (red)
+    # Confirm black in sRGB -- not palette[0] (red)
     r_f, g_f, b_f = oklab_to_srgb(lab_pixels[0])
     r = max(0, min(255, round(r_f * 255)))
     g = max(0, min(255, round(g_f * 255)))
     b = max(0, min(255, round(b_f * 255)))
     assert (r, g, b) == (0, 0, 0), f"Unknown cell sRGB must be (0,0,0), got {(r,g,b)}"
 
-    # palette[0] is red — confirm the two are distinct
+    # palette[0] is red -- confirm the two are distinct
     r_f2, g_f2, b_f2 = oklab_to_srgb(palette[0])
     p0 = (
         max(0, min(255, round(r_f2 * 255))),
@@ -453,7 +453,7 @@ def test_unknown_cell_renders_black_not_palette_zero():
 
 
 # ---------------------------------------------------------------------------
-# I2 — target_width larger than source does not crash
+# I2 -- target_width larger than source does not crash
 # ---------------------------------------------------------------------------
 
 def test_target_width_larger_than_source_does_not_crash():
