@@ -11,3 +11,6 @@ venv/
 .env.*
 CLAUDE.local.md
 _drafts/
+
+# pytest coverage artifact
+.coverage
