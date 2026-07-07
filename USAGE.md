@@ -19,12 +19,15 @@ python -m coherence_membrane selftest
 
 ```sh
 python -m coherence_membrane selftest
+python -m coherence_membrane perceive frame.png
 python -m coherence_membrane capture frame.png
 python -m coherence_membrane watch 60 --raw
+python -m coherence_membrane distill --code --original mod.py --candidate mod_small.py
 ```
 
 `capture` and `watch` perceive local screen state. Use them only on surfaces the
-operator owns or is authorized to inspect.
+operator owns or is authorized to inspect. `distill` accepts a compressed
+rewrite of a source file only when the declared criterion survives.
 
 ## Use From Python
 
