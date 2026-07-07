@@ -1,12 +1,15 @@
-# Coherence Membrane
+<p align="center"><img src=".github/assets/banner.svg" alt="coherence-membrane: The reconcile, embodied: externalized organs for a stateless mind." width="100%"></p>
 
-![Coherence Membrane hero](docs/brand/coherence-membrane-hero.png)
+**The reconcile, embodied: externalized organs for a stateless mind.**
 
-> Give AI agents inspectable observations of files, images, screens, and context.
+![version](https://img.shields.io/badge/version-0.1.0-ff8334?style=flat-square&labelColor=14041b)
+[![license: MIT](https://img.shields.io/badge/license-MIT-8f8095?style=flat-square&labelColor=14041b)](LICENSE)
+![python](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square&labelColor=14041b)
+[![CI](https://github.com/HarperZ9/coherence-membrane/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/coherence-membrane/actions/workflows/ci.yml)
+![deps: none](https://img.shields.io/badge/deps-none-success?style=flat-square&labelColor=14041b)
+[![part of: AI-accountability toolkit](https://img.shields.io/badge/part_of-AI--accountability_toolkit-7a5cff?style=flat-square&labelColor=14041b)](https://harperz9.github.io)
 
-Coherence Membrane is a Python perception layer for agent workflows. It turns
-bounded local artifacts into observations with hashes, dimensions, drift checks,
-and receipt-shaped data an agent can reason from instead of guessing.
+Coherence Membrane gives AI agents real eyes on local state: it perceives files, PNGs, screen captures, and context records into structured observations with exact hashes, dimensions, and perceptual fingerprints. Live screen capture goes straight through the OS compositor via stdlib `ctypes`, so it works across D3D, Vulkan, OpenGL, Metal, and software renderers with zero third-party dependencies. Baseline comparison returns a closed MATCH / DRIFT / UNVERIFIABLE verdict that never silently matches on difference, and it composes with a write-gate through a shared JSON shape. Every observation is receipt-shaped and re-derivable, so an agent can re-check what it saw.
 
 ## Why it matters
 
@@ -36,13 +39,6 @@ integration points for proof-surface style gates.
 ## Existing technical notes
 
 > An inert, host-adjudicated perception membrane for inspectable model context.
-
-[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
-![version](https://img.shields.io/badge/version-0.1.0-informational.svg)
-[![CI](https://github.com/HarperZ9/coherence-membrane/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/coherence-membrane/actions/workflows/ci.yml)
-![deps: none](https://img.shields.io/badge/deps-none-success.svg)
-[![part of: AI-accountability toolkit](https://img.shields.io/badge/part_of-AI--accountability_toolkit-7a5cff.svg)](https://harperz9.github.io)
 
 A model's one structural disability is **state-blindness**: it reasons on its prior
 and on source text, not on what actually happened. When it says "this frame renders
