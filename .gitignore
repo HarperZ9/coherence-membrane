@@ -14,3 +14,6 @@ _drafts/
 
 # pytest coverage artifact
 .coverage
+
+# The committed template must survive the .env.* rule above (global standard)
+!.env.example
