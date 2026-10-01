@@ -1,4 +1,4 @@
-<p align="center"><img src=".github/assets/zentropy-banner.png" alt="coherence-membrane: The reconcile, embodied: externalized organs for a stateless mind." width="100%"></p>
+<p align="center"><img src=".github/assets/banner.png" alt="coherence-membrane: The reconcile, embodied: externalized organs for a stateless mind." width="100%"></p>
 
 **The reconcile, embodied: externalized organs for a stateless mind.**
 
@@ -183,4 +183,4 @@ The long form of this belief: [The Unbundling](https://github.com/HarperZ9/flywh
 
 ---
 
-**[Zentropy Labs](https://github.com/ZentropyLabs-ai)** · order out of entropy. An independent lab building evidence-first tools that leave a re-checkable artifact behind. Built by Zain Dana Harper in Seattle. The full workbench is at [Project Telos](https://harperz9.github.io).
+Built by **[Zain Dana Harper](https://harperz9.github.io)** in Seattle: evidence-first tools that leave a re-checkable artifact behind. The full workbench is at [Project Telos](https://harperz9.github.io).
