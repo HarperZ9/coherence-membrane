@@ -2,8 +2,8 @@
 
 **The reconcile, embodied: externalized organs for a stateless mind.**
 
-![version](https://img.shields.io/badge/version-0.1.0-ff8334?style=flat-square&labelColor=14041b)
-[![license: MIT](https://img.shields.io/badge/license-MIT-8f8095?style=flat-square&labelColor=14041b)](LICENSE)
+![version](https://img.shields.io/badge/version-0.2.0-ff8334?style=flat-square&labelColor=14041b)
+[![license: FSL-1.1-MIT](https://img.shields.io/badge/license-FSL--1.1--MIT-8f8095?style=flat-square&labelColor=14041b)](LICENSE)
 ![python](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square&labelColor=14041b)
 [![CI](https://github.com/HarperZ9/coherence-membrane/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/coherence-membrane/actions/workflows/ci.yml)
 ![deps: none](https://img.shields.io/badge/deps-none-success?style=flat-square&labelColor=14041b)
@@ -35,7 +35,7 @@ cd coherence-membrane
 python -m pip install -e ".[test]"
 ```
 
-Python 3.10+. Not yet on PyPI; this is a 0.1.0 alpha installed from source.
+Python 3.10+. Release 0.1.0 is on PyPI (`pip install coherence-membrane`, MIT). This source tree is the 0.2.0 alpha.
 
 ## Quickstart
 
@@ -149,7 +149,7 @@ They are deliberately separate repos that compose through a shared observation a
 - A dHash is a coarse 64-bit fingerprint of low-frequency structure, not semantic understanding. Distance is advisory evidence.
 - Capture reads the composited display output the operator can already see. It does not inject into, hook, or read another process's memory.
 - The JS core's canonical JSON deliberately throws on non-safe-integer numbers rather than silently diverging from Python float semantics.
-- This is a 0.1.0 alpha. APIs can still move, and non-Windows capture backends are unvalidated.
+- This is a 0.2.0 alpha. APIs can still move, and non-Windows capture backends are unvalidated.
 
 ## Documentation
 
@@ -165,7 +165,7 @@ Everything above is re-derivable rather than asserted: 914 tests pass (3 skipped
 
 ## License
 
-MIT.
+From v0.2.0, code is licensed FSL-1.1-MIT. Earlier releases remain under MIT. FSL-1.1-MIT is the Functional Source License, Version 1.1, with MIT as the future licence: each release becomes available under MIT two years after it is made available. See [LICENSE](LICENSE). Release 0.1.0 on PyPI is MIT. Every commit in this repository is by the author.
 
 ---
 **Zain Dana Harper**, small tools with explicit edges.

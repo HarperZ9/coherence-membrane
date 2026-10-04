@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 (unreleased)
+
+- From v0.2.0, code is licensed FSL-1.1-MIT. Earlier releases remain under MIT.
+- `LICENSE` is the FSL-1.1-MIT text from fsl.software, with licensor Zain Dana Harper and copyright 2026.
+- Release 0.1.0, published on PyPI, stays MIT.
+- `LICENSE.md` was a second copy of the MIT text and is removed; `LICENSE` is the one licence file.
+- `pyproject.toml` declares `license = "FSL-1.1-MIT"` (PEP 639, hatchling 1.27 or later) and drops the MIT classifier; PyPI has no FSL classifier. Version 0.2.0 in `pyproject.toml` and `__version__`.
+- No code behaviour changed.
+
 ## 2026-06-29 - Forward Delivery Contract
 
 - Added `AGENTS.md`, `USAGE.md`, `CHANGELOG.md`, and
