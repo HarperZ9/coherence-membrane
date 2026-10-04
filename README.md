@@ -1,13 +1,20 @@
-<p align="center"><img src=".github/assets/banner.png" alt="coherence-membrane: The reconcile, embodied: externalized organs for a stateless mind." width="100%"></p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HarperZ9/coherence-membrane/main/docs/art/hero-dark.svg">
+  <img src="https://raw.githubusercontent.com/HarperZ9/coherence-membrane/main/docs/art/hero-light.svg" alt="coherence-membrane: Give AI agents verifiable perception of local files, images, and screens. Parallel rays pass through a lens drawn in fine lines, gather at a bright core and spread out past it." width="100%">
+</picture>
 
-**The reconcile, embodied: externalized organs for a stateless mind.**
+# coherence-membrane
 
-![version](https://img.shields.io/badge/version-0.2.0-ff8334?style=flat-square&labelColor=14041b)
-[![license: FSL-1.1-MIT](https://img.shields.io/badge/license-FSL--1.1--MIT-8f8095?style=flat-square&labelColor=14041b)](LICENSE)
-![python](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square&labelColor=14041b)
+Give AI agents verifiable perception of local files, images, and screens.
+
+```
+git clone https://github.com/HarperZ9/coherence-membrane
+```
+
+[![version: 0.2.0](https://img.shields.io/badge/version-0.2.0-e6e1d6?style=flat-square&labelColor=1a1712)](https://pypi.org/project/coherence-membrane/)
 [![CI](https://github.com/HarperZ9/coherence-membrane/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/coherence-membrane/actions/workflows/ci.yml)
-![deps: none](https://img.shields.io/badge/deps-none-success?style=flat-square&labelColor=14041b)
-[![part of: AI-accountability toolkit](https://img.shields.io/badge/part_of-AI--accountability_toolkit-7a5cff?style=flat-square&labelColor=14041b)](https://harperz9.github.io)
+[![license](https://img.shields.io/badge/license-FSL--1.1--MIT-e6e1d6?style=flat-square&labelColor=1a1712)](https://github.com/HarperZ9/coherence-membrane/blob/main/LICENSE)
+![python 3.10+](https://img.shields.io/badge/python-3.10%2B-e6e1d6?style=flat-square&labelColor=1a1712)
 
 Coherence Membrane gives AI agents real eyes on local state: it perceives files, PNGs, screen captures, and context records into structured observations with exact hashes, dimensions, and perceptual fingerprints. Live screen capture goes straight through the OS compositor via stdlib `ctypes`, so it works across D3D, Vulkan, OpenGL, Metal, and software renderers with zero third-party dependencies. Baseline comparison returns a closed MATCH / DRIFT / UNVERIFIABLE verdict that never silently matches on difference, and it composes with a write-gate through a shared JSON shape. Every observation is receipt-shaped and re-derivable, so an agent can re-check what it saw.
 
