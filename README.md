@@ -34,6 +34,12 @@ Coherence Membrane gives AI agents real eyes on local state: it perceives files,
 
 Zero runtime dependencies. The entire trust path is the Python standard library.
 
+## See it work, step by step
+
+The [animated explainer](https://harperz9.github.io/repo-explainers/coherence-membrane.html)
+walks through observing a JSON document, a baseline checked on its three-rung ladder, two logic claims certified, a receipt verified with and without its anchor, and the two-implementation conformance corpus. Every value on it is output from this repository. Its
+source is [docs/explainer/index.html](docs/explainer/index.html).
+
 ## Install
 
 ```bash
