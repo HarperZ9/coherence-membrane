@@ -40,6 +40,51 @@ The [animated explainer](https://harperz9.github.io/repo-explainers/coherence-me
 walks through observing a JSON document, a baseline checked on its three-rung ladder, two logic claims certified, a receipt verified with and without its anchor, and the two-implementation conformance corpus. Every value on it is output from this repository. Its
 source is [docs/explainer/index.html](docs/explainer/index.html).
 
+## Watch
+
+[![Re-derive it. Don't take it on trust.: a narrated film, 2 min 5 s](https://harperz9.github.io/media/explainers/rederive/poster.jpg)](https://harperz9.github.io/explainers.html#rederive-h)
+
+**[Re-derive it. Don't take it on trust.](https://harperz9.github.io/explainers.html#rederive-h)** (2 min 5 s, narrated, captioned). Coherence Membrane keeps a record an agent can re-check, and two independent implementations re-derive the same corpus. The film page carries the transcript, the sources and recall questions.
+
+Video walkthrough: coming with the next release.
+
+## Walkthrough
+
+Install it, run it once, then use the main feature. Each command below is real, and so is its output.
+
+1. **Install.** Install from a checkout. Python 3.10 or newer; this tree is the 0.2.0 alpha.
+
+   ```text
+   $ git clone https://github.com/HarperZ9/coherence-membrane && cd coherence-membrane
+   $ python -m pip install -e ".[test]"
+   $ python -m coherence_membrane selftest
+   ```
+
+2. **First run: observe a document.** In Python, observe a small JSON document. The observation records exact and canonical hashes.
+
+   ```text
+   >>> StructuredDataOrgan().observe(b'{"a": 1, "b": 2}')
+   identity_sha256   d8497d9d82770a70...
+   canonical_sha256  43258cff783fe703...
+   top_level_type    object
+   key_count         2
+   ```
+
+3. **Check a claim.** A logic claim goes to a deterministic checker. A refutation carries its counterexample.
+
+   ```text
+   claim: ((B & (A -> B)) -> A)
+   oracle    propositional-dpll-v1
+   evidence  counterexample A = 0, B = 1
+   ```
+
+4. **Run the conformance corpus.** Re-derive the 16-case corpus in Python, then in the independent Node.js core.
+
+   ```text
+   $ python conformance/run.py
+   {"cases": 16, "passed": 16, "failed": 0, "corpus_sha256": "0748fc1adef9753d..."}
+   ```
+
 ## Install
 
 ```bash
