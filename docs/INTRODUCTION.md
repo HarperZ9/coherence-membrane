@@ -1,16 +1,15 @@
 # Introduction to Coherence Membrane
 
-Coherence Membrane is a zero-dependency Python library that lets an AI agent,
-a test harness, or any host program perceive real local state instead of
-guessing at it. It turns files, PNGs, WAVs, JSON documents, captions, and live
-screen frames into structured observations carrying exact SHA-256 identities,
-witnessed dimensions, and 64-bit perceptual fingerprints. It compares those
-observations against operator-authorized baselines and returns a closed
-verdict: MATCH, DRIFT, or UNVERIFIABLE, never a silent pass.
+Coherence Membrane is a Python library, built on the standard library alone,
+that lets an AI agent, a test harness, or any host program read real local
+state. It turns files, PNGs, WAVs, JSON documents, captions, and live screen
+frames into structured observations carrying exact SHA-256 identities, measured
+dimensions, and 64-bit perceptual fingerprints. It compares those observations
+against baselines you pinned and returns one of three verdicts: MATCH, DRIFT,
+or UNVERIFIABLE.
 
-The entire trust path is the Python standard library. Screen capture goes
-through the OS compositor via `ctypes`, so it works under D3D, Vulkan, OpenGL,
-Metal, and software renderers without importing a graphics API.
+Screen capture goes through the OS compositor via `ctypes`, so it works under
+D3D, Vulkan, OpenGL, Metal, and software renderers alike.
 
 ## Why it exists
 
@@ -26,16 +25,16 @@ look, compare, adjust loop the agent was always blind in.
 **Observation.** The unit of perception. Every observation carries the
 full-width SHA-256 of the exact bytes it saw, modality-specific facts (width
 and height, audio envelope hash, canonical JSON identity, glyph grid), and a
-status. An unreadable or malformed artifact yields an unverified observation
-with no fabricated data.
+status. When an artifact fails to parse, the observation records that in its
+status and leaves its data fields empty.
 
-**Organ.** A single sense with a contract: it reads, it reports, it never
-mutates anything, and it ships a `selftest()` that re-derives its own claims
-from a known artifact and can fail. Sixteen organs are registered by default,
+**Organ.** A single sense with a contract: it reads and reports, leaves
+what it reads unchanged, and ships a `selftest()` that re-derives its own
+claims from a known artifact. Sixteen organs are registered by default,
 covering sight, hearing, structured data, captions, region drift, glyph views,
 contours, palettes, raw frames, and six deductive verifiers.
-`python -m coherence_membrane selftest` runs them all and exits non-zero if
-any organ cannot prove itself.
+`python -m coherence_membrane selftest` runs them all and exits 1 when an
+organ fails its own test.
 
 **Drift lattice.** Every adjudicator returns a verdict from a small closed
 set. MATCH requires positive evidence, absence of evidence is UNVERIFIABLE,
@@ -48,10 +47,10 @@ observations against it on a three-rung ladder: byte identity, canonical
 (normal-form) identity, perceptual distance. A reformatted JSON document is a
 MATCH; a changed value is a DRIFT. Baselines persist to disk.
 
-**Continuity.** The always-on loop. A cheap identity hash runs every tick;
-only a real change escalates to the full perceptual work, and a
-`ResourceBudget` caps and paces that work. A change the budget cannot afford
-is reported UNVERIFIABLE("throttled"), never dropped.
+**Continuity.** The always-on loop. A cheap identity hash runs every tick,
+and a real change escalates to the full perceptual work. A `ResourceBudget`
+caps and paces that work. A change over budget is still reported, as
+UNVERIFIABLE("throttled").
 
 **Receipt and provenance.** `emit_receipt` wraps an observation's facts with a
 content anchor the operator pins or signs out-of-band; `verify_receipt`
@@ -66,7 +65,7 @@ not a dependency, so each is useful alone.
 
 ## Your first ten minutes
 
-Install from source (Python 3.10+, no runtime dependencies):
+Install from source (Python 3.10 or newer is the one requirement):
 
 ```bash
 git clone https://github.com/HarperZ9/coherence-membrane
@@ -80,8 +79,9 @@ python -m pip install -e ".[test]"
 python -m coherence_membrane selftest
 ```
 
-Expect a JSON report with `"passed": true` and one entry per organ. A
-membrane that cannot verify itself refuses, by exit code, to be trusted.
+Expect a JSON report with `"passed": true` and 16 entries under
+`"results"`, one per organ. The command exits 0 on a pass and 1 on a failure,
+so a script can gate on it.
 
 2. Perceive something real. Grab your own screen, then observe the file:
 
@@ -91,8 +91,8 @@ python -m coherence_membrane perceive shot.png
 ```
 
 The perceive output shows the identity hash, the dimensions, and the
-perceptual hash. Run it twice: the identity is bit-stable. Only use capture on
-surfaces you own or are authorized to inspect.
+perceptual hash. Run it twice: the identity is bit-stable. Capture surfaces you
+own or are authorized to inspect.
 
 3. Detect drift from Python:
 
@@ -128,16 +128,16 @@ obs = PropositionalVerifierOrgan().observe(Implies(And(A, Implies(A, B)), B))[0]
 obs.data["verdict"]   # "verified"
 ```
 
-An oversized or undecidable claim comes back UNVERIFIABLE. The verifier
-organs never return a false verdict to stay helpful.
+An oversized or undecidable claim comes back UNVERIFIABLE, so a verdict of
+"verified" always carries a completed check.
 
 ## Where to go next
 
 - The [README](../README.md) has the full capability list, the CLI table, and
   the honest-limits section.
 - [USAGE.md](../USAGE.md) states the public boundary in five lines.
-- [ROADMAP.md](../ROADMAP.md) shows what is planned, with explicit flags for
-  anything that cannot be validated on the author's Windows-only machine.
+- [ROADMAP.md](../ROADMAP.md) shows what is planned, and flags the items that
+  need a Linux or macOS machine to validate.
 - `conformance/run.py` and `impl/js/run.js` re-derive the frozen 16-case
   contract corpus in Python and Node.js respectively; `schemas/` holds the
   JSON Schemas for the wire shapes.
@@ -145,8 +145,6 @@ organs never return a false verdict to stay helpful.
   documentation of behavior, including the machine-checked lattice proofs in
   `tests/test_lattice.py` and `tests/test_lattice_binding.py`.
 
-One closing note on the point of it all: every claim the membrane makes is
-designed to be re-derived by someone who does not trust it. The hashes are
-full-width, the corpus is frozen, a second implementation in another language
-agrees value-for-value, and the safety laws are enumerated rather than
-promised. Perception you cannot re-check is just another assertion.
+To re-check any of this yourself, run `python conformance/run.py` and
+`node impl/js/run.js`: both re-derive the frozen 16-case corpus, value for
+value, from separate code in two languages.
