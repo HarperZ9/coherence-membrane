@@ -175,8 +175,8 @@ ol.walkthrough p{margin:0 0 .3rem;max-width:44rem}
   </div>
   <ul class="uses">
     <li><b>Observations with hashes</b>Each observation carries an exact SHA-256 and, where it applies, a canonical form or a perceptual hash.</li>
-    <li><b>A baseline ladder</b>Byte identity, then canonical identity, then perceptual distance: reformatting is not drift.</li>
-    <li><b>Checkers, not guesses</b>Logic, quantities, distributions, linear arithmetic and graph claims get a certificate from a deterministic oracle.</li>
+    <li><b>A baseline ladder</b>Byte identity, then canonical identity, then perceptual distance. A reformatted JSON file comes back MATCH.</li>
+    <li><b>Deterministic checkers</b>Logic, quantities, distributions, linear arithmetic and graph claims get a certificate from a deterministic oracle.</li>
     <li><b>Two implementations agree</b>A 16-case conformance corpus is re-derived by the Python reference and an independent Node.js core.</li>
   </ul>
   <p class="src">Source: <a href="https://github.com/HarperZ9/coherence-membrane/blob/da827816e28dd5db976b3910784bafb7ef601200/README.md">README.md</a> at da82781 (version 0.2.0 alpha)</p>
@@ -231,12 +231,12 @@ ol.walkthrough p{margin:0 0 .3rem;max-width:44rem}
       </div></li>
       <li class="step" tabindex="-1" data-scene="k3" data-state="s"><div class="card">
         <span class="num">04</span><h3>A receipt needs its anchor</h3>
-        <p><code>emit_receipt</code> wraps an observation in a witness receipt with an anchor you can pin or sign out of band. Verified against the pinned anchor it is VALID. Verified with no anchor it is UNVERIFIABLE: the receipt alone cannot vouch for itself.</p>
+        <p><code>emit_receipt</code> wraps an observation in a witness receipt with an anchor you can pin or sign out of band. Verified against the pinned anchor it is VALID. Verified on its own it is UNVERIFIABLE, because a receipt needs an outside anchor to check against.</p>
         <p class="src">Source: <a href="https://github.com/HarperZ9/coherence-membrane/blob/da827816e28dd5db976b3910784bafb7ef601200/src/coherence_membrane">src/coherence_membrane</a>, <code>emit_receipt</code> and <code>verify_receipt</code></p>
       </div></li>
       <li class="step" tabindex="-1" data-scene="k4" data-state="s"><div class="card">
         <span class="num">05</span><h3>Two implementations, one corpus</h3>
-        <p>A frozen corpus of 16 cases is re-derived value for value by the Python reference and by a Node.js core that shares no code with it. Both pass all 16.</p>
+        <p>A frozen corpus of 16 cases is re-derived value for value by the Python reference and by a separately written Node.js core. Both pass all 16: <code>python conformance/run.py</code> prints <code>"passed": 16, "failed": 0</code>.</p>
         <p class="src">Source: <a href="https://github.com/HarperZ9/coherence-membrane/blob/da827816e28dd5db976b3910784bafb7ef601200/conformance/run.py">conformance/run.py</a>, <a href="https://github.com/HarperZ9/coherence-membrane/blob/da827816e28dd5db976b3910784bafb7ef601200/impl/js">impl/js</a></p>
       </div></li>
     </ol>
@@ -269,10 +269,10 @@ evidence  counterexample A = 0, B = 1</span></code></pre></li>
 </section>
 
 <section class="block wrap" aria-labelledby="limits">
-  <h2 id="limits">What it does not do</h2>
+  <h2 id="limits">Limits</h2>
   <ul class="limits">
-    <li>Screen capture reads the composited display. Use it only on surfaces you own or are authorised to inspect.</li>
-    <li>A MATCH on the canonical rung means the normalised content is equal. It says nothing about whether that content is right.</li>
+    <li>Screen capture reads the composited display. Capture surfaces you own or are authorised to inspect.</li>
+    <li>A MATCH on the canonical rung means the normalised content equals the pinned baseline. Whether the baseline itself is right is your call when you pin it.</li>
     <li>A deterministic checker certifies the claim it was given. Translating a question into that claim is still the agent's work.</li>
     <li>This source tree is an alpha. The PyPI release is 0.1.0.</li>
   </ul>
@@ -284,7 +284,7 @@ evidence  counterexample A = 0, B = 1</span></code></pre></li>
   <p class="measure">Answer each one in your head before you open it.</p>
   <details><summary>Why is { "b": 2, "a": 1 } a MATCH against { "a": 1, "b": 2 }?</summary><p>Their canonical forms are equal, so the ladder matches on its second rung.</p></details>
   <details><summary>What does the refutation of affirming the consequent carry?</summary><p>A counterexample: A false and B true.</p></details>
-  <details><summary>Why is a receipt UNVERIFIABLE without an anchor?</summary><p>Nothing outside the receipt vouches for it until you pin or sign its anchor.</p></details>
+  <details><summary>A receipt is checked on its own, with its anchor left out. What is the verdict, and why?</summary><p>UNVERIFIABLE. A receipt is checked against an anchor you pinned or signed out of band, and that anchor is the outside witness.</p></details>
 </section>
 </main>
 <footer class="foot wrap">
